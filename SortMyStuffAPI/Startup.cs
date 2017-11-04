@@ -13,9 +13,13 @@ namespace SortMyStuffAPI
 {
     public class Startup
     {
+        private readonly int? _httpsPort;
+
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
+
+            _httpsPort = configuration.GetValue<int>("iisSettings:iisExpress:sslPort");
         }
 
         public IConfiguration Configuration { get; }
@@ -27,6 +31,12 @@ namespace SortMyStuffAPI
             {
                 // add JsonExceptionFilter
                 opt.Filters.Add(typeof(JsonExceptionFilter));
+
+                // setting up the ssl port for development mode
+                // this will be ignored if not in development mode and _httpsPort will be null
+                opt.SslPort = _httpsPort; 
+                // Add RequireHttps Attribute to all the controllers
+                opt.Filters.Add(typeof(RequireHttpsAttribute));
 
                 // change json formatter
                 var jsonFormatter = opt.OutputFormatters.OfType<JsonOutputFormatter>().Single();
@@ -53,6 +63,14 @@ namespace SortMyStuffAPI
             {
                 app.UseDeveloperExceptionPage();
             }
+
+            // include HSTS header
+            app.UseHsts(opt =>
+            {
+                opt.MaxAge(days: 360);
+                opt.IncludeSubdomains();
+                opt.Preload();
+            });
 
             app.UseMvc();
         }
