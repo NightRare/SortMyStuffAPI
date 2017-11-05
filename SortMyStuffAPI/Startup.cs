@@ -1,4 +1,6 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
+using AutoMapper;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -7,7 +9,10 @@ using Microsoft.AspNetCore.Mvc.Formatters;
 using SortMyStuffAPI.Infrastructure;
 using Microsoft.AspNetCore.Mvc.Versioning;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using SortMyStuffAPI.Filters;
+using SortMyStuffAPI.Services;
+using SortMyStuffAPI.Utils;
 
 namespace SortMyStuffAPI
 {
@@ -27,14 +32,22 @@ namespace SortMyStuffAPI
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            // Use in-memroy db for dev, change the scope of the DbContext and the option to Singleton
+            // TODO: Swap out with a real database in production
+            services.AddDbContext<SortMyStuffContext>(opt => opt.UseInMemoryDatabase(Guid.NewGuid().ToString()),
+                ServiceLifetime.Singleton, ServiceLifetime.Singleton);
+
+            services.AddAutoMapper();
+
             services.AddMvc(opt =>
             {
-                // add JsonExceptionFilter
+                // add Filters
                 opt.Filters.Add(typeof(JsonExceptionFilter));
+                opt.Filters.Add(typeof(LinkRewrittingFilter));
 
                 // setting up the ssl port for development mode
                 // this will be ignored if not in development mode and _httpsPort will be null
-                opt.SslPort = _httpsPort; 
+                opt.SslPort = _httpsPort;
                 // Add RequireHttps Attribute to all the controllers
                 opt.Filters.Add(typeof(RequireHttpsAttribute));
 
@@ -54,6 +67,10 @@ namespace SortMyStuffAPI
                 opt.DefaultApiVersion = new ApiVersion(0, 1);
                 opt.ApiVersionSelector = new CurrentImplementationApiVersionSelector(opt);
             });
+
+            // Dependency injeciton
+            services.AddSingleton<IAssetDataService, EntityFrameworkDataService>();
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -62,6 +79,10 @@ namespace SortMyStuffAPI
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
+
+                // Add test data in development
+                var dbContext = app.ApplicationServices.GetRequiredService<SortMyStuffContext>();
+                TestDataRepository.LoadAllIntoContext(dbContext);
             }
 
             // include HSTS header
@@ -73,6 +94,7 @@ namespace SortMyStuffAPI
             });
 
             app.UseMvc();
+
         }
     }
 }

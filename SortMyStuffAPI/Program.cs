@@ -21,10 +21,9 @@ namespace SortMyStuffAPI
             WebHost.CreateDefaultBuilder(args)
             .ConfigureAppConfiguration((builderContext, configBuilder) =>
                 {
-                    if (builderContext.HostingEnvironment.IsDevelopment())
-                    {
-                        configBuilder.AddJsonFile("Properties\\launchSettings.json", optional: false, reloadOnChange: true);
-                    }
+                    if (!builderContext.HostingEnvironment.IsDevelopment()) return;
+
+                    configBuilder.AddJsonFile("Properties\\launchSettings.json", optional: false, reloadOnChange: true);
                 })
                 .UseStartup<Startup>()
                 .Build();

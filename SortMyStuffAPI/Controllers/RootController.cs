@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using SortMyStuffAPI.Models;
 
 namespace SortMyStuffAPI.Controllers
 {
@@ -13,9 +14,11 @@ namespace SortMyStuffAPI.Controllers
         [HttpGet(Name = nameof(GetRoot))]
         public IActionResult GetRoot()
         {
-            var response = new
+            var response = new RootResponse
             {
-                href = Url.Link(nameof(GetRoot), null)
+                Self = Link.To(nameof(GetRoot)),
+                AssetTrees = Link.To(nameof(AssetTreesController.GetAssetTree)),
+                Assets = Link.To(nameof(AssetsController.GetAssets))
             };
 
             return Ok(response);
