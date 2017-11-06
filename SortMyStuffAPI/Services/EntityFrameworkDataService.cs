@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Data.Entity;
+﻿using System.Data.Entity;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -7,6 +6,7 @@ using AutoMapper;
 using SortMyStuffAPI.Models.Entities;
 using SortMyStuffAPI.Models.Resources;
 using AutoMapper.QueryableExtensions;
+using SortMyStuffAPI.Models;
 
 namespace SortMyStuffAPI.Services
 {
@@ -29,10 +29,24 @@ namespace SortMyStuffAPI.Services
             return entity == null ? null : Mapper.Map<AssetTreeEntity, AssetTree>(entity);
         }
 
-        public async Task<IEnumerable<Asset>> GetAssetsAsync(CancellationToken ct)
+        public async Task<PagedResults<Asset>> GetAllAssetsAsync(CancellationToken ct, PagingOptions pagingOptions = null)
         {
-            var result = await Task.Run(() => _context.Assets.ProjectTo<Asset>());
-            return result;
+            var assets = await Task.Run(() => _context.Assets.ProjectTo<Asset>());
+            var totalSize = assets.Count();
+
+            if(pagingOptions != null)
+            {
+                var pagedAssets = assets
+                    .Skip(pagingOptions.Offset.Value)
+                    .Take(pagingOptions.PageSize.Value);
+                assets = pagedAssets;
+            }
+
+            return new PagedResults<Asset>
+            {
+                PagedItems = assets,
+                TotalSize = totalSize
+            };
         }
 
         public async Task<Asset> GetAssetAsync(string id, CancellationToken ct)

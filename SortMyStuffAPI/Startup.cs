@@ -13,6 +13,7 @@ using Microsoft.EntityFrameworkCore;
 using SortMyStuffAPI.Filters;
 using SortMyStuffAPI.Services;
 using SortMyStuffAPI.Utils;
+using SortMyStuffAPI.Models;
 
 namespace SortMyStuffAPI
 {
@@ -71,6 +72,7 @@ namespace SortMyStuffAPI
             // Dependency injeciton
             services.AddSingleton<IAssetDataService, EntityFrameworkDataService>();
 
+            services.Configure<PagingOptions>(Configuration.GetSection("DefaultPagingOptions"));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

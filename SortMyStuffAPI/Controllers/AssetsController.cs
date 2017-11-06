@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using SortMyStuffAPI.Services;
 using SortMyStuffAPI.Models.Resources;
 using SortMyStuffAPI.Models;
+using Microsoft.Extensions.Options;
 
 namespace SortMyStuffAPI.Controllers
 {
@@ -15,26 +16,36 @@ namespace SortMyStuffAPI.Controllers
     {
 
         private readonly IAssetDataService _ads;
+        private readonly PagingOptions _defaultpagingOptions;
 
-        public AssetsController(IAssetDataService assetDataService)
+        public AssetsController(IAssetDataService assetDataService, IOptions<PagingOptions> pagingOptions)
         {
             _ads = assetDataService;
+            _defaultpagingOptions = pagingOptions.Value;
         }
 
+        // GET /assets
         [HttpGet(Name = nameof(GetAssetsAsync))]
-        public async Task<IActionResult> GetAssetsAsync(CancellationToken ct)
+        public async Task<IActionResult> GetAssetsAsync(CancellationToken ct, [FromQuery] PagingOptions pagingOptions)
         {
-            var assets = await _ads.GetAssetsAsync(ct);
-            
-            var response = new Collection<Asset>
-            {
-                Self = Link.ToCollection(nameof(GetAssetsAsync)),
-                Value = assets.ToArray()
-            };
+            // if any Model (in this case PagingOptions) property is not valid according to the Range attributes
+            if (!ModelState.IsValid) return BadRequest(new ApiError(ModelState));
+
+            pagingOptions.Offset = pagingOptions.Offset ?? _defaultpagingOptions.Offset;
+            pagingOptions.PageSize = pagingOptions.PageSize ?? _defaultpagingOptions.PageSize;
+
+            var assets = await _ads.GetAllAssetsAsync(ct, pagingOptions);
+
+            var response = PagedCollection<Asset>.Create(
+                Link.ToCollection(nameof(GetAssetsAsync)),
+                assets.PagedItems.ToArray(),
+                assets.TotalSize,
+                pagingOptions);
 
             return Ok(response);
         }
 
+        // GET /assets/{assetId}
         [HttpGet("{assetId}", Name = nameof(GetAssetByIdAsync))]
         public async Task<IActionResult> GetAssetByIdAsync(string assetId, CancellationToken ct)
         {
