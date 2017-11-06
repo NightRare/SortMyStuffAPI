@@ -10,17 +10,17 @@ namespace SortMyStuffAPI.Models.Resources
     {
         public string Name { get; set; }
 
-        public string ContainerId { get; set; }
+        public Link Container { get; set; }
 
         public string Category { get; set; }
 
+        public string CreateTimestamp { get; set; }
+
+        public string ModifyTimestamp { get; set; }
+
+        public Link ThumbnailUrl { get; set; }
+
 //        public IList<string> DetailsList { get; set; }
-
-        public long CreateTimestamp { get; set; }
-
-        public long ModifyTimestamp { get; set; }
-
-        public string ThumbnailUrl { get; set; }
 
     }
 }

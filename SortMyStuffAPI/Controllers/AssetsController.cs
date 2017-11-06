@@ -1,11 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 using SortMyStuffAPI.Services;
-using SortMyStuffAPI.Utils;
+using SortMyStuffAPI.Models.Resources;
+using SortMyStuffAPI.Models;
 
 namespace SortMyStuffAPI.Controllers
 {
@@ -21,17 +21,24 @@ namespace SortMyStuffAPI.Controllers
             _ads = assetDataService;
         }
 
-        [HttpGet(Name = nameof(GetAssets))]
-        public async Task<IActionResult> GetAssets()
+        [HttpGet(Name = nameof(GetAssetsAsync))]
+        public async Task<IActionResult> GetAssetsAsync(CancellationToken ct)
         {
-            var response = new
+            var assets = await _ads.GetAssetsAsync(ct);
+            
+            var response = new Collection<Asset>
             {
-                href = Url.Link(nameof(GetAssets), null),
-                resource = await _ads.GetAssets(CancellationToken.None)
+                Self = Link.ToCollection(nameof(GetAssetsAsync)),
+                Value = assets.ToArray()
             };
 
             return Ok(response);
         }
 
+        [HttpGet("{assetId}", Name = nameof(GetAssetByIdAsync))]
+        public async Task<IActionResult> GetAssetByIdAsync(string assetId, CancellationToken ct)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

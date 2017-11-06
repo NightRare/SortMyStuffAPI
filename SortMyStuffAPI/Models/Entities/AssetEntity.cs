@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace SortMyStuffAPI.Models.Entities
 {
@@ -15,12 +13,10 @@ namespace SortMyStuffAPI.Models.Entities
 
         public string Category { get; set; }
 
-        public long CreateTimestamp { get; set; }
+        public string CreateTimestamp { get; set; }
 
-        public long ModifyTimestamp { get; set; }
+        public string ModifyTimestamp { get; set; }
 
-        public string ThumbnailUrl { get; set; }
-        
 //        public virtual IList<string> DetailsList { get; set; }
     }
 }
