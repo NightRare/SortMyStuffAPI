@@ -3,10 +3,9 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using AutoMapper;
-using SortMyStuffAPI.Models.Entities;
-using SortMyStuffAPI.Models.Resources;
 using AutoMapper.QueryableExtensions;
 using SortMyStuffAPI.Models;
+using System.Collections.Generic;
 
 namespace SortMyStuffAPI.Services
 {
@@ -29,12 +28,25 @@ namespace SortMyStuffAPI.Services
             return entity == null ? null : Mapper.Map<AssetTreeEntity, AssetTree>(entity);
         }
 
-        public async Task<PagedResults<Asset>> GetAllAssetsAsync(CancellationToken ct, PagingOptions pagingOptions = null)
+        public async Task<PagedResults<Asset>> GetAllAssetsAsync(
+            CancellationToken ct,
+            PagingOptions pagingOptions = null,
+            SortOptions<Asset, AssetEntity> sortOptions = null)
         {
-            var assets = await Task.Run(() => _context.Assets.ProjectTo<Asset>());
-            var totalSize = assets.Count();
 
-            if(pagingOptions != null)
+            IQueryable<AssetEntity> query = _context.Assets;
+            var totalSize = query.Count();
+
+            if (sortOptions != null)
+            {
+                query = sortOptions.Apply(query);
+            }
+
+            IEnumerable<Asset> assets = await Task.Run(
+                () => query.ProjectTo<Asset>().ToArray(), 
+                ct);
+
+            if (pagingOptions != null)
             {
                 var pagedAssets = assets
                     .Skip(pagingOptions.Offset.Value)

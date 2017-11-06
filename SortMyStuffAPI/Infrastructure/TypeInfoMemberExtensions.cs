@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Reflection;
 
-namespace SortMyStuffAPI.Utils
+namespace SortMyStuffAPI.Infrastructure
 {
     public static class TypeInfoMemberExtensions
     {

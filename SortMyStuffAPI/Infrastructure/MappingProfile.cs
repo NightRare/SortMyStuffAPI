@@ -1,7 +1,5 @@
 ﻿using AutoMapper;
 using SortMyStuffAPI.Models;
-using SortMyStuffAPI.Models.Entities;
-using SortMyStuffAPI.Models.Resources;
 
 namespace SortMyStuffAPI.Infrastructure
 {

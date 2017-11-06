@@ -1,26 +1,26 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Remotion.Linq.Parsing.Structure.IntermediateModel;
+﻿using SortMyStuffAPI.Infrastructure;
 
-namespace SortMyStuffAPI.Models.Resources
+namespace SortMyStuffAPI.Models
 {
     public class Asset : Resource
     {
+        [Sortable]
         public string Name { get; set; }
 
         public Link Container { get; set; }
 
+        [Sortable]
         public string Category { get; set; }
 
+        [Sortable]
         public string CreateTimestamp { get; set; }
 
+        [Sortable]
         public string ModifyTimestamp { get; set; }
 
         public Link ThumbnailUrl { get; set; }
 
-//        public IList<string> DetailsList { get; set; }
+        public Link Details { get; set; }
 
     }
 }

@@ -1,4 +1,4 @@
-﻿namespace SortMyStuffAPI.Models.Resources
+﻿namespace SortMyStuffAPI.Models
 {
     public class AssetTree : Resource
     {

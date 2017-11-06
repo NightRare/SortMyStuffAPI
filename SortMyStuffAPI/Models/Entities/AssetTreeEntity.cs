@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
-namespace SortMyStuffAPI.Models.Entities
+namespace SortMyStuffAPI.Models
 {
     public class AssetTreeEntity
     {

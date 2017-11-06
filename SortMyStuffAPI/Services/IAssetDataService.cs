@@ -1,7 +1,5 @@
-﻿using System.Collections.Generic;
-using System.Threading;
+﻿using System.Threading;
 using System.Threading.Tasks;
-using SortMyStuffAPI.Models.Resources;
 using SortMyStuffAPI.Models;
 
 namespace SortMyStuffAPI.Services
@@ -10,7 +8,10 @@ namespace SortMyStuffAPI.Services
     {
         Task<AssetTree> GetAssetTreeAsync(string id, CancellationToken ct);
 
-        Task<PagedResults<Asset>> GetAllAssetsAsync(CancellationToken ct, PagingOptions options = null);
+        Task<PagedResults<Asset>> GetAllAssetsAsync(
+            CancellationToken ct, 
+            PagingOptions pagingOptions = null,
+            SortOptions<Asset, AssetEntity> sortOptions = null);
 
         Task<Asset> GetAssetAsync(string id, CancellationToken ct);
     }

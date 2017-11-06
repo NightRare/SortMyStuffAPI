@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 
-namespace SortMyStuffAPI.Models.Resources
+namespace SortMyStuffAPI.Models
 {
     public abstract class Resource : Link
     {

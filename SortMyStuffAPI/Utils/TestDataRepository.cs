@@ -1,15 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data.Entity.Infrastructure;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Server.Kestrel.Internal.System.Collections.Sequences;
-using Microsoft.EntityFrameworkCore;
-using SortMyStuffAPI.Models.Entities;
+﻿using System.Collections.Generic;
 using SortMyStuffAPI.Services;
-using StackExchange.Redis;
+using SortMyStuffAPI.Models;
+using SortMyStuffAPI.Infrastructure;
 
 namespace SortMyStuffAPI.Utils
 {

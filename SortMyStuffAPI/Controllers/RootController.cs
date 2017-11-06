@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using SortMyStuffAPI.Models;
-using SortMyStuffAPI.Models.Resources;
 
 namespace SortMyStuffAPI.Controllers
 {

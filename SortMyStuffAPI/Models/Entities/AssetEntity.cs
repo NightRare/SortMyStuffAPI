@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace SortMyStuffAPI.Models.Entities
+namespace SortMyStuffAPI.Models
 {
     public class AssetEntity
     {
@@ -17,6 +17,5 @@ namespace SortMyStuffAPI.Models.Entities
 
         public string ModifyTimestamp { get; set; }
 
-//        public virtual IList<string> DetailsList { get; set; }
     }
 }

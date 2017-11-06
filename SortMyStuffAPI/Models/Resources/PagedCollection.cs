@@ -1,8 +1,9 @@
 ﻿using Microsoft.AspNetCore.Routing;
 using Newtonsoft.Json;
+using SortMyStuffAPI.Models;
 using System;
 
-namespace SortMyStuffAPI.Models.Resources
+namespace SortMyStuffAPI.Models
 {
     public class PagedCollection<T> : Collection<T>
     {

@@ -7,5 +7,7 @@
         public const string ROOT_ASSET_ID = "rootassetid";
 
         public const string GET_METHOD = "GET";
+
+        public const string PARAMETER_DESC = "desc";
     }
 }

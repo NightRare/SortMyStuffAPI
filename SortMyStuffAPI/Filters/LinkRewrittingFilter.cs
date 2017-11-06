@@ -9,7 +9,6 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.Routing;
 using SortMyStuffAPI.Infrastructure;
 using SortMyStuffAPI.Models;
-using SortMyStuffAPI.Models.Resources;
 using SortMyStuffAPI.Utils;
 
 namespace SortMyStuffAPI.Filters

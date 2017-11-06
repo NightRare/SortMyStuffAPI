@@ -2,7 +2,6 @@
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using SortMyStuffAPI.Models;
-using SortMyStuffAPI.Models.Resources;
 using SortMyStuffAPI.Services;
 using SortMyStuffAPI.Utils;
 

@@ -1,9 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
-namespace SortMyStuffAPI.Utils
+namespace SortMyStuffAPI.Infrastructure
 {
     public static class DateTimeHelper
     {

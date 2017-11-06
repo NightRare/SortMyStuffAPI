@@ -69,10 +69,12 @@ namespace SortMyStuffAPI
                 opt.ApiVersionSelector = new CurrentImplementationApiVersionSelector(opt);
             });
 
+            // Inject options from Configuration
+            services.Configure<PagingOptions>(Configuration.GetSection("DefaultPagingOptions"));
+
             // Dependency injeciton
             services.AddSingleton<IAssetDataService, EntityFrameworkDataService>();
 
-            services.Configure<PagingOptions>(Configuration.GetSection("DefaultPagingOptions"));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
