@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Remotion.Linq.Parsing.Structure.IntermediateModel;
 
-namespace SortMyStuffAPI.Models
+namespace SortMyStuffAPI.Models.Resources
 {
     public class Asset : Resource
     {

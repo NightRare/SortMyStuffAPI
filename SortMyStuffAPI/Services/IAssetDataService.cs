@@ -2,6 +2,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using SortMyStuffAPI.Models;
+using SortMyStuffAPI.Models.Resources;
 
 namespace SortMyStuffAPI.Services
 {

@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using AutoMapper;
 using SortMyStuffAPI.Models;
 using SortMyStuffAPI.Models.Entities;
+using SortMyStuffAPI.Models.Resources;
 
 namespace SortMyStuffAPI.Services
 {
@@ -22,7 +23,9 @@ namespace SortMyStuffAPI.Services
 
         public async Task<AssetTree> GetAssetTreeAsync(string id, CancellationToken ct)
         {
-            var entity = _context.AssetTrees.Include(at => at.Contents).SingleOrDefault(at => at.Id == id);
+            var entity = await Task.Run(() =>
+            _context.AssetTrees.Include(at => at.Contents).SingleOrDefault(at => at.Id == id)
+            , ct);
             var result = entity == null ? null : Mapper.Map<AssetTreeEntity, AssetTree>(entity);
             return result;
         }

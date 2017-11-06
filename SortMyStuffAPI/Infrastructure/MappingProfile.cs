@@ -1,10 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using AutoMapper;
+﻿using AutoMapper;
 using SortMyStuffAPI.Models;
 using SortMyStuffAPI.Models.Entities;
+using SortMyStuffAPI.Models.Resources;
 
 namespace SortMyStuffAPI.Infrastructure
 {
