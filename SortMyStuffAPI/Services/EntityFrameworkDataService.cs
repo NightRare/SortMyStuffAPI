@@ -6,6 +6,7 @@ using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using SortMyStuffAPI.Models;
 using System.Collections.Generic;
+using SortMyStuffAPI.Models.QueryOptions;
 
 namespace SortMyStuffAPI.Services
 {
@@ -31,11 +32,15 @@ namespace SortMyStuffAPI.Services
         public async Task<PagedResults<Asset>> GetAllAssetsAsync(
             CancellationToken ct,
             PagingOptions pagingOptions = null,
-            SortOptions<Asset, AssetEntity> sortOptions = null)
+            SortOptions<Asset, AssetEntity> sortOptions = null,
+            SearchOptions<Asset, AssetEntity> searchOptions = null)
         {
-
             IQueryable<AssetEntity> query = _context.Assets;
-            var totalSize = query.Count();
+
+            if(searchOptions != null)
+            {
+                query = searchOptions.Apply(query);
+            }
 
             if (sortOptions != null)
             {
@@ -45,6 +50,7 @@ namespace SortMyStuffAPI.Services
             IEnumerable<Asset> assets = await Task.Run(
                 () => query.ProjectTo<Asset>().ToArray(), 
                 ct);
+            var totalSize = assets.Count();
 
             if (pagingOptions != null)
             {

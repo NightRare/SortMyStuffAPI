@@ -9,5 +9,15 @@
         public const string GET_METHOD = "GET";
 
         public const string PARAMETER_DESC = "desc";
+
+        public const string PARAMETER_OP_EQUAL = "eq";
+
+        public const string PARAMETER_OP_GREATERTHAN = "gt";
+
+        public const string PARAMETER_OP_LESSTHAN = "lt";
+
+        public const string PARAMETER_OP_GREATERTHAN_OR_EQUAL = "gte";
+
+        public const string PARAMETER_OP_LESSTHAN_OR_EQUAL = "lte";
     }
 }

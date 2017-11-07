@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using SortMyStuffAPI.Services;
 using SortMyStuffAPI.Models;
 using Microsoft.Extensions.Options;
+using SortMyStuffAPI.Models.QueryOptions;
 
 namespace SortMyStuffAPI.Controllers
 {
@@ -28,7 +29,8 @@ namespace SortMyStuffAPI.Controllers
         public async Task<IActionResult> GetAssetsAsync(
             CancellationToken ct, 
             [FromQuery] PagingOptions pagingOptions,
-            [FromQuery] SortOptions<Asset, AssetEntity> sortOptions)
+            [FromQuery] SortOptions<Asset, AssetEntity> sortOptions,
+            [FromQuery] SearchOptions<Asset, AssetEntity> searchOptions)
         {
             // if any Model (in this case PagingOptions) property is not valid according to the Range attributes
             if (!ModelState.IsValid) return BadRequest(new ApiError(ModelState));
@@ -36,7 +38,7 @@ namespace SortMyStuffAPI.Controllers
             pagingOptions.Offset = pagingOptions.Offset ?? _defaultpagingOptions.Offset;
             pagingOptions.PageSize = pagingOptions.PageSize ?? _defaultpagingOptions.PageSize;
 
-            var assets = await _ads.GetAllAssetsAsync(ct, pagingOptions, sortOptions);
+            var assets = await _ads.GetAllAssetsAsync(ct, pagingOptions, sortOptions, searchOptions);
 
             var response = PagedCollection<Asset>.Create(
                 Link.ToCollection(nameof(GetAssetsAsync)),

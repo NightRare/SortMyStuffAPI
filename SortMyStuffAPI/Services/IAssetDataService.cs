@@ -1,6 +1,7 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
 using SortMyStuffAPI.Models;
+using SortMyStuffAPI.Models.QueryOptions;
 
 namespace SortMyStuffAPI.Services
 {
@@ -11,7 +12,8 @@ namespace SortMyStuffAPI.Services
         Task<PagedResults<Asset>> GetAllAssetsAsync(
             CancellationToken ct, 
             PagingOptions pagingOptions = null,
-            SortOptions<Asset, AssetEntity> sortOptions = null);
+            SortOptions<Asset, AssetEntity> sortOptions = null,
+            SearchOptions<Asset, AssetEntity> searchOptions = null);
 
         Task<Asset> GetAssetAsync(string id, CancellationToken ct);
     }
