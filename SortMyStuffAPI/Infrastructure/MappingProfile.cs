@@ -21,7 +21,7 @@ namespace SortMyStuffAPI.Infrastructure
                 .ForMember(dest => dest.Container, opt => opt.MapFrom(src =>
                     Link.To(nameof(Controllers.AssetsController.GetAssetByIdAsync), new { assetId = src.ContainerId })))
 
-                .ForMember(dest => dest.ThumbnailUrl, opt => opt.MapFrom(src =>
+                .ForMember(dest => dest.Thumbnail, opt => opt.MapFrom(src =>
                     Link.To(nameof(Controllers.ThumbnailsController.GetThumbnailById), new { assetId = src.Id })))
                 
                 .ForMember(dest => dest.UpdateAsset, opt => opt.MapFrom(src =>

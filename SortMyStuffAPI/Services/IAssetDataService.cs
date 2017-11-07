@@ -16,5 +16,13 @@ namespace SortMyStuffAPI.Services
             SearchOptions<Asset, AssetEntity> searchOptions = null);
 
         Task<Asset> GetAssetAsync(string id, CancellationToken ct);
+
+        Task<int> UpdateAssetAsync(
+            string id, 
+            CancellationToken ct, 
+            string name = null, 
+            string containerId = null, 
+            string category = null,
+            string modifyTimestamp = null);
     }
 }

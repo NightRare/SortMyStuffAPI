@@ -2,6 +2,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using System.Linq;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using SortMyStuffAPI.Services;
 using SortMyStuffAPI.Models;
@@ -15,12 +16,12 @@ namespace SortMyStuffAPI.Controllers
     public class AssetsController : Controller
     {
 
-        private readonly IAssetDataService _ads;
+        private readonly IAssetDataService _assetDataService;
         private readonly PagingOptions _defaultpagingOptions;
 
         public AssetsController(IAssetDataService assetDataService, IOptions<PagingOptions> pagingOptions)
         {
-            _ads = assetDataService;
+            _assetDataService = assetDataService;
             _defaultpagingOptions = pagingOptions.Value;
         }
 
@@ -38,7 +39,7 @@ namespace SortMyStuffAPI.Controllers
             pagingOptions.Offset = pagingOptions.Offset ?? _defaultpagingOptions.Offset;
             pagingOptions.PageSize = pagingOptions.PageSize ?? _defaultpagingOptions.PageSize;
 
-            var assets = await _ads.GetAllAssetsAsync(ct, pagingOptions, sortOptions, searchOptions);
+            var assets = await _assetDataService.GetAllAssetsAsync(ct, pagingOptions, sortOptions, searchOptions);
 
             var response = PagedCollection<Asset>.Create(
                 Link.ToCollection(nameof(GetAssetsAsync)),
@@ -53,7 +54,10 @@ namespace SortMyStuffAPI.Controllers
         [HttpGet("{assetId}", Name = nameof(GetAssetByIdAsync))]
         public async Task<IActionResult> GetAssetByIdAsync(string assetId, CancellationToken ct)
         {
-            throw new NotImplementedException();
+            var asset = await _assetDataService.GetAssetAsync(assetId, ct);
+            if (asset == null) return NotFound();
+
+            return Ok(asset);
         }
 
         [HttpPut("{assetId}", Name = nameof(UpdateAssetByIdAsync))]
@@ -62,7 +66,12 @@ namespace SortMyStuffAPI.Controllers
             [FromBody] UpdateAssetForm assetUpdatingForm,
             CancellationToken ct)
         {
-            throw new NotImplementedException();
+            if (!ModelState.IsValid) return BadRequest(new ApiError(ModelState));
+
+            int statusCode = await _assetDataService.UpdateAssetAsync(assetId, ct, name: assetUpdatingForm.Name);
+            return statusCode == StatusCodes.Status200OK
+                ? Ok() as IActionResult
+                : BadRequest(new ApiError("Update database failed."));
         }
     }
 }

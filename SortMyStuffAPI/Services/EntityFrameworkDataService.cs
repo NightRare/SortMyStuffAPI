@@ -6,6 +6,7 @@ using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using SortMyStuffAPI.Models;
 using System.Collections.Generic;
+using Microsoft.AspNetCore.Http;
 using SortMyStuffAPI.Models.QueryOptions;
 
 namespace SortMyStuffAPI.Services
@@ -69,7 +70,29 @@ namespace SortMyStuffAPI.Services
 
         public async Task<Asset> GetAssetAsync(string id, CancellationToken ct)
         {
-            throw new System.NotImplementedException();
+            var entity = await Task.Run(() => _context.Assets.SingleOrDefault(a => a.Id == id), ct);
+            return entity == null ? null : Mapper.Map<AssetEntity, Asset>(entity);
+        }
+
+        public async Task<int> UpdateAssetAsync(
+            string id, 
+            CancellationToken ct, 
+            string name = null, 
+            string containerId = null,
+            string category = null,
+            string modifyTimestamp = null)
+        {
+            var entity = await Task.Run(() => _context.Assets.SingleOrDefault(a => a.Id == id), ct);
+            if (entity == null) return StatusCodes.Status404NotFound;
+
+            entity.Name = name ?? entity.Name;
+            entity.ContainerId = containerId ?? entity.ContainerId;
+            entity.Category = category ?? entity.Category;
+            entity.ModifyTimestamp = modifyTimestamp ?? entity.ModifyTimestamp;
+
+            _context.SaveChanges();
+
+            return StatusCodes.Status200OK;
         }
 
         #endregion

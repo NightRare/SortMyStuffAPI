@@ -1,4 +1,6 @@
-﻿namespace SortMyStuffAPI.Models
+﻿using Newtonsoft.Json;
+
+namespace SortMyStuffAPI.Models
 {
     public class AssetTree : Resource
     {

@@ -1,9 +1,11 @@
-﻿using SortMyStuffAPI.Infrastructure;
+﻿using Newtonsoft.Json;
+using SortMyStuffAPI.Infrastructure;
 
 namespace SortMyStuffAPI.Models
 {
     public class Asset : Resource
     {
+
         [Sortable]
         [Searchable]
         public string Name { get; set; }
@@ -20,12 +22,13 @@ namespace SortMyStuffAPI.Models
         [Sortable]
         public string ModifyTimestamp { get; set; }
          
-        public Link ThumbnailUrl { get; set; }
+        public Link Thumbnail { get; set; }
 
-        public Link PhotoUrl { get; set; }
+        public Link Photo { get; set; }
 
         public Link Details { get; set; }
 
         public Form UpdateAsset { get; set; }
+
     }
 }
