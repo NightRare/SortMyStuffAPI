@@ -22,7 +22,10 @@ namespace SortMyStuffAPI.Models
          
         public Link ThumbnailUrl { get; set; }
 
+        public Link PhotoUrl { get; set; }
+
         public Link Details { get; set; }
 
+        public Form UpdateAsset { get; set; }
     }
 }

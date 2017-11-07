@@ -8,6 +8,12 @@
 
         public const string GET_METHOD = "GET";
 
+        public const string POST_METHOD = "POST";
+
+        public const string PUT_METHOD = "PUT";
+
+        public const string DELETE_METHOD = "DELETE";
+
         public const string PARAMETER_DESC = "desc";
 
         public const string PARAMETER_OP_EQUAL = "eq";

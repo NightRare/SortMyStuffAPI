@@ -28,6 +28,19 @@ namespace SortMyStuffAPI.Models
                 Relations = new string[] { "collection" }
             };
 
+        public static Link ToForm(
+            string routeName,
+            object routeValues = null,
+            string method = ApiStrings.POST_METHOD,
+            params string[] relations)
+            => new Link
+            {
+                RouteName = routeName,
+                RouteValues = routeValues,
+                Method = method,
+                Relations = relations
+            };
+
         [JsonProperty(Order = -4)]
         public string Href { get; set; }
 

@@ -7,10 +7,13 @@ namespace SortMyStuffAPI.Infrastructure
         /// <summary>
         /// Get the string representation of the current utc date and time in ISO-8601 format
         /// </summary>
-        /// <returns>The string representation of the current utc date and time in ISO-8601 format</returns>
+        /// 
+        /// <returns>
+        /// The string representation of the current utc date and time in ISO-8601 format
+        /// </returns>
         public static string UtcNow()
         {
-            return DateTime.UtcNow.ToString("o");
+            return DateTimeOffset.UtcNow.ToString("o");
         }
     }
 }

@@ -27,7 +27,7 @@ namespace SortMyStuffAPI.Controllers
         // GET /assets
         [HttpGet(Name = nameof(GetAssetsAsync))]
         public async Task<IActionResult> GetAssetsAsync(
-            CancellationToken ct, 
+            CancellationToken ct,
             [FromQuery] PagingOptions pagingOptions,
             [FromQuery] SortOptions<Asset, AssetEntity> sortOptions,
             [FromQuery] SearchOptions<Asset, AssetEntity> searchOptions)
@@ -52,6 +52,15 @@ namespace SortMyStuffAPI.Controllers
         // GET /assets/{assetId}
         [HttpGet("{assetId}", Name = nameof(GetAssetByIdAsync))]
         public async Task<IActionResult> GetAssetByIdAsync(string assetId, CancellationToken ct)
+        {
+            throw new NotImplementedException();
+        }
+
+        [HttpPut("{assetId}", Name = nameof(UpdateAssetByIdAsync))]
+        public async Task<IActionResult> UpdateAssetByIdAsync(
+            string assetId,
+            [FromBody] UpdateAssetForm assetUpdatingForm,
+            CancellationToken ct)
         {
             throw new NotImplementedException();
         }
