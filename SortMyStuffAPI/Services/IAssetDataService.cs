@@ -1,4 +1,6 @@
-﻿using System.Threading;
+﻿using System;
+using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using SortMyStuffAPI.Models;
 using SortMyStuffAPI.Models.QueryOptions;
@@ -17,12 +19,14 @@ namespace SortMyStuffAPI.Services
 
         Task<Asset> GetAssetAsync(string id, CancellationToken ct);
 
-        Task<int> UpdateAssetAsync(
-            string id, 
-            CancellationToken ct, 
-            string name = null, 
-            string containerId = null, 
-            string category = null,
-            string modifyTimestamp = null);
+        Task<IEnumerable<PathUnit>> GetAssetPathAsync(string id, CancellationToken ct);
+
+        Task<bool> UpdateAssetAsync(
+            string id,
+            DateTimeOffset modifyTimestamp,
+            CancellationToken ct,
+            string name = null,
+            string containerId = null,
+            string category = null);
     }
 }

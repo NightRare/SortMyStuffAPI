@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System;
+using System.ComponentModel.DataAnnotations;
 
 namespace SortMyStuffAPI.Models
 {
@@ -13,9 +14,9 @@ namespace SortMyStuffAPI.Models
 
         public string Category { get; set; }
 
-        public string CreateTimestamp { get; set; }
+        public DateTimeOffset CreateTimestamp { get; set; }
 
-        public string ModifyTimestamp { get; set; }
+        public DateTimeOffset ModifyTimestamp { get; set; }
 
     }
 }

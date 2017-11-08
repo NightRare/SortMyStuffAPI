@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Linq;
@@ -60,6 +61,32 @@ namespace SortMyStuffAPI.Controllers
             return Ok(asset);
         }
 
+        [HttpGet("{assetId}/path", Name = nameof(GetAssetPathByIDAsync))]
+        public async Task<IActionResult> GetAssetPathByIDAsync(
+            string assetId,
+            CancellationToken ct)
+        {
+            IEnumerable<PathUnit> pathUnits;
+            try
+            {
+                pathUnits = await _assetDataService.GetAssetPathAsync(assetId, ct);
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound();
+            }
+
+
+            var response = new Collection<PathUnit>
+            {
+                Self = Link.ToCollection(nameof(GetAssetPathByIDAsync), new {assetId = assetId}),
+                Value = pathUnits.ToArray()
+            };
+
+            return Ok(response);
+        }
+
+        // PUT /assets/{assetId}
         [HttpPut("{assetId}", Name = nameof(UpdateAssetByIdAsync))]
         public async Task<IActionResult> UpdateAssetByIdAsync(
             string assetId,
@@ -68,10 +95,13 @@ namespace SortMyStuffAPI.Controllers
         {
             if (!ModelState.IsValid) return BadRequest(new ApiError(ModelState));
 
-            int statusCode = await _assetDataService.UpdateAssetAsync(assetId, ct, name: assetUpdatingForm.Name);
-            return statusCode == StatusCodes.Status200OK
-                ? Ok() as IActionResult
-                : BadRequest(new ApiError("Update database failed."));
+            var asset = await _assetDataService.GetAssetAsync(assetId, ct);
+            if (asset == null) return NotFound();
+
+
+
+            bool ok = await _assetDataService.UpdateAssetAsync(assetId, DateTimeOffset.UtcNow, ct, name: assetUpdatingForm.Name);
+            return ok ? Ok() as IActionResult : BadRequest(new ApiError("Update database failed."));
         }
     }
 }

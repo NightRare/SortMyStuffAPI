@@ -18,15 +18,20 @@ namespace SortMyStuffAPI.Infrastructure
                 .ForMember(dest => dest.Self, opt => opt.MapFrom(src =>
                     Link.To(nameof(Controllers.AssetsController.GetAssetByIdAsync), new { assetId = src.Id })))
 
-                .ForMember(dest => dest.Container, opt => opt.MapFrom(src =>
-                    Link.To(nameof(Controllers.AssetsController.GetAssetByIdAsync), new { assetId = src.ContainerId })))
+                .ForMember(dest => dest.Path, opt => opt.MapFrom(src =>
+                    Link.ToCollection(nameof(Controllers.AssetsController.GetAssetPathByIDAsync), new { assetId = src.Id })))
 
                 .ForMember(dest => dest.Thumbnail, opt => opt.MapFrom(src =>
                     Link.To(nameof(Controllers.ThumbnailsController.GetThumbnailById), new { assetId = src.Id })))
-                
+
+                .ForMember(dest => dest.ContentAssets, opt => opt.MapFrom(src =>
+                    Link.ToCollection(
+                        nameof(Controllers.AssetsController.GetAssetsAsync),
+                        new { search = $"{ nameof(Asset.ContainerId).ToCamelCase() } { ApiStrings.PARAMETER_OP_EQUAL } { src.Id }" })))
+
                 .ForMember(dest => dest.UpdateAsset, opt => opt.MapFrom(src =>
                     FormMetadata.FromModel(
-                        new UpdateAssetForm(), 
+                        new UpdateAssetForm(),
                         Link.ToForm(
                             nameof(Controllers.AssetsController.UpdateAssetByIdAsync),
                             new { assetId = src.Id },

@@ -1,4 +1,5 @@
-﻿using System.Data.Entity;
+﻿using System;
+using System.Data.Entity;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -8,6 +9,7 @@ using SortMyStuffAPI.Models;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Http;
 using SortMyStuffAPI.Models.QueryOptions;
+using SortMyStuffAPI.Utils;
 
 namespace SortMyStuffAPI.Services
 {
@@ -74,27 +76,58 @@ namespace SortMyStuffAPI.Services
             return entity == null ? null : Mapper.Map<AssetEntity, Asset>(entity);
         }
 
-        public async Task<int> UpdateAssetAsync(
+        public async Task<IEnumerable<PathUnit>> GetAssetPathAsync(
             string id, 
-            CancellationToken ct, 
+            CancellationToken ct)
+        {
+            var allParents = await Task.Run(() => GetAllParents(id), ct);
+            var pathUnits = new List<PathUnit>();
+            foreach (var entity in allParents)
+            {
+                pathUnits.Add(new PathUnit
+                {
+                    Name = entity.Name,
+                    Asset = Link.To(nameof(Controllers.AssetsController.GetAssetByIdAsync), new { assetId = entity.Id })
+                });
+            }
+
+            return pathUnits;
+        }
+
+        public async Task<bool> UpdateAssetAsync(
+            string id, 
+            DateTimeOffset modifyTimestamp,
+            CancellationToken ct,
             string name = null, 
             string containerId = null,
-            string category = null,
-            string modifyTimestamp = null)
+            string category = null)
         {
             var entity = await Task.Run(() => _context.Assets.SingleOrDefault(a => a.Id == id), ct);
-            if (entity == null) return StatusCodes.Status404NotFound;
+            if (entity == null) return false;
 
             entity.Name = name ?? entity.Name;
             entity.ContainerId = containerId ?? entity.ContainerId;
             entity.Category = category ?? entity.Category;
-            entity.ModifyTimestamp = modifyTimestamp ?? entity.ModifyTimestamp;
+            entity.ModifyTimestamp = modifyTimestamp;
 
             _context.SaveChanges();
 
-            return StatusCodes.Status200OK;
+            return true;
         }
 
+        private IEnumerable<AssetEntity> GetAllParents(string id)
+        {
+            var entity = _context.Assets.SingleOrDefault(a => a.Id == id);
+            if (entity == null) throw new KeyNotFoundException();
+            yield return entity;
+            
+            while (!entity.Id.Equals(ApiStrings.ROOT_ASSET_ID))
+            {
+                entity = _context.Assets.SingleOrDefault(a => a.Id == entity.ContainerId);
+                if (entity == null) yield break;
+                yield return entity;
+            }
+        }
         #endregion
     }
 }

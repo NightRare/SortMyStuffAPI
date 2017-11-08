@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using SortMyStuffAPI.Services;
 using SortMyStuffAPI.Models;
 using SortMyStuffAPI.Infrastructure;
@@ -21,12 +22,14 @@ namespace SortMyStuffAPI.Utils
             var root = new AssetTreeEntity
             {
                 Id = ApiStrings.ROOT_ASSET_ID,
+                Name = "Assets",
                 Contents = new List<AssetTreeEntity>()
             };
 
             var asset_1 = new AssetTreeEntity
             {
                 Id = "1",
+                Name = "asset_1",
                 Contents = new List<AssetTreeEntity>()
             };
             root.Contents.Add(asset_1);
@@ -34,6 +37,7 @@ namespace SortMyStuffAPI.Utils
             var asset_2 = new AssetTreeEntity
             {
                 Id = "2",
+                Name = "asset_2",
                 Contents = new List<AssetTreeEntity>()
             };
             root.Contents.Add(asset_2);
@@ -41,6 +45,7 @@ namespace SortMyStuffAPI.Utils
             var asset_1_1 = new AssetTreeEntity
             {
                 Id = "1_1",
+                Name = "asset_1_1",
                 Contents = new List<AssetTreeEntity>()
             };
             asset_1.Contents.Add(asset_1_1);
@@ -48,6 +53,7 @@ namespace SortMyStuffAPI.Utils
             var asset_1_2 = new AssetTreeEntity
             {
                 Id = "1_2",
+                Name = "asset_1_2",
                 Contents = new List<AssetTreeEntity>()
             };
             asset_1.Contents.Add(asset_1_2);
@@ -55,6 +61,7 @@ namespace SortMyStuffAPI.Utils
             var asset_2_1 = new AssetTreeEntity
             {
                 Id = "2_1",
+                Name = "asset_2_1",
                 Contents = new List<AssetTreeEntity>()
             };
             asset_2.Contents.Add(asset_2_1);
@@ -62,6 +69,7 @@ namespace SortMyStuffAPI.Utils
             var asset_1_1_1 = new AssetTreeEntity
             {
                 Id = "1_1_1",
+                Name = "asset_1_1_1",
                 Contents = new List<AssetTreeEntity>()
             };
             asset_1_1.Contents.Add(asset_1_1_1);
@@ -77,7 +85,7 @@ namespace SortMyStuffAPI.Utils
 
         public static void LoadAssets(SortMyStuffContext context)
         {
-            string timestamp = DateTimeHelper.UtcNow();
+            var timestamp = DateTimeOffset.UtcNow;
             var root = new AssetEntity
             {
                 Id = ApiStrings.ROOT_ASSET_ID,

@@ -8,6 +8,8 @@ namespace SortMyStuffAPI.Models
         [Key]
         public string Id { get; set; }
 
+        public string Name { get; set; }
+
         public virtual IList<AssetTreeEntity> Contents { get; set; }
     }
 }

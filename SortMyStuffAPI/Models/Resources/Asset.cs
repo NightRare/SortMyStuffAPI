@@ -1,27 +1,30 @@
-﻿using Newtonsoft.Json;
+﻿using System;
+using Newtonsoft.Json;
 using SortMyStuffAPI.Infrastructure;
 
 namespace SortMyStuffAPI.Models
 {
     public class Asset : Resource
     {
-
         [Sortable]
         [Searchable]
         public string Name { get; set; }
-
-        public Link Container { get; set; }
 
         [Sortable]
         [Searchable]
         public string Category { get; set; }
 
         [Sortable]
-        public string CreateTimestamp { get; set; }
+        public DateTimeOffset CreateTimestamp { get; set; }
 
         [Sortable]
-        public string ModifyTimestamp { get; set; }
-         
+        public DateTimeOffset ModifyTimestamp { get; set; }
+
+
+        public Link Path { get; set; }
+
+        public Link ContentAssets { get; set; }
+
         public Link Thumbnail { get; set; }
 
         public Link Photo { get; set; }
@@ -30,5 +33,12 @@ namespace SortMyStuffAPI.Models
 
         public Form UpdateAsset { get; set; }
 
+
+        [JsonIgnore]
+        public string Id { get; set; }
+
+        [JsonIgnore]
+        [Searchable]
+        public string ContainerId { get; set; }
     }
 }
