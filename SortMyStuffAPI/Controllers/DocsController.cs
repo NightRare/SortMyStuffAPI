@@ -63,7 +63,7 @@ namespace SortMyStuffAPI.Controllers
             var addOrUpdateAsset = FormMetadata.FromModel(
                 new AddOrUpdateAssetForm(),
                 Link.ToForm(
-                    nameof(AssetsController.UpdateAssetByIdAsync),
+                    nameof(AssetsController.AddOrUpdateAssetAsync),
                     new { assetId = assetId ?? "assetId" },
                     ApiStrings.PUT_METHOD,
                     ApiStrings.FORM_CREATE_REL, ApiStrings.FORM_EDIT_REL));

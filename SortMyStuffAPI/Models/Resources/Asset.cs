@@ -31,6 +31,7 @@ namespace SortMyStuffAPI.Models
 
         public Link Details { get; set; }
 
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public Link FormSpecs { get; set; }
 
 

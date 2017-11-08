@@ -14,6 +14,12 @@ namespace SortMyStuffAPI.Models
             Message = message;
         }
 
+        public ApiError(string message, object detail)
+        {
+            Message = message;
+            Detail = detail.ToString();
+        }
+
         public ApiError(ModelStateDictionary modelState)
         {
             Message = "Invalid parameters.";

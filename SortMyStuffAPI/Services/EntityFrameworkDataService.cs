@@ -7,9 +7,9 @@ using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using SortMyStuffAPI.Models;
 using System.Collections.Generic;
-using Microsoft.AspNetCore.Http;
 using SortMyStuffAPI.Models.QueryOptions;
 using SortMyStuffAPI.Utils;
+using System.Data.Entity.Migrations;
 
 namespace SortMyStuffAPI.Services
 {
@@ -30,6 +30,27 @@ namespace SortMyStuffAPI.Services
             _context.AssetTrees.Include(at => at.Contents).SingleOrDefault(at => at.Id == id)
             , ct);
             return entity == null ? null : Mapper.Map<AssetTreeEntity, AssetTree>(entity);
+        }
+
+        public async Task AddOrUpdateAssetTreeAsync(AssetTree assetTree, CancellationToken ct)
+        {
+            var entity = await Task.Run(() =>
+                    _context.AssetTrees.Include(at => at.Contents).SingleOrDefault(at => at.Id == assetTree.Id)
+                , ct);
+            if (entity == null)
+            {
+                _context.AssetTrees.Add(Mapper.Map<AssetTree, AssetTreeEntity>(assetTree));
+            }
+            else
+            {
+                entity.Name = assetTree.Name;
+
+                var idList = assetTree.Contents.Select(at => at.Id);
+                entity.Contents = _context.AssetTrees.Include(ate => ate.Contents)
+                    .Where(ate => idList.Contains(ate.Id)).ToList();
+            }
+
+            _context.SaveChanges();
         }
 
         public async Task<PagedResults<Asset>> GetAllAssetsAsync(
@@ -92,6 +113,25 @@ namespace SortMyStuffAPI.Services
             }
 
             return pathUnits;
+        }
+
+        public async Task AddOrUpdateAssetAsync(Asset asset, CancellationToken ct)
+        {
+            var entity = await Task.Run(() => _context.Assets.SingleOrDefault(a => a.Id == asset.Id), ct);
+            if (entity == null)
+            {
+                _context.Assets.Add(Mapper.Map<Asset, AssetEntity>(asset));
+            }
+            else
+            {
+                entity.Name = asset.Name;
+                entity.Category = asset.Category;
+                entity.ContainerId = asset.ContainerId;
+                entity.CreateTimestamp = asset.CreateTimestamp;
+                entity.ModifyTimestamp = asset.ModifyTimestamp;
+            }
+
+            _context.SaveChanges();
         }
 
         public async Task<bool> UpdateAssetAsync(

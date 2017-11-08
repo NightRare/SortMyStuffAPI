@@ -29,10 +29,11 @@ namespace SortMyStuffAPI.Infrastructure
                         nameof(Controllers.AssetsController.GetAssetsAsync),
                         new { search = $"{ nameof(Asset.ContainerId).ToCamelCase() } { ApiStrings.PARAMETER_OP_EQUAL } { src.Id }" })))
 
-                .ForMember(dest => dest.FormSpecs, opt => opt.MapFrom(src =>
-                    Link.ToCollection(
-                        nameof(Controllers.DocsController.GetDocsByResourceId),
-                        new { resourceType = nameof(Asset).ToCamelCase(), resourceId = src.Id })));
+                .ForMember(dest => dest.FormSpecs, opt => opt.MapFrom(src => 
+                    src.Id == ApiStrings.ROOT_ASSET_ID ? 
+                    null : Link.ToCollection(
+                            nameof(Controllers.DocsController.GetDocsByResourceId),
+                            new { resourceType = nameof(Asset).ToCamelCase(), resourceId = src.Id })));
         }
     }
 }

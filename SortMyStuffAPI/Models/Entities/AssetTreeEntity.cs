@@ -10,6 +10,6 @@ namespace SortMyStuffAPI.Models
 
         public string Name { get; set; }
 
-        public virtual IList<AssetTreeEntity> Contents { get; set; }
+        public virtual List<AssetTreeEntity> Contents { get; set; }
     }
 }

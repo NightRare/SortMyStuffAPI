@@ -13,8 +13,10 @@ namespace SortMyStuffAPI.Controllers
             var response = new RootResponse
             {
                 Self = Link.To(nameof(GetRoot)),
+                Documentations = Link.To(nameof(DocsController.GetDocs)),
                 AssetTrees = Link.To(nameof(AssetTreesController.GetAssetTreeAsync)),
-                Assets = Link.To(nameof(AssetsController.GetAssetsAsync))
+                Assets = Link.To(nameof(AssetsController.GetAssetsAsync)),
+                NewGuid = Link.To(nameof(NewGuidController.GetNewGuid))
             };
 
             return Ok(response);

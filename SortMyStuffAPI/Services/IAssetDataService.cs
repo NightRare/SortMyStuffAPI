@@ -11,6 +11,8 @@ namespace SortMyStuffAPI.Services
     {
         Task<AssetTree> GetAssetTreeAsync(string id, CancellationToken ct);
 
+        Task AddOrUpdateAssetTreeAsync(AssetTree assetTree, CancellationToken ct);
+
         Task<PagedResults<Asset>> GetAllAssetsAsync(
             CancellationToken ct, 
             PagingOptions pagingOptions = null,
@@ -21,12 +23,8 @@ namespace SortMyStuffAPI.Services
 
         Task<IEnumerable<PathUnit>> GetAssetPathAsync(string id, CancellationToken ct);
 
-        Task<bool> UpdateAssetAsync(
-            string id,
-            DateTimeOffset modifyTimestamp,
-            CancellationToken ct,
-            string name = null,
-            string containerId = null,
-            string category = null);
+        Task AddOrUpdateAssetAsync(
+            Asset asset,
+            CancellationToken ct);
     }
 }
