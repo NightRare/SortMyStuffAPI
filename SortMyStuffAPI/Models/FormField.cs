@@ -25,6 +25,9 @@ namespace SortMyStuffAPI.Models
         public const string DefaultType = "string";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public int? StringLength { get; set; }
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public int? MinLength { get; set; }
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]

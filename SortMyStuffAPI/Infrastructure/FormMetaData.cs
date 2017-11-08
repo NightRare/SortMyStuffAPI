@@ -9,7 +9,7 @@ namespace SortMyStuffAPI.Infrastructure
 {
     public static class FormMetadata
     {
-        public static Form FromModel(FormModel model, Link self)
+        public static FormSpecification FromModel(FormModel model, Link self)
         {
             var formFields = new List<FormField>();
 
@@ -30,6 +30,9 @@ namespace SortMyStuffAPI.Infrastructure
                 var required = attributes.OfType<RequiredAttribute>().Any();
                 var type = GetFriendlyType(prop, attributes);
 
+                var stringLength = attributes.OfType<StringLengthAttribute>()
+                    .SingleOrDefault()?.MaximumLength;
+
                 var minLength = attributes.OfType<MinLengthAttribute>()
                     .SingleOrDefault()?.Length;
                 var maxLength = attributes.OfType<MaxLengthAttribute>()
@@ -40,6 +43,7 @@ namespace SortMyStuffAPI.Infrastructure
                     Name = name,
                     Required = required,
                     Type = type,
+                    StringLength = stringLength,
                     Value = value,
                     Description = description,
                     MinLength = minLength,
@@ -47,9 +51,10 @@ namespace SortMyStuffAPI.Infrastructure
                 });
             }
 
-            return new Form()
+            return new FormSpecification()
             {
                 Self = self,
+                Name = model.GetType().Name.ToCamelCase(),
                 Value = formFields.ToArray()
             };
         }

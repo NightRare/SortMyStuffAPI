@@ -61,6 +61,7 @@ namespace SortMyStuffAPI.Controllers
             return Ok(asset);
         }
 
+        // GET /assets/{assetId}/path
         [HttpGet("{assetId}/path", Name = nameof(GetAssetPathByIDAsync))]
         public async Task<IActionResult> GetAssetPathByIDAsync(
             string assetId,
@@ -76,7 +77,6 @@ namespace SortMyStuffAPI.Controllers
                 return NotFound();
             }
 
-
             var response = new Collection<PathUnit>
             {
                 Self = Link.ToCollection(nameof(GetAssetPathByIDAsync), new {assetId = assetId}),
@@ -86,18 +86,23 @@ namespace SortMyStuffAPI.Controllers
             return Ok(response);
         }
 
+        public async Task<IActionResult> CreateAsset(
+            CancellationToken ct)
+        {
+            throw new NotImplementedException();
+        }
+
         // PUT /assets/{assetId}
         [HttpPut("{assetId}", Name = nameof(UpdateAssetByIdAsync))]
         public async Task<IActionResult> UpdateAssetByIdAsync(
             string assetId,
-            [FromBody] UpdateAssetForm assetUpdatingForm,
+            [FromBody] AddOrUpdateAssetForm assetUpdatingForm,
             CancellationToken ct)
         {
             if (!ModelState.IsValid) return BadRequest(new ApiError(ModelState));
 
             var asset = await _assetDataService.GetAssetAsync(assetId, ct);
             if (asset == null) return NotFound();
-
 
 
             bool ok = await _assetDataService.UpdateAssetAsync(assetId, DateTimeOffset.UtcNow, ct, name: assetUpdatingForm.Name);

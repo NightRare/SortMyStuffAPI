@@ -41,6 +41,11 @@ namespace SortMyStuffAPI.Filters
         private static void RewriteAllLinks(object model, LinkHelper helper)
         {
             if (model == null) return;
+            if (model.GetType() == typeof(Link))
+            {
+                ((Link) model).Href = helper.ToAbsolute((Link) model).Href;
+                return;
+            }
 
             var allProperties = model
                 .GetType().GetTypeInfo()
@@ -111,6 +116,14 @@ namespace SortMyStuffAPI.Filters
                     RewriteAllLinks(element, helper);
                 }
             }
+        }
+
+        private static void RewriteLinksInCollection(
+            IEnumerable<PropertyInfo> arrayProperties,
+            object obj,
+            LinkHelper helper)
+        {
+
         }
     }
 }

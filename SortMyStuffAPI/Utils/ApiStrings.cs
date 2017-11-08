@@ -25,5 +25,13 @@
         public const string PARAMETER_OP_GREATERTHAN_OR_EQUAL = "gte";
 
         public const string PARAMETER_OP_LESSTHAN_OR_EQUAL = "lte";
+
+        public const string FORM_REL = "form";
+
+        public const string FORM_EDIT_REL = "edit-form";
+
+        public const string FORM_CREATE_REL = "create-form";
+
+        public const string FORM_QUERY_REL = "query-form";
     }
 }

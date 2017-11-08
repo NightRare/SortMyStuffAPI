@@ -31,7 +31,7 @@ namespace SortMyStuffAPI.Models
 
         public Link Details { get; set; }
 
-        public Form UpdateAsset { get; set; }
+        public Link FormSpecs { get; set; }
 
 
         [JsonIgnore]
