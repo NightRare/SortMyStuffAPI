@@ -11,8 +11,6 @@ namespace SortMyStuffAPI.Services
     {
         Task<AssetTree> GetAssetTreeAsync(string id, CancellationToken ct);
 
-        Task AddOrUpdateAssetTreeAsync(AssetTree assetTree, CancellationToken ct);
-
         Task<PagedResults<Asset>> GetAllAssetsAsync(
             CancellationToken ct, 
             PagingOptions pagingOptions = null,

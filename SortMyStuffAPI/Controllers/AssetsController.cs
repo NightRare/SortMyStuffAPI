@@ -90,16 +90,38 @@ namespace SortMyStuffAPI.Controllers
         // POST /assets
         [HttpPost(Name = nameof(CreateAssetAsync))]
         public async Task<IActionResult> CreateAssetAsync(
+            [FromBody] CreateAssetForm body,
             CancellationToken ct)
         {
-            throw new NotImplementedException();
+            if (!ModelState.IsValid) return BadRequest(new ApiError(ModelState));
+
+            // TODO: check whether category exists
+
+            var container = await _assetDataService.GetAssetAsync(body.ContainerId, ct);
+            if (container == null) return BadRequest(new ApiError("Container not found."));
+
+            var currentTime = DateTimeOffset.UtcNow;
+
+            var asset = Mapper.Map<CreateAssetForm, Asset>(body);
+            asset.Id = Guid.NewGuid().ToString();
+            asset.CreateTimestamp = currentTime;
+            asset.ModifyTimestamp = currentTime;
+
+            await _assetDataService.AddOrUpdateAssetAsync(asset, ct);
+
+            var assetCreated = await _assetDataService.GetAssetAsync(asset.Id, ct);
+
+            return Created(
+                Url.Link(nameof(GetAssetByIdAsync), 
+                new { assetId = asset.Id }), 
+                assetCreated);
         }
 
         // PUT /assets/{assetId}
         [HttpPut("{assetId}", Name = nameof(AddOrUpdateAssetAsync))]
         public async Task<IActionResult> AddOrUpdateAssetAsync(
             string assetId,
-            [FromBody] AddOrUpdateAssetForm form,
+            [FromBody] AddOrUpdateAssetForm body,
             CancellationToken ct)
         {
             if (!ModelState.IsValid) return BadRequest(new ApiError(ModelState));
@@ -109,52 +131,29 @@ namespace SortMyStuffAPI.Controllers
 
             // TODO: check whether category exists
 
-            var container = await _assetDataService.GetAssetAsync(form.ContainerId, ct);
+            var container = await _assetDataService.GetAssetAsync(body.ContainerId, ct);
             if (container == null) return BadRequest(new ApiError("Container not found."));
 
-            if (DateTimeOffset.Compare(form.CreateTimestamp.Value, form.ModifyTimestamp.Value) > 0)
+            if (DateTimeOffset.Compare(body.CreateTimestamp.Value, body.ModifyTimestamp.Value) > 0)
                 return BadRequest(new ApiError("The create timestamp cannot be later than the modify timestamp."));
 
             var record = await _assetDataService.GetAssetAsync(assetId, ct);
             if (record == null)
             {
-                await CreateAsset(Mapper.Map<AddOrUpdateAssetForm, Asset>(form), ct);
+                await _assetDataService.AddOrUpdateAssetAsync(Mapper.Map<AddOrUpdateAssetForm, Asset>(body), ct);
                 return Ok();
             }
 
-            if (DateTimeOffset.Compare(record.CreateTimestamp, form.CreateTimestamp.Value) != 0)
+            if (DateTimeOffset.Compare(record.CreateTimestamp, body.CreateTimestamp.Value) != 0)
                 return BadRequest(new ApiError("CreateTimestamp cannot be modified."));
 
-            if (!record.Category.Equals(form.Category))
+            if (!record.Category.Equals(body.Category))
                 return BadRequest(new ApiError("Category cannot be modified."));
 
-            var recordTree = await _assetDataService.GetAssetTreeAsync(assetId, ct);
-            recordTree.Name = form.Name;
+            record.Name = body.Name;
+            record.ModifyTimestamp = body.ModifyTimestamp.Value;
+            record.ContainerId = body.ContainerId;
 
-            // if moving
-            if (record.ContainerId != form.ContainerId)
-            {
-                var fromContainerTree = await _assetDataService.GetAssetTreeAsync(record.ContainerId, ct);
-                var toContainerTree = await _assetDataService.GetAssetTreeAsync(form.ContainerId, ct);
-
-                // remove from the fromContainerTree
-                fromContainerTree.Contents = fromContainerTree.Contents.Except(
-                    fromContainerTree.Contents.Where(at => at.Id == record.Id)).ToArray();
-
-                // add to the toContainerTree
-                var toContainerTreeContentsList = toContainerTree.Contents.ToList();
-                toContainerTreeContentsList.Add(recordTree);
-                toContainerTree.Contents = toContainerTreeContentsList.ToArray();
-
-                await _assetDataService.AddOrUpdateAssetTreeAsync(fromContainerTree, ct);
-                await _assetDataService.AddOrUpdateAssetTreeAsync(toContainerTree, ct);
-            }
-
-            record.Name = form.Name;
-            record.ModifyTimestamp = form.ModifyTimestamp.Value;
-            record.ContainerId = form.ContainerId;
-
-            await _assetDataService.AddOrUpdateAssetTreeAsync(recordTree, ct);
             await _assetDataService.AddOrUpdateAssetAsync(record, ct);
 
             return Ok();
@@ -162,21 +161,6 @@ namespace SortMyStuffAPI.Controllers
 
         #region PRIVATE METHODS
 
-        private async Task CreateAsset(Asset newAsset, CancellationToken ct)
-        {
-            var containerAssetTree = await _assetDataService.GetAssetTreeAsync(newAsset.ContainerId, ct);
-            var contentsList = containerAssetTree.Contents.ToList();
-            contentsList.Add(new AssetTree
-            {
-                Id = newAsset.Id,
-                Name = newAsset.Name,
-                Contents = new AssetTree[0]
-            });
-            containerAssetTree.Contents = contentsList.ToArray();
-            await _assetDataService.AddOrUpdateAssetTreeAsync(containerAssetTree, ct);
-
-            await _assetDataService.AddOrUpdateAssetAsync(newAsset, ct);
-        }
 
         #endregion
     }

@@ -8,12 +8,6 @@ namespace SortMyStuffAPI.Infrastructure
     {
         public MappingProfile()
         {
-            CreateMap<AssetTreeEntity, AssetTree>()
-                .ForMember(dest => dest.Self, opt => opt.MapFrom(src =>
-                    Link.To(nameof(Controllers.AssetTreesController.GetAssetTreeByIdAsync), new { assetTreeId = src.Id })))
-                .MaxDepth(1000)
-                .PreserveReferences();
-
             CreateMap<AssetEntity, Asset>()
                 .ForMember(dest => dest.Self, opt => opt.MapFrom(src =>
                     Link.To(nameof(Controllers.AssetsController.GetAssetByIdAsync), new { assetId = src.Id })))
@@ -34,6 +28,12 @@ namespace SortMyStuffAPI.Infrastructure
                     null : Link.ToCollection(
                             nameof(Controllers.DocsController.GetDocsByResourceId),
                             new { resourceType = nameof(Asset).ToCamelCase(), resourceId = src.Id })));
+
+            CreateMap<Asset, AssetEntity>();
+
+            CreateMap<AddOrUpdateAssetForm, Asset>();
+
+            CreateMap<CreateAssetForm, Asset>();
         }
     }
 }

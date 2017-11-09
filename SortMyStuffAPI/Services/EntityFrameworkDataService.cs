@@ -26,31 +26,13 @@ namespace SortMyStuffAPI.Services
 
         public async Task<AssetTree> GetAssetTreeAsync(string id, CancellationToken ct)
         {
-            var entity = await Task.Run(() =>
-            _context.AssetTrees.Include(at => at.Contents).SingleOrDefault(at => at.Id == id)
-            , ct);
-            return entity == null ? null : Mapper.Map<AssetTreeEntity, AssetTree>(entity);
-        }
-
-        public async Task AddOrUpdateAssetTreeAsync(AssetTree assetTree, CancellationToken ct)
-        {
-            var entity = await Task.Run(() =>
-                    _context.AssetTrees.Include(at => at.Contents).SingleOrDefault(at => at.Id == assetTree.Id)
-                , ct);
-            if (entity == null)
+            var tree = await Task.Run(() =>
             {
-                _context.AssetTrees.Add(Mapper.Map<AssetTree, AssetTreeEntity>(assetTree));
-            }
-            else
-            {
-                entity.Name = assetTree.Name;
+                var entity = _context.Assets.SingleOrDefault(a => a.Id == id);
+                return ConvertToAssetTree(entity);
+            }, ct);
 
-                var idList = assetTree.Contents.Select(at => at.Id);
-                entity.Contents = _context.AssetTrees.Include(ate => ate.Contents)
-                    .Where(ate => idList.Contains(ate.Id)).ToList();
-            }
-
-            _context.SaveChanges();
+            return tree;
         }
 
         public async Task<PagedResults<Asset>> GetAllAssetsAsync(
@@ -61,7 +43,7 @@ namespace SortMyStuffAPI.Services
         {
             IQueryable<AssetEntity> query = _context.Assets;
 
-            if(searchOptions != null)
+            if (searchOptions != null)
             {
                 query = searchOptions.Apply(query);
             }
@@ -72,7 +54,7 @@ namespace SortMyStuffAPI.Services
             }
 
             IEnumerable<Asset> assets = await Task.Run(
-                () => query.ProjectTo<Asset>().ToArray(), 
+                () => query.ProjectTo<Asset>().ToArray(),
                 ct);
             var totalSize = assets.Count();
 
@@ -98,7 +80,7 @@ namespace SortMyStuffAPI.Services
         }
 
         public async Task<IEnumerable<PathUnit>> GetAssetPathAsync(
-            string id, 
+            string id,
             CancellationToken ct)
         {
             var allParents = await Task.Run(() => GetAllParents(id), ct);
@@ -135,10 +117,10 @@ namespace SortMyStuffAPI.Services
         }
 
         public async Task<bool> UpdateAssetAsync(
-            string id, 
+            string id,
             DateTimeOffset modifyTimestamp,
             CancellationToken ct,
-            string name = null, 
+            string name = null,
             string containerId = null,
             string category = null)
         {
@@ -155,12 +137,16 @@ namespace SortMyStuffAPI.Services
             return true;
         }
 
+        #endregion
+
+        #region PRIVATE METHODS
+
         private IEnumerable<AssetEntity> GetAllParents(string id)
         {
             var entity = _context.Assets.SingleOrDefault(a => a.Id == id);
             if (entity == null) throw new KeyNotFoundException();
             yield return entity;
-            
+
             while (!entity.Id.Equals(ApiStrings.ROOT_ASSET_ID))
             {
                 entity = _context.Assets.SingleOrDefault(a => a.Id == entity.ContainerId);
@@ -168,6 +154,31 @@ namespace SortMyStuffAPI.Services
                 yield return entity;
             }
         }
+
+        private AssetTree ConvertToAssetTree(AssetEntity assetEntity)
+        {
+            if (assetEntity == null) return null;
+            var contents = _context.Assets.Where(a => a.ContainerId == assetEntity.Id);
+
+            var assetTree = new AssetTree
+            {
+                Self = Link.To(nameof(Controllers.AssetTreesController.GetAssetTreeByIdAsync),
+                    new { assetTreeId = assetEntity.Id }),
+                Id = assetEntity.Id,
+                Name = assetEntity.Name,
+                Contents = null
+            };
+
+            var childAssetTrees = new List<AssetTree>();
+            foreach (var child in contents)
+            {
+                childAssetTrees.Add(ConvertToAssetTree(child));
+            }
+            assetTree.Contents = childAssetTrees.ToArray();
+
+            return assetTree;
+        }
+
         #endregion
     }
 }

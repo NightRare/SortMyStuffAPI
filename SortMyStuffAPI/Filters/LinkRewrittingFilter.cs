@@ -25,7 +25,7 @@ namespace SortMyStuffAPI.Filters
         public async Task OnResultExecutionAsync(ResultExecutingContext context, ResultExecutionDelegate next)
         {
             var objectResult = context.Result as ObjectResult;
-            bool shouldSkip = objectResult?.Value == null || objectResult?.StatusCode != (int)HttpStatusCode.OK;
+            bool shouldSkip = objectResult?.Value == null || ShouldSkipStatusCodes(objectResult?.StatusCode);
             if (shouldSkip)
             {
                 await next();
@@ -118,12 +118,15 @@ namespace SortMyStuffAPI.Filters
             }
         }
 
-        private static void RewriteLinksInCollection(
-            IEnumerable<PropertyInfo> arrayProperties,
-            object obj,
-            LinkHelper helper)
+        private static bool ShouldSkipStatusCodes(int? statusCode)
         {
-
+            var codesShouldNotBeSkipped = new int[]
+            {
+                (int)HttpStatusCode.OK,
+                (int)HttpStatusCode.Created
+            };
+            return !statusCode.HasValue || 
+                !codesShouldNotBeSkipped.Contains(statusCode.Value);
         }
     }
 }

@@ -8,8 +8,6 @@ namespace SortMyStuffAPI.Services
         public SortMyStuffContext(DbContextOptions opt) : base(opt)
         { }
 
-        public DbSet<AssetTreeEntity> AssetTrees { get; set; }
-
         public DbSet<AssetEntity> Assets { get; set; }
     }
 }
