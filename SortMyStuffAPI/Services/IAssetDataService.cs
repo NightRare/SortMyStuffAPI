@@ -24,5 +24,10 @@ namespace SortMyStuffAPI.Services
         Task AddOrUpdateAssetAsync(
             Asset asset,
             CancellationToken ct);
+
+        Task DeleteAssetAsync(
+            string id,
+            bool delOnlySelf,
+            CancellationToken ct);
     }
 }

@@ -63,8 +63,8 @@ namespace SortMyStuffAPI.Controllers
         }
 
         // GET /assets/{assetId}/path
-        [HttpGet("{assetId}/path", Name = nameof(GetAssetPathByIDAsync))]
-        public async Task<IActionResult> GetAssetPathByIDAsync(
+        [HttpGet("{assetId}/path", Name = nameof(GetAssetPathByIdAsync))]
+        public async Task<IActionResult> GetAssetPathByIdAsync(
             string assetId,
             CancellationToken ct)
         {
@@ -80,7 +80,7 @@ namespace SortMyStuffAPI.Controllers
 
             var response = new Collection<PathUnit>
             {
-                Self = Link.ToCollection(nameof(GetAssetPathByIDAsync), new {assetId = assetId}),
+                Self = Link.ToCollection(nameof(GetAssetPathByIdAsync), new {assetId = assetId}),
                 Value = pathUnits.ToArray()
             };
 
@@ -140,7 +140,9 @@ namespace SortMyStuffAPI.Controllers
             var record = await _assetDataService.GetAssetAsync(assetId, ct);
             if (record == null)
             {
-                await _assetDataService.AddOrUpdateAssetAsync(Mapper.Map<AddOrUpdateAssetForm, Asset>(body), ct);
+                var asset = Mapper.Map<AddOrUpdateAssetForm, Asset>(body);
+                asset.Id = assetId;
+                await _assetDataService.AddOrUpdateAssetAsync(asset, ct);
                 return Ok();
             }
 
@@ -159,8 +161,31 @@ namespace SortMyStuffAPI.Controllers
             return Ok();
         }
 
-        #region PRIVATE METHODS
 
+        [HttpDelete("{assetId}", Name = nameof(DeleteAssetByIdAsync))]
+        public async Task<IActionResult> DeleteAssetByIdAsync(
+            string assetId,
+            [FromQuery] DeletingAssetOptions deletingOptions,
+            CancellationToken ct)
+        {
+            if (!ModelState.IsValid) return BadRequest(new ApiError(ModelState));
+
+            if (assetId.Equals(ApiStrings.ROOT_ASSET_ID, StringComparison.OrdinalIgnoreCase))
+                return BadRequest(new ApiError("Cannot delete the root asset"));
+
+            try
+            {
+                await _assetDataService.DeleteAssetAsync(assetId, deletingOptions.OnlySelf, ct);
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound();
+            }
+
+            return NoContent();
+        }
+
+        #region PRIVATE METHODS
 
         #endregion
     }

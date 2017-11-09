@@ -71,6 +71,7 @@ namespace SortMyStuffAPI
 
             // Inject options from Configuration
             services.Configure<PagingOptions>(Configuration.GetSection("DefaultPagingOptions"));
+//            services.Configure<DeletingAssetOptions>(Configuration.GetSection("DefaultDeletingAssetOptions"));
 
             // Dependency injeciton
             services.AddSingleton<IAssetDataService, EntityFrameworkDataService>();

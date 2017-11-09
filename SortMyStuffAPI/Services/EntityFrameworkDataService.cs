@@ -116,25 +116,36 @@ namespace SortMyStuffAPI.Services
             _context.SaveChanges();
         }
 
-        public async Task<bool> UpdateAssetAsync(
-            string id,
-            DateTimeOffset modifyTimestamp,
-            CancellationToken ct,
-            string name = null,
-            string containerId = null,
-            string category = null)
+        public async Task DeleteAssetAsync(string id, bool delOnlySelf, CancellationToken ct)
         {
-            var entity = await Task.Run(() => _context.Assets.SingleOrDefault(a => a.Id == id), ct);
-            if (entity == null) return false;
+            var delAsset = await Task.Run(() => _context.Assets.SingleOrDefault(a => a.Id == id), ct);
+            if (delAsset == null) throw new KeyNotFoundException();
 
-            entity.Name = name ?? entity.Name;
-            entity.ContainerId = containerId ?? entity.ContainerId;
-            entity.Category = category ?? entity.Category;
-            entity.ModifyTimestamp = modifyTimestamp;
+            if (delOnlySelf)
+            {
+                var contents = await Task.Run(() => _context.Assets.Where(a => a.ContainerId == id), ct);
+                foreach (var asset in contents)
+                {
+                    asset.ContainerId = delAsset.ContainerId;
+                }
 
+                _context.Assets.Remove(delAsset);
+                _context.SaveChanges();
+                return;
+            }
+
+            DeleteAsset(delAsset);
             _context.SaveChanges();
+        }
 
-            return true;
+        private void DeleteAsset(AssetEntity entity)
+        {
+            var contents = _context.Assets.Where(a => a.ContainerId == entity.Id);
+            foreach (var asset in contents)
+            {
+                DeleteAsset(asset);
+            }
+            _context.Assets.Remove(entity);
         }
 
         #endregion

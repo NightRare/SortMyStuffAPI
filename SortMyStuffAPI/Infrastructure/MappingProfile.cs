@@ -13,7 +13,7 @@ namespace SortMyStuffAPI.Infrastructure
                     Link.To(nameof(Controllers.AssetsController.GetAssetByIdAsync), new { assetId = src.Id })))
 
                 .ForMember(dest => dest.Path, opt => opt.MapFrom(src =>
-                    Link.ToCollection(nameof(Controllers.AssetsController.GetAssetPathByIDAsync), new { assetId = src.Id })))
+                    Link.ToCollection(nameof(Controllers.AssetsController.GetAssetPathByIdAsync), new { assetId = src.Id })))
 
                 .ForMember(dest => dest.Thumbnail, opt => opt.MapFrom(src =>
                     Link.To(nameof(Controllers.ThumbnailsController.GetThumbnailById), new { assetId = src.Id })))
