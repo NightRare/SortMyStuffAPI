@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Threading;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using SortMyStuffAPI.Infrastructure;
 using SortMyStuffAPI.Models;
@@ -65,7 +64,7 @@ namespace SortMyStuffAPI.Controllers
                 Link.ToForm(
                     nameof(AssetsController.AddOrUpdateAssetAsync),
                     new { assetId = assetId ?? "assetId" },
-                    ApiStrings.PUT_METHOD,
+                    ApiStrings.HTTP_PUT,
                     ApiStrings.FORM_CREATE_REL, ApiStrings.FORM_EDIT_REL));
 
             var response = new Documentation

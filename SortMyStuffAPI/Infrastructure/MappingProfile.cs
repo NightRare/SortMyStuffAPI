@@ -24,7 +24,7 @@ namespace SortMyStuffAPI.Infrastructure
                         new { search = $"{ nameof(Asset.ContainerId).ToCamelCase() } { ApiStrings.PARAMETER_OP_EQUAL } { src.Id }" })))
 
                 .ForMember(dest => dest.FormSpecs, opt => opt.MapFrom(src => 
-                    src.Id == ApiStrings.ROOT_ASSET_ID ? 
+                    src.Id == "rootassetid" ? 
                     null : Link.ToCollection(
                             nameof(Controllers.DocsController.GetDocsByResourceId),
                             new { resourceType = nameof(Asset).ToCamelCase(), resourceId = src.Id })));

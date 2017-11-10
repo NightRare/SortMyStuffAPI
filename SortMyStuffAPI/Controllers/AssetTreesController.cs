@@ -1,6 +1,8 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
+using SortMyStuffAPI.Infrastructure;
 using SortMyStuffAPI.Models;
 using SortMyStuffAPI.Services;
 using SortMyStuffAPI.Utils;
@@ -12,16 +14,18 @@ namespace SortMyStuffAPI.Controllers
     public class AssetTreesController : Controller
     {
         private readonly IAssetDataService _ads;
+        private readonly ApiConfigs _apiConfigs;
 
-        public AssetTreesController(IAssetDataService assetDataService)
+        public AssetTreesController(IAssetDataService assetDataService, IOptions<ApiConfigs> apiConfigs)
         {
             _ads = assetDataService;
+            _apiConfigs = apiConfigs.Value;
         }
 
         [HttpGet(Name = nameof(GetAssetTreeAsync))]
         public async Task<IActionResult> GetAssetTreeAsync(CancellationToken ct)
         {
-            var rootTree = await _ads.GetAssetTreeAsync(ApiStrings.ROOT_ASSET_ID, ct);
+            var rootTree = await _ads.GetAssetTreeAsync(_apiConfigs.RootAssetId, ct);
 
             var response = new Collection<AssetTree>
             {

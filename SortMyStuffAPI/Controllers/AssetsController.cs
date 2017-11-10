@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using SortMyStuffAPI.Services;
 using SortMyStuffAPI.Models;
 using Microsoft.Extensions.Options;
+using SortMyStuffAPI.Infrastructure;
 using SortMyStuffAPI.Models.QueryOptions;
 using SortMyStuffAPI.Utils;
 
@@ -20,11 +21,16 @@ namespace SortMyStuffAPI.Controllers
 
         private readonly IAssetDataService _assetDataService;
         private readonly PagingOptions _defaultpagingOptions;
+        private readonly ApiConfigs _apiConfigs;
 
-        public AssetsController(IAssetDataService assetDataService, IOptions<PagingOptions> pagingOptions)
+        public AssetsController(
+            IAssetDataService assetDataService, 
+            IOptions<PagingOptions> pagingOptions,
+            IOptions<ApiConfigs> apiConfigs)
         {
             _assetDataService = assetDataService;
             _defaultpagingOptions = pagingOptions.Value;
+            _apiConfigs = apiConfigs.Value;
         }
 
         // GET /assets
@@ -126,7 +132,7 @@ namespace SortMyStuffAPI.Controllers
         {
             if (!ModelState.IsValid) return BadRequest(new ApiError(ModelState));
 
-            if (assetId.Equals(ApiStrings.ROOT_ASSET_ID, StringComparison.OrdinalIgnoreCase))
+            if (assetId.Equals(_apiConfigs.RootAssetId, StringComparison.OrdinalIgnoreCase))
                 return BadRequest(new ApiError("Cannot create or modify the root asset."));
 
             // TODO: check whether category exists
@@ -161,7 +167,7 @@ namespace SortMyStuffAPI.Controllers
             return Ok();
         }
 
-
+        // DELETE /assets/{assetId}
         [HttpDelete("{assetId}", Name = nameof(DeleteAssetByIdAsync))]
         public async Task<IActionResult> DeleteAssetByIdAsync(
             string assetId,
@@ -170,7 +176,7 @@ namespace SortMyStuffAPI.Controllers
         {
             if (!ModelState.IsValid) return BadRequest(new ApiError(ModelState));
 
-            if (assetId.Equals(ApiStrings.ROOT_ASSET_ID, StringComparison.OrdinalIgnoreCase))
+            if (assetId.Equals(_apiConfigs.RootAssetId, StringComparison.OrdinalIgnoreCase))
                 return BadRequest(new ApiError("Cannot delete the root asset"));
 
             try

@@ -8,6 +8,7 @@ namespace SortMyStuffAPI.Utils
 {
     public static class TestDataRepository
     {
+        private const string RootAssetId = "rootassetid";
 
         public static void LoadAllIntoContext(SortMyStuffContext context)
         {
@@ -21,7 +22,7 @@ namespace SortMyStuffAPI.Utils
             var timestamp = DateTimeOffset.UtcNow;
             var root = new AssetEntity
             {
-                Id = ApiStrings.ROOT_ASSET_ID,
+                Id = RootAssetId,
                 Name = "Assets",
                 ContainerId = null,
                 Category = null,

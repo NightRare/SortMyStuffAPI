@@ -1,6 +1,6 @@
 ﻿namespace SortMyStuffAPI.Services
 {
-    public interface IFileService
+    public interface ILocalResourceService
     {
     }
 }

@@ -1,18 +1,20 @@
-﻿namespace SortMyStuffAPI.Utils
+﻿using System;
+
+namespace SortMyStuffAPI.Utils
 {
     public static class ApiStrings
     {
         public const string ERROR_COMMON_MSG = "A server error occurred.";
 
-        public const string ROOT_ASSET_ID = "rootassetid";
+        public const string HTTP_GET = "GET";
 
-        public const string GET_METHOD = "GET";
+        public const string HTTP_POST = "POST";
 
-        public const string POST_METHOD = "POST";
+        public const string HTTP_PUT = "PUT";
 
-        public const string PUT_METHOD = "PUT";
+        public const string HTTP_DELETE = "DELETE";
 
-        public const string DELETE_METHOD = "DELETE";
+        public const string HTTP_PATCH = "PATCH";
 
         public const string PARAMETER_DESC = "desc";
 
@@ -33,5 +35,22 @@
         public const string FORM_CREATE_REL = "create-form";
 
         public const string FORM_QUERY_REL = "query-form";
+
+
+        #region ENVIRONMENT VIRIABLE KEYS
+
+        public const string ENV_FIREBASE_STORAGE_URL = "FIREBASE_STORAGE_URL";
+
+        public const string ENV_FIREBASE_DATABASE_URL = "FIREBASE_DATABSE_URL";
+
+        public const string ENV_FIREBASE_DATABASE_SECRET = "FIREBASE_DATABASE_SECRET";
+
+        public const string ENV_FIREBASE_API_KEY = "FIREBASE_API_KEY";
+
+        public const string ENV_FIREBASE_AUTH_EMAIL = "FIREBASE_AUTH_EMAIL";
+
+        public const string ENV_FIREBASE_AUTH_PASSWORD = "FIREBASE_AUTH_PASSWORD";
+
+        #endregion
     }
 }

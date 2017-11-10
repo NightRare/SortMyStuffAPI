@@ -1,25 +1,25 @@
-﻿using System;
-using System.Data.Entity;
-using System.Linq;
+﻿using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using SortMyStuffAPI.Models;
 using System.Collections.Generic;
+using Microsoft.Extensions.Options;
+using SortMyStuffAPI.Infrastructure;
 using SortMyStuffAPI.Models.QueryOptions;
-using SortMyStuffAPI.Utils;
-using System.Data.Entity.Migrations;
 
 namespace SortMyStuffAPI.Services
 {
-    public class EntityFrameworkDataService : IAssetDataService
+    public class DefaultDataService : IAssetDataService
     {
         private readonly SortMyStuffContext _context;
+        private readonly ApiConfigs _apiConfigs;
 
-        public EntityFrameworkDataService(SortMyStuffContext context)
+        public DefaultDataService(SortMyStuffContext context, IOptions<ApiConfigs> apiConfigs)
         {
             _context = context;
+            _apiConfigs = apiConfigs.Value;
         }
 
         #region IAssetDataService METHODS
@@ -138,16 +138,6 @@ namespace SortMyStuffAPI.Services
             _context.SaveChanges();
         }
 
-        private void DeleteAsset(AssetEntity entity)
-        {
-            var contents = _context.Assets.Where(a => a.ContainerId == entity.Id);
-            foreach (var asset in contents)
-            {
-                DeleteAsset(asset);
-            }
-            _context.Assets.Remove(entity);
-        }
-
         #endregion
 
         #region PRIVATE METHODS
@@ -158,7 +148,7 @@ namespace SortMyStuffAPI.Services
             if (entity == null) throw new KeyNotFoundException();
             yield return entity;
 
-            while (!entity.Id.Equals(ApiStrings.ROOT_ASSET_ID))
+            while (!entity.Id.Equals(_apiConfigs.RootAssetId))
             {
                 entity = _context.Assets.SingleOrDefault(a => a.Id == entity.ContainerId);
                 if (entity == null) yield break;
@@ -188,6 +178,16 @@ namespace SortMyStuffAPI.Services
             assetTree.Contents = childAssetTrees.ToArray();
 
             return assetTree;
+        }
+
+        private void DeleteAsset(AssetEntity entity)
+        {
+            var contents = _context.Assets.Where(a => a.ContainerId == entity.Id);
+            foreach (var asset in contents)
+            {
+                DeleteAsset(asset);
+            }
+            _context.Assets.Remove(entity);
         }
 
         #endregion

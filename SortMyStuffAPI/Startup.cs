@@ -33,6 +33,10 @@ namespace SortMyStuffAPI
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            // Inject options from Configuration
+            services.Configure<PagingOptions>(Configuration.GetSection("DefaultPagingOptions"));
+            services.Configure<ApiConfigs>(Configuration.GetSection("ApiConfigurations"));
+
             // Use in-memroy db for dev, change the scope of the DbContext and the option to Singleton
             // TODO: Swap out with a real database in production
             services.AddDbContext<SortMyStuffContext>(opt => opt.UseInMemoryDatabase(Guid.NewGuid().ToString()),
@@ -69,13 +73,11 @@ namespace SortMyStuffAPI
                 opt.ApiVersionSelector = new CurrentImplementationApiVersionSelector(opt);
             });
 
-            // Inject options from Configuration
-            services.Configure<PagingOptions>(Configuration.GetSection("DefaultPagingOptions"));
-//            services.Configure<DeletingAssetOptions>(Configuration.GetSection("DefaultDeletingAssetOptions"));
-
             // Dependency injeciton
-            services.AddSingleton<IAssetDataService, EntityFrameworkDataService>();
-
+            services.AddSingleton<IAssetDataService, DefaultDataService>();
+            services.AddSingleton<IPhotoFileService, DefaultFileService>();
+            services.AddSingleton<IThumbnailFileService, DefaultFileService>();
+            services.AddSingleton<ILocalResourceService, DefaultLocalResourceService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

@@ -9,14 +9,19 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="AutoMapper" Version="6.1.1" />
+    <PackageReference Include="AutoMapper" Version="6.2.0" />
     <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="3.1.0" />
     <PackageReference Include="EntityFramework" Version="6.2.0" />
+    <PackageReference Include="FirebaseAuthentication.net" Version="3.0.5" />
+    <PackageReference Include="FirebaseDatabase.net" Version="3.0.3" />
+    <PackageReference Include="FirebaseStorage.net" Version="1.0.0" />
     <PackageReference Include="LinqKit.EntityFramework" Version="1.1.9" />
     <PackageReference Include="Microsoft.AspNetCore.All" Version="2.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Versioning" Version="2.0.0" />
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="2.0.0" />
     <PackageReference Include="NWebsec.AspNetCore.Middleware" Version="1.1.0" />
+    <PackageReference Include="SixLabors.ImageSharp" Version="1.0.0-beta0001" />
+    <PackageReference Include="SixLabors.ImageSharp.Drawing" Version="1.0.0-beta0001" />
   </ItemGroup>
 
   <ItemGroup>
