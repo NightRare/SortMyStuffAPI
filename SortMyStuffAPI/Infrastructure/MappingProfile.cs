@@ -16,12 +16,15 @@ namespace SortMyStuffAPI.Infrastructure
                     Link.ToCollection(nameof(Controllers.AssetsController.GetAssetPathByIdAsync), new { assetId = src.Id })))
 
                 .ForMember(dest => dest.Thumbnail, opt => opt.MapFrom(src =>
-                    Link.To(nameof(Controllers.ThumbnailsController.GetThumbnailById), new { assetId = src.Id })))
+                    Link.To(nameof(Controllers.ThumbnailsController.GetThumbnailByIdAsync), new { assetId = src.Id })))
+
+                .ForMember(dest => dest.Photo, opt => opt.MapFrom(src =>
+                    Link.To(nameof(Controllers.PhotosController.GetPhotoByIdAsync), new { assetId = src.Id })))
 
                 .ForMember(dest => dest.ContentAssets, opt => opt.MapFrom(src =>
                     Link.ToCollection(
                         nameof(Controllers.AssetsController.GetAssetsAsync),
-                        new { search = $"{ nameof(Asset.ContainerId).ToCamelCase() } { ApiStrings.PARAMETER_OP_EQUAL } { src.Id }" })))
+                        new { search = $"{ nameof(Asset.ContainerId).ToCamelCase() } { ApiStrings.ParameterOpEqual } { src.Id }" })))
 
                 .ForMember(dest => dest.FormSpecs, opt => opt.MapFrom(src => 
                     src.Id == "rootassetid" ? 

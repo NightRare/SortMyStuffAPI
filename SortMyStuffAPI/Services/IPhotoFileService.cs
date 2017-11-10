@@ -11,8 +11,6 @@ namespace SortMyStuffAPI.Services
     {
         Task<Stream> DownloadPhoto(string id, CancellationToken ct);
 
-        Task<Stream> DownloadDefaultPhoto(CancellationToken ct);
-
         Task<bool> UploadPhoto(
             string id,
             Stream photo,

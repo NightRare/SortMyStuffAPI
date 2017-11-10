@@ -13,7 +13,7 @@ namespace SortMyStuffAPI.Infrastructure
         {
             var formFields = new List<FormField>();
 
-            foreach (var prop in model.GetType().GetTypeInfo().DeclaredProperties)
+            foreach (var prop in GetAllPropertyInfo(model.GetType()))
             {
                 var value = prop.CanRead
                     ? prop.GetValue(model)
@@ -57,6 +57,22 @@ namespace SortMyStuffAPI.Infrastructure
                 Name = model.GetType().Name.ToCamelCase(),
                 Value = formFields.ToArray()
             };
+        }
+
+        private static IEnumerable<PropertyInfo> GetAllPropertyInfo(Type type)
+        {
+            foreach (var prop in type.GetTypeInfo().DeclaredProperties)
+            {
+                yield return prop;
+            }
+
+            if (type != typeof(FormModel))
+            {
+                foreach (var prop in GetAllPropertyInfo(type.BaseType))
+                {
+                    yield return prop;
+                }
+            }
         }
 
         private static string GetFriendlyType(PropertyInfo property, Attribute[] attributes)

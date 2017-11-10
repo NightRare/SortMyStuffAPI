@@ -2,6 +2,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using SortMyStuffAPI.Models;
 using SortMyStuffAPI.Services;
 
 namespace SortMyStuffAPI.Controllers
@@ -11,18 +12,30 @@ namespace SortMyStuffAPI.Controllers
     public class ThumbnailsController : Controller
     {
         private readonly IThumbnailFileService _thumbnailService;
+        private readonly IAssetDataService _assetDataService;
 
-        public ThumbnailsController(IThumbnailFileService thumbnailService)
+        public ThumbnailsController(
+            IThumbnailFileService thumbnailService, 
+            IAssetDataService assetDataService)
         {
             _thumbnailService = thumbnailService;
+            _assetDataService = assetDataService;
         }
 
-        // GET /thumbnails/{assetId}
-        [HttpGet("{assetId}", Name = nameof(GetThumbnailById))]
-        public async Task<IActionResult> GetThumbnailById(string assetId, CancellationToken ct)
+        // GET /thumbnails/{assetId}.jpg
+        [HttpGet("{assetId}.jpg", Name = nameof(GetThumbnailByIdAsync))]
+        public async Task<IActionResult> GetThumbnailByIdAsync(string assetId, CancellationToken ct)
         {
-            throw new NotImplementedException();
-        }
+            if (await _assetDataService.GetAssetAsync(assetId, ct) == null)
+                return NotFound(new ApiError("Asset id not found."));
 
+            var stream = await _thumbnailService.DownloadThumbnail(assetId, ct);
+
+            if (stream == null)
+                return BadRequest(new ApiError("Downloading image file failed."));
+
+            var response = File(stream, "application/octet-stream");
+            return response;
+        }
     }
 }

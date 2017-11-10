@@ -26,7 +26,7 @@ namespace SortMyStuffAPI.Filters
             }
             else
             {
-                error.Message = ApiStrings.ERROR_COMMON_MSG;
+                error.Message = ApiStrings.ErrorCommonMsg;
                 error.Detail = context.Exception.Message;
             }
 

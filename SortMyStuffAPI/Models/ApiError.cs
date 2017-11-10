@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Newtonsoft.Json;
+using SortMyStuffAPI.Utils;
 using System.ComponentModel;
 using System.Linq;
 
@@ -32,8 +33,10 @@ namespace SortMyStuffAPI.Models
         }
 
         public string Message { get; set; }
+            = ApiStrings.ErrorCommonMsg;
 
         public string Detail { get; set; }
+            = ApiStrings.ErrorCommonDetail;
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore, DefaultValueHandling = DefaultValueHandling.Ignore)]
         [DefaultValue("")]

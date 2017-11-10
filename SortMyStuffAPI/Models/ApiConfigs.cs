@@ -1,4 +1,6 @@
-﻿namespace SortMyStuffAPI.Infrastructure
+﻿using SortMyStuffAPI.Infrastructure;
+
+namespace SortMyStuffAPI.Models
 {
     public class ApiConfigs
     {
@@ -16,5 +18,10 @@
         public int ImageQuality { get; set; }
         public int ImageMaxBytes { get; set; }
         public string ImageFormat { get; set; }
+
+        [LocalResource]
+        public string DefaultPhoto { get; set; }
+        [LocalResource]
+        public string DefaultThumbnail { get; set; }
     }
 }

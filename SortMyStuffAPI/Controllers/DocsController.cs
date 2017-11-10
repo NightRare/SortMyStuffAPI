@@ -1,8 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using SortMyStuffAPI.Infrastructure;
 using SortMyStuffAPI.Models;
+using SortMyStuffAPI.Services;
 using SortMyStuffAPI.Utils;
 
 namespace SortMyStuffAPI.Controllers
@@ -11,6 +14,13 @@ namespace SortMyStuffAPI.Controllers
     [ApiVersion("0.1")]
     public class DocsController : Controller
     {
+        private readonly IAssetDataService _assetDataService;
+
+        public DocsController(IAssetDataService assetDataService)
+        {
+            _assetDataService = assetDataService;
+        }
+
         // GET /docs
         [HttpGet(Name = nameof(GetDocs))]
         public IActionResult GetDocs()
@@ -44,37 +54,52 @@ namespace SortMyStuffAPI.Controllers
 
         // GET /docs/{resourceType}/{resourceId}
         [HttpGet("{resourceType}/{resourceId}", Name = nameof(GetDocsByResourceId))]
-        public IActionResult GetDocsByResourceId(
+        public async Task<IActionResult> GetDocsByResourceId(
             string resourceType,
             string resourceId,
             CancellationToken ct)
         {
             if (resourceType.Equals(nameof(Asset), StringComparison.OrdinalIgnoreCase))
             {
+                if (await _assetDataService.GetAssetAsync(resourceId, ct) == null)
+                    return NotFound(new ApiError($"Resource '{resourceType}/{resourceId}' not found."));
+
                 return Ok(GetAssetDocs(nameof(GetDocsByResourceId), resourceId));
             }
 
-            return NotFound();
+            return NotFound(new ApiError($"Resource type '{resourceType}' not found."));
         }
 
         private static Documentation GetAssetDocs(string methodName, string assetId = null)
         {
+            var list = new List<FormSpecification>();
+
             var addOrUpdateAsset = FormMetadata.FromModel(
                 new AddOrUpdateAssetForm(),
                 Link.ToForm(
                     nameof(AssetsController.AddOrUpdateAssetAsync),
                     new { assetId = assetId ?? "assetId" },
-                    ApiStrings.HTTP_PUT,
-                    ApiStrings.FORM_CREATE_REL, ApiStrings.FORM_EDIT_REL));
+                    ApiStrings.HttpPut,
+                    ApiStrings.FormCreateRel, ApiStrings.FormEditRel));
+            list.Add(addOrUpdateAsset);
+
+            if (assetId == null)
+            {
+                var createAsset = FormMetadata.FromModel(
+                    new CreateAssetForm(),
+                    Link.ToForm(
+                        nameof(AssetsController.CreateAssetAsync),
+                        null,
+                        ApiStrings.HttpPost,
+                        ApiStrings.FormCreateRel));
+                list.Add(createAsset);
+            }
 
             var response = new Documentation
             {
                 Self = Link.ToCollection(methodName, new { resourceType = nameof(Asset).ToCamelCase() }),
                 ResourceType = nameof(Asset).ToCamelCase(),
-                Value = new[]
-                {
-                    addOrUpdateAsset
-                }
+                Value = list.ToArray()
             };
 
             return response;

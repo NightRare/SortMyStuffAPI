@@ -37,7 +37,7 @@ namespace SortMyStuffAPI.Infrastructure
 
                 // e.g. orderBy=XXX desc
                 var descending = tokens.Length > 1 && 
-                    tokens[1].Equals(ApiStrings.PARAMETER_DESC, StringComparison.OrdinalIgnoreCase);
+                    tokens[1].Equals(ApiStrings.ParameterDesc, StringComparison.OrdinalIgnoreCase);
 
                 yield return new SortTerm
                 {

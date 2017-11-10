@@ -146,6 +146,10 @@ namespace SortMyStuffAPI.Controllers
             var record = await _assetDataService.GetAssetAsync(assetId, ct);
             if (record == null)
             {
+                // newly added asset via api must have a correctly formatted guid
+                if (!Guid.TryParse(assetId, out var result))
+                    return BadRequest(new ApiError("The assetId must be a correctly formatted Guid."));
+
                 var asset = Mapper.Map<AddOrUpdateAssetForm, Asset>(body);
                 asset.Id = assetId;
                 await _assetDataService.AddOrUpdateAssetAsync(asset, ct);

@@ -8,7 +8,7 @@ namespace SortMyStuffAPI.Infrastructure
     {
         public virtual Expression GetComparison(MemberExpression left, string op, ConstantExpression right)
         {
-            if (!op.Equals(ApiStrings.PARAMETER_OP_EQUAL, StringComparison.OrdinalIgnoreCase))
+            if (!op.Equals(ApiStrings.ParameterOpEqual, StringComparison.OrdinalIgnoreCase))
                 throw new ArgumentException($"Invalid operator '{op}'.");
 
             return Expression.Equal(left, right);

@@ -15,7 +15,7 @@ namespace SortMyStuffAPI.Models
             {
                 RouteName = routeName,
                 RouteValues = routeValues,
-                Method = ApiStrings.HTTP_GET,
+                Method = ApiStrings.HttpGet,
                 Relations = null
             };
 
@@ -24,14 +24,14 @@ namespace SortMyStuffAPI.Models
             {
                 RouteName = routeName,
                 RouteValues = routeValues,
-                Method = ApiStrings.HTTP_GET,
+                Method = ApiStrings.HttpGet,
                 Relations = new string[] { "collection" }
             };
 
         public static Link ToForm(
             string routeName,
             object routeValues = null,
-            string method = ApiStrings.HTTP_POST,
+            string method = ApiStrings.HttpPost,
             params string[] relations)
             => new Link
             {
@@ -46,7 +46,7 @@ namespace SortMyStuffAPI.Models
 
         [JsonProperty(Order = -3, NullValueHandling = NullValueHandling.Ignore,
             DefaultValueHandling = DefaultValueHandling.Ignore)]
-        [DefaultValue(ApiStrings.HTTP_GET)]
+        [DefaultValue(ApiStrings.HttpGet)]
         public string Method { get; set; }
 
         [JsonProperty(Order = -2, PropertyName = "rel", NullValueHandling = NullValueHandling.Ignore,
