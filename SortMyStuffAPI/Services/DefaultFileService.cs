@@ -4,7 +4,6 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using Firebase.Auth;
-using Firebase.Database;
 using Firebase.Storage;
 using SortMyStuffAPI.Utils;
 using Microsoft.Extensions.Options;

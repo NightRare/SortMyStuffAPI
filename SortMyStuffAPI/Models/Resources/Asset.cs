@@ -11,15 +11,12 @@ namespace SortMyStuffAPI.Models
         public string Name { get; set; }
 
         [Sortable]
-        [Searchable]
-        public string Category { get; set; }
-
-        [Sortable]
         public DateTimeOffset CreateTimestamp { get; set; }
 
         [Sortable]
         public DateTimeOffset ModifyTimestamp { get; set; }
 
+        public Link Category { get; set; }
 
         public Link Path { get; set; }
 
@@ -41,5 +38,9 @@ namespace SortMyStuffAPI.Models
         [JsonIgnore]
         [Searchable]
         public string ContainerId { get; set; }
+
+        [JsonIgnore]
+        [Searchable]
+        public string CategoryId { get; set; }
     }
 }

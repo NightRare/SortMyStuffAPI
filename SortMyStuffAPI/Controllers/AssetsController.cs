@@ -8,9 +8,6 @@ using Microsoft.AspNetCore.Mvc;
 using SortMyStuffAPI.Services;
 using SortMyStuffAPI.Models;
 using Microsoft.Extensions.Options;
-using SortMyStuffAPI.Infrastructure;
-using SortMyStuffAPI.Models.QueryOptions;
-using SortMyStuffAPI.Utils;
 
 namespace SortMyStuffAPI.Controllers
 {
@@ -20,7 +17,7 @@ namespace SortMyStuffAPI.Controllers
     {
 
         private readonly IAssetDataService _assetDataService;
-        private readonly PagingOptions _defaultpagingOptions;
+        private readonly PagingOptions _defaultPagingOptions;
         private readonly ApiConfigs _apiConfigs;
 
         public AssetsController(
@@ -29,7 +26,7 @@ namespace SortMyStuffAPI.Controllers
             IOptions<ApiConfigs> apiConfigs)
         {
             _assetDataService = assetDataService;
-            _defaultpagingOptions = pagingOptions.Value;
+            _defaultPagingOptions = pagingOptions.Value;
             _apiConfigs = apiConfigs.Value;
         }
 
@@ -44,8 +41,8 @@ namespace SortMyStuffAPI.Controllers
             // if any Model (in this case PagingOptions) property is not valid according to the Range attributes
             if (!ModelState.IsValid) return BadRequest(new ApiError(ModelState));
 
-            pagingOptions.Offset = pagingOptions.Offset ?? _defaultpagingOptions.Offset;
-            pagingOptions.PageSize = pagingOptions.PageSize ?? _defaultpagingOptions.PageSize;
+            pagingOptions.Offset = pagingOptions.Offset ?? _defaultPagingOptions.Offset;
+            pagingOptions.PageSize = pagingOptions.PageSize ?? _defaultPagingOptions.PageSize;
 
             var assets = await _assetDataService.GetAllAssetsAsync(ct, pagingOptions, sortOptions, searchOptions);
 
@@ -159,7 +156,7 @@ namespace SortMyStuffAPI.Controllers
             if (DateTimeOffset.Compare(record.CreateTimestamp, body.CreateTimestamp.Value) != 0)
                 return BadRequest(new ApiError("CreateTimestamp cannot be modified."));
 
-            if (!record.Category.Equals(body.Category))
+            if (!record.CategoryId.Equals(body.CategoryId))
                 return BadRequest(new ApiError("Category cannot be modified."));
 
             record.Name = body.Name;

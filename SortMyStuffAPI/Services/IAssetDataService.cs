@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using SortMyStuffAPI.Models;
-using SortMyStuffAPI.Models.QueryOptions;
 
 namespace SortMyStuffAPI.Services
 {

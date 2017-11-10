@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 
-namespace SortMyStuffAPI.Models.QueryOptions
+namespace SortMyStuffAPI.Models
 {
     public class SearchOptions<T, TEntity> : IValidatableObject
     {

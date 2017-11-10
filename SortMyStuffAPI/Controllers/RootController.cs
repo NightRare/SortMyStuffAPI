@@ -14,8 +14,9 @@ namespace SortMyStuffAPI.Controllers
             {
                 Self = Link.To(nameof(GetRoot)),
                 Documentations = Link.To(nameof(DocsController.GetDocs)),
-                AssetTrees = Link.To(nameof(AssetTreesController.GetAssetTreeAsync)),
-                Assets = Link.To(nameof(AssetsController.GetAssetsAsync)),
+                Categories = Link.ToCollection(nameof(CategoriesController.GetCategoriesAsync)),
+                AssetTrees = Link.ToCollection(nameof(AssetTreesController.GetAssetTreeAsync)),
+                Assets = Link.ToCollection(nameof(AssetsController.GetAssetsAsync)),
                 NewGuid = Link.To(nameof(NewGuidController.GetNewGuid))
             };
 

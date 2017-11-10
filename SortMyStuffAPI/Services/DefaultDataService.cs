@@ -6,12 +6,10 @@ using AutoMapper.QueryableExtensions;
 using SortMyStuffAPI.Models;
 using System.Collections.Generic;
 using Microsoft.Extensions.Options;
-using SortMyStuffAPI.Infrastructure;
-using SortMyStuffAPI.Models.QueryOptions;
 
 namespace SortMyStuffAPI.Services
 {
-    public class DefaultDataService : IAssetDataService
+    public class DefaultDataService : IAssetDataService, IDetailDataService, ICategoryDataService
     {
         private readonly SortMyStuffContext _context;
         private readonly ApiConfigs _apiConfigs;
@@ -21,6 +19,7 @@ namespace SortMyStuffAPI.Services
             _context = context;
             _apiConfigs = apiConfigs.Value;
         }
+
 
         #region IAssetDataService METHODS
 
@@ -41,42 +40,17 @@ namespace SortMyStuffAPI.Services
             SortOptions<Asset, AssetEntity> sortOptions = null,
             SearchOptions<Asset, AssetEntity> searchOptions = null)
         {
-            IQueryable<AssetEntity> query = _context.Assets;
-
-            if (searchOptions != null)
-            {
-                query = searchOptions.Apply(query);
-            }
-
-            if (sortOptions != null)
-            {
-                query = sortOptions.Apply(query);
-            }
-
-            IEnumerable<Asset> assets = await Task.Run(
-                () => query.ProjectTo<Asset>().ToArray(),
-                ct);
-            var totalSize = assets.Count();
-
-            if (pagingOptions != null)
-            {
-                var pagedAssets = assets
-                    .Skip(pagingOptions.Offset.Value)
-                    .Take(pagingOptions.PageSize.Value);
-                assets = pagedAssets;
-            }
-
-            return new PagedResults<Asset>
-            {
-                PagedItems = assets,
-                TotalSize = totalSize
-            };
+            return await GetOneTypeResourcesAsync(
+                _context.Assets,
+                ct,
+                pagingOptions,
+                sortOptions,
+                searchOptions);
         }
 
         public async Task<Asset> GetAssetAsync(string id, CancellationToken ct)
         {
-            var entity = await Task.Run(() => _context.Assets.SingleOrDefault(a => a.Id == id), ct);
-            return entity == null ? null : Mapper.Map<AssetEntity, Asset>(entity);
+            return await GetResourceAsync<Asset, AssetEntity>(_context.Assets, id, ct);
         }
 
         public async Task<IEnumerable<PathUnit>> GetAssetPathAsync(
@@ -107,7 +81,7 @@ namespace SortMyStuffAPI.Services
             else
             {
                 entity.Name = asset.Name;
-                entity.Category = asset.Category;
+                entity.CategoryId = asset.CategoryId;
                 entity.ContainerId = asset.ContainerId;
                 entity.CreateTimestamp = asset.CreateTimestamp;
                 entity.ModifyTimestamp = asset.ModifyTimestamp;
@@ -140,7 +114,97 @@ namespace SortMyStuffAPI.Services
 
         #endregion
 
+
+        #region IDetailDataService METHODS
+
+
+
+        #endregion
+
+
+        #region ICategoryDataService METHODS
+
+        public async Task<PagedResults<Category>> GetAllCategoriesAsync(
+            CancellationToken ct, 
+            PagingOptions pagingOptions = null, 
+            SortOptions<Category, CategoryEntity> sortOptions = null,
+            SearchOptions<Category, CategoryEntity> searchOptions = null)
+        {
+            return await GetOneTypeResourcesAsync(
+                _context.Categories,
+                ct,
+                pagingOptions,
+                sortOptions,
+                searchOptions);
+        }
+
+        public async Task<Category> GetCategoryAsync(string id, CancellationToken ct)
+        {
+            return await GetResourceAsync<Category, CategoryEntity>(_context.Categories, id, ct);
+        }
+
+        public Task AddOrUpdateAssetAsync(Category category, CancellationToken ct)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public Task DeleteCategoryAsync(string id, CancellationToken ct)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        #endregion
+
+
         #region PRIVATE METHODS
+
+        private async Task<PagedResults<T>> GetOneTypeResourcesAsync<T, TEntity>(
+            IQueryable<TEntity> dbSet,
+            CancellationToken ct,
+            PagingOptions pagingOptions = null,
+            SortOptions<T, TEntity> sortOptions = null,
+            SearchOptions<T, TEntity> searchOptions = null) where TEntity : IEntity
+        {
+            IQueryable<TEntity> query = dbSet;
+
+            if (searchOptions != null)
+            {
+                query = searchOptions.Apply(query);
+            }
+
+            if (sortOptions != null)
+            {
+                query = sortOptions.Apply(query);
+            }
+
+            IEnumerable<T> resources = await Task.Run(
+                () => query.ProjectTo<T>().ToArray(),
+                ct);
+            var totalSize = resources.Count();
+
+            if (pagingOptions != null)
+            {
+                var pagedResources = resources
+                    .Skip(pagingOptions.Offset.Value)
+                    .Take(pagingOptions.PageSize.Value);
+                resources = pagedResources;
+            }
+
+            return new PagedResults<T>
+            {
+                PagedItems = resources,
+                TotalSize = totalSize
+            };
+        }
+
+        private async Task<T> GetResourceAsync<T, TEntity>(
+            IQueryable<TEntity> dbSet,
+            string id,
+            CancellationToken ct) where TEntity : IEntity
+        {
+            var entity = await Task.Run(() => dbSet.SingleOrDefault(a => a.Id == id), ct);
+            return entity == null ? default(T) : Mapper.Map<TEntity, T>(entity);
+        }
 
         private IEnumerable<AssetEntity> GetAllParents(string id)
         {
@@ -191,5 +255,6 @@ namespace SortMyStuffAPI.Services
         }
 
         #endregion
+
     }
 }

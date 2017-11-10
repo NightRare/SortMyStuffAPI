@@ -1,6 +1,7 @@
 ﻿namespace SortMyStuffAPI.Services
 {
-    public interface IDataService
+    interface IDetailDataService : IDataService
     {
+
     }
 }

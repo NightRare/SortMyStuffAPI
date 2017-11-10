@@ -9,5 +9,8 @@ namespace SortMyStuffAPI.Services
         { }
 
         public DbSet<AssetEntity> Assets { get; set; }
+        public DbSet<CategoryEntity> Categories { get; set; }
+        public DbSet<BaseDetailEntity> BaseDetails { get; set; }
+        public DbSet<DetailEntity> Details { get; set; }
     }
 }

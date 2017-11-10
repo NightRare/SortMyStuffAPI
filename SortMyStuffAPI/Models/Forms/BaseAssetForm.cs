@@ -14,8 +14,8 @@ namespace SortMyStuffAPI.Models
         public string Name { get; set; }
 
         [Required]
-        [Display(Name = "category", Description = "The category of the asset.")]
-        public string Category { get; set; }
+        [Display(Name = "categoryId", Description = "The id of the category of the asset.")]
+        public string CategoryId { get; set; }
 
         [Required]
         [Display(Name = "containerId", Description = "The id of the container asset.")]

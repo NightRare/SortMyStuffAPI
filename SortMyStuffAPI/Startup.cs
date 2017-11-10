@@ -75,6 +75,7 @@ namespace SortMyStuffAPI
 
             // Dependency injeciton
             services.AddSingleton<IAssetDataService, DefaultDataService>();
+            services.AddSingleton<ICategoryDataService, DefaultDataService>();
             services.AddSingleton<IPhotoFileService, DefaultFileService>();
             services.AddSingleton<IThumbnailFileService, DefaultFileService>();
             services.AddSingleton<ILocalResourceService, DefaultLocalResourceService>();
