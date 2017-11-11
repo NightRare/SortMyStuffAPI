@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using AutoMapper;
@@ -114,7 +115,21 @@ namespace SortMyStuffAPI.Controllers
             string categoryId,
             CancellationToken ct)
         {
-            throw new NotImplementedException();
+            // TODO: delete the base details first
+            try
+            {
+                await _categoryDataService.DeleteCategoryAsync(categoryId, ct);
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound();
+            }
+            catch (InvalidOperationException)
+            {
+                return BadRequest(
+                    new ApiError("Please make sure no asset is assigned to this category before deleting."));
+            }
+            return NoContent();
         }
 
         #region PRIVATE METHODS

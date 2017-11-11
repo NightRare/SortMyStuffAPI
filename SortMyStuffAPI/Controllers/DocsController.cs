@@ -14,11 +14,18 @@ namespace SortMyStuffAPI.Controllers
     [ApiVersion("0.1")]
     public class DocsController : Controller
     {
-        private readonly IAssetDataService _assetDataService;
+        public const string AssetsTypeName = "assets";
+        public const string CategoriesTypeName = "categories";
 
-        public DocsController(IAssetDataService assetDataService)
+        private readonly IAssetDataService _assetDataService;
+        private readonly ICategoryDataService _categoryDataService;
+
+        public DocsController(
+            IAssetDataService assetDataService,
+            ICategoryDataService categoryDataService)
         {
             _assetDataService = assetDataService;
+            _categoryDataService = categoryDataService;
         }
 
         // GET /docs
@@ -41,7 +48,7 @@ namespace SortMyStuffAPI.Controllers
         // GET /docs/{resourceType}
         [HttpGet("{resourceType}", Name = nameof(GetDocsByType))]
         public IActionResult GetDocsByType(
-            string resourceType, 
+            string resourceType,
             CancellationToken ct)
         {
             if (resourceType.Equals(nameof(Asset), StringComparison.OrdinalIgnoreCase))
@@ -59,18 +66,65 @@ namespace SortMyStuffAPI.Controllers
             string resourceId,
             CancellationToken ct)
         {
-            if (resourceType.Equals(nameof(Asset), StringComparison.OrdinalIgnoreCase))
+            switch (resourceType.ToLower())
             {
-                if (await _assetDataService.GetResourceAsync(resourceId, ct) == null)
-                    return NotFound(new ApiError($"Resource '{resourceType}/{resourceId}' not found."));
-
-                return Ok(GetAssetDocs(nameof(GetDocsByResourceId), resourceId));
+                case AssetsTypeName:
+                    {
+                        return await _assetDataService.GetResourceAsync(resourceId, ct) == null ?
+                            NotFound(new ApiError($"Resource '{resourceType}/{resourceId}' not found.")) :
+                            Ok(GetAssetDocs(resourceId)) as IActionResult;
+                    }
+                case CategoriesTypeName:
+                    {
+                        return await _categoryDataService.GetResourceAsync(resourceId, ct) == null ?
+                            NotFound(new ApiError($"Resource '{resourceType}/{resourceId}' not found.")) :
+                            Ok(GetCategoryDocs(resourceId)) as IActionResult;
+                    }
+                default:
+                    {
+                        return NotFound(new ApiError($"Resource type '{resourceType}' not found."));
+                    }
             }
-
-            return NotFound(new ApiError($"Resource type '{resourceType}' not found."));
         }
 
-        private static Documentation GetAssetDocs(string methodName, string assetId = null)
+        private static Documentation GetCategoryDocs(string categoryId = null)
+        {
+            var list = new List<FormSpecification>();
+
+            var addOrUpdate = FormMetadata.FromModel(
+                new CategoryForm(),
+                Link.ToForm(
+                    nameof(CategoriesController.AddOrUpdateCategoryAsync),
+                    new { categoryId = categoryId ?? "categoryId" },
+                    ApiStrings.HttpPut,
+                    ApiStrings.FormCreateRel, ApiStrings.FormEditRel));
+            list.Add(addOrUpdate);
+
+            if (categoryId == null)
+            {
+                var create = FormMetadata.FromModel(
+                    new CategoryForm(),
+                    Link.ToForm(
+                        nameof(CategoriesController.CreateCatgegoryAsync),
+                        null,
+                        ApiStrings.HttpPost,
+                        ApiStrings.FormCreateRel));
+                list.Add(create);
+            }
+
+            var response = new Documentation
+            {
+                Self = Link.ToCollection(
+                    nameof(GetDocsByResourceId), 
+                    new { resourceType = CategoriesTypeName }),
+                ResourceType = CategoriesTypeName,
+                Value = list.ToArray()
+            };
+
+            return response;
+        }
+
+        private static Documentation GetAssetDocs(string assetId = null)
         {
             var list = new List<FormSpecification>();
 
@@ -97,8 +151,10 @@ namespace SortMyStuffAPI.Controllers
 
             var response = new Documentation
             {
-                Self = Link.ToCollection(methodName, new { resourceType = nameof(Asset).ToCamelCase() }),
-                ResourceType = nameof(Asset).ToCamelCase(),
+                Self = Link.ToCollection(
+                    nameof(GetDocsByResourceId), 
+                    new { resourceType = AssetsTypeName }),
+                ResourceType = AssetsTypeName,
                 Value = list.ToArray()
             };
 

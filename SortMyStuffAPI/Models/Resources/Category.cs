@@ -13,6 +13,9 @@ namespace SortMyStuffAPI.Models
 
         public Link CategorisedAssets { get; set; }
 
+        public Link FormSpecs { get; set; }
+
+
         [JsonIgnore]
         public string Id { get; set; }
     }

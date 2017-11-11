@@ -33,7 +33,7 @@ namespace SortMyStuffAPI.Infrastructure
                     src.Id == "rootassetid" ? 
                     null : Link.ToCollection(
                             nameof(Controllers.DocsController.GetDocsByResourceId),
-                            new { resourceType = nameof(Asset).ToCamelCase(), resourceId = src.Id })));
+                            new { resourceType = Controllers.DocsController.AssetsTypeName, resourceId = src.Id })));
 
             CreateMap<Asset, AssetEntity>();
 
@@ -45,13 +45,18 @@ namespace SortMyStuffAPI.Infrastructure
                 .ForMember(dest => dest.Self, opt => opt.MapFrom(src =>
                     Link.To(nameof(Controllers.CategoriesController.GetCategoryByIdAsync), new {categoryId = src.Id})))
 
-                // TODO: change these mappings
+                // TODO: change BaseDetails mapping
                 .ForMember(dest => dest.BaseDetails, opt => opt.MapFrom(src =>
                     Link.ToCollection(nameof(Controllers.CategoriesController.GetCategoryByIdAsync), null)))
 
                 .ForMember(dest => dest.CategorisedAssets, opt => opt.MapFrom(src =>
                     Link.ToCollection(nameof(Controllers.AssetsController.GetAssetsAsync),
-                        new { search = $"{ nameof(Asset.CategoryId).ToCamelCase() } { ApiStrings.ParameterOpEqual } { src.Id }" })));
+                        new { search = $"{ nameof(Asset.CategoryId).ToCamelCase() } { ApiStrings.ParameterOpEqual } { src.Id }" })))
+
+                .ForMember(dest => dest.FormSpecs, opt => opt.MapFrom(src =>
+                    Link.ToCollection(
+                            nameof(Controllers.DocsController.GetDocsByResourceId),
+                            new { resourceType = Controllers.DocsController.CategoriesTypeName, resourceId = src.Id })));
 
             CreateMap<Category, CategoryEntity>()
                 .ForMember(dest => dest.BaseDetails, opt => opt.Ignore())

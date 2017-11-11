@@ -2,7 +2,7 @@
 
 namespace SortMyStuffAPI.Models
 {
-    public class CategoryForm
+    public class CategoryForm : FormModel
     {
         [Required]
         [Display(Name = "name", Description = "The new name of the asset.")]
