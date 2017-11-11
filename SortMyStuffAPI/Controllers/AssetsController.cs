@@ -17,14 +17,16 @@ namespace SortMyStuffAPI.Controllers
         JsonResourcesController<Asset, AssetEntity>
     {
         private readonly IAssetDataService _assetDataService;
+        private readonly ICategoryDataService _categoryDataService;
 
         public AssetsController(
             IAssetDataService assetDataService,
             IOptions<PagingOptions> pagingOptions,
-            IOptions<ApiConfigs> apiConfigs) : 
+            IOptions<ApiConfigs> apiConfigs, ICategoryDataService categoryDataService) : 
             base(assetDataService, pagingOptions, apiConfigs)
         {
             _assetDataService = assetDataService;
+            _categoryDataService = categoryDataService;
         }
         
         // GET /assets
@@ -83,10 +85,9 @@ namespace SortMyStuffAPI.Controllers
         {
             if (!ModelState.IsValid) return BadRequest(new ApiError(ModelState));
 
-            // TODO: check whether category exists
-
-            var container = await _assetDataService.GetResourceAsync(body.ContainerId, ct);
-            if (container == null) return BadRequest(new ApiError("Container not found."));
+            ApiError error;
+            if((error = await CheckBaseForm(body, ct)) != null)
+                return BadRequest(error);
 
             var currentTime = DateTimeOffset.UtcNow;
 
@@ -117,10 +118,9 @@ namespace SortMyStuffAPI.Controllers
             if (assetId.Equals(ApiConfigs.RootAssetId, StringComparison.OrdinalIgnoreCase))
                 return BadRequest(new ApiError("Cannot create or modify the root asset."));
 
-            // TODO: check whether category exists
-
-            var container = await _assetDataService.GetResourceAsync(body.ContainerId, ct);
-            if (container == null) return BadRequest(new ApiError("Container not found."));
+            ApiError error;
+            if ((error = await CheckBaseForm(body, ct)) != null)
+                return BadRequest(error);
 
             if (DateTimeOffset.Compare(body.CreateTimestamp.Value, body.ModifyTimestamp.Value) > 0)
                 return BadRequest(new ApiError("The create timestamp cannot be later than the modify timestamp."));
@@ -178,6 +178,19 @@ namespace SortMyStuffAPI.Controllers
         }
 
         #region PRIVATE METHODS
+
+        private async Task<ApiError> CheckBaseForm(BaseAssetForm form, CancellationToken ct)
+        {
+            var category = await _categoryDataService.GetResourceAsync(form.CategoryId, ct);
+            if (category == null)
+                return new ApiError("Category not found, please create category first.");
+
+            var container = await _assetDataService.GetResourceAsync(form.ContainerId, ct);
+            if (container == null)
+                return new ApiError("Container not found.");
+
+            return null;
+        }
 
         #endregion
     }

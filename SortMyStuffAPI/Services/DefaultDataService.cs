@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using AutoMapper;
@@ -152,14 +153,41 @@ namespace SortMyStuffAPI.Services
                 searchOptions);
         }
 
-        public Task AddOrUpdateAssetAsync(Category category, CancellationToken ct)
+        public async Task<Category> GetCategoryByNameAsync(string name, CancellationToken ct)
         {
-            throw new System.NotImplementedException();
+            var entity = await Task.Run(() =>
+                _context.Categories.SingleOrDefault(c => 
+                    c.Name.Equals(name, StringComparison.OrdinalIgnoreCase)));
+            return entity == null ? null : Mapper.Map<CategoryEntity, Category>(entity);
         }
 
-        public Task DeleteCategoryAsync(string id, CancellationToken ct)
+        public async Task AddOrUpdateAssetAsync(Category category, CancellationToken ct)
         {
-            throw new System.NotImplementedException();
+            var entity = await Task.Run(() => _context.Categories.SingleOrDefault(c => c.Id == category.Id), ct);
+            if (entity == null)
+            {
+                _context.Categories.Add(Mapper.Map<Category, CategoryEntity>(category));
+            }
+            else
+            {
+                entity.Name = category.Name;
+            }
+
+            _context.SaveChanges();
+        }
+
+        public async Task DeleteCategoryAsync(string id, CancellationToken ct)
+        {
+            var delCategory = await Task.Run(() => _context.Categories.SingleOrDefault(c => c.Id == id), ct);
+            if (delCategory == null) throw new KeyNotFoundException();
+
+            // reference key integrity
+            if (delCategory.BaseDetails.Any() || delCategory.CategorisedAssets.Any())
+                throw new InvalidOperationException(
+                    "Cannot delete category when it is referred by BaseDetails or Assets");
+
+            _context.Categories.Remove(delCategory);
+            _context.SaveChanges();
         }
 
         #endregion

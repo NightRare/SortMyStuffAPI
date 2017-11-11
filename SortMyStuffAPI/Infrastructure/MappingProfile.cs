@@ -50,7 +50,14 @@ namespace SortMyStuffAPI.Infrastructure
                     Link.ToCollection(nameof(Controllers.CategoriesController.GetCategoryByIdAsync), null)))
 
                 .ForMember(dest => dest.CategorisedAssets, opt => opt.MapFrom(src =>
-                    Link.ToCollection(nameof(Controllers.CategoriesController.GetCategoryByIdAsync), null)));
+                    Link.ToCollection(nameof(Controllers.AssetsController.GetAssetsAsync),
+                        new { search = $"{ nameof(Asset.CategoryId).ToCamelCase() } { ApiStrings.ParameterOpEqual } { src.Id }" })));
+
+            CreateMap<Category, CategoryEntity>()
+                .ForMember(dest => dest.BaseDetails, opt => opt.Ignore())
+                .ForMember(dest => dest.CategorisedAssets, opt => opt.Ignore());
+
+            CreateMap<CategoryForm, Category>();
         }
     }
 }
