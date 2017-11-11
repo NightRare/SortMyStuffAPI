@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
+using SortMyStuffAPI.Exceptions;
 using SortMyStuffAPI.Models;
 using SortMyStuffAPI.Services;
 
@@ -42,7 +43,16 @@ namespace SortMyStuffAPI.Controllers
             pagingOptions.Offset = pagingOptions.Offset ?? DefaultPagingOptions.Offset;
             pagingOptions.PageSize = pagingOptions.PageSize ?? DefaultPagingOptions.PageSize;
 
-            var results = await DataService.GetResouceCollectionAsync(ct, pagingOptions, sortOptions, searchOptions);
+            PagedResults<T> results;
+            try
+            {
+                results = await DataService.GetResouceCollectionAsync(
+                    ct, pagingOptions, sortOptions, searchOptions);
+            }
+            catch (InvalidSearchOperationException ex)
+            {
+                return BadRequest(new ApiError(ex.Message));
+            }
 
             var response = PagedCollection<T>.Create(
                 Link.ToCollection(httpMethodName),

@@ -1,6 +1,7 @@
 ﻿using SortMyStuffAPI.Utils;
 using System;
 using System.Linq.Expressions;
+using SortMyStuffAPI.Exceptions;
 
 namespace SortMyStuffAPI.Infrastructure
 {
@@ -9,7 +10,7 @@ namespace SortMyStuffAPI.Infrastructure
         public virtual Expression GetComparison(MemberExpression left, string op, ConstantExpression right)
         {
             if (!op.Equals(ApiStrings.ParameterOpEqual, StringComparison.OrdinalIgnoreCase))
-                throw new ArgumentException($"Invalid operator '{op}'.");
+                throw new InvalidSearchOperationException($"Invalid operator '{op}'.");
 
             return Expression.Equal(left, right);
         }

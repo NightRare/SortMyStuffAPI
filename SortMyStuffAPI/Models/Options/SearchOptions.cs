@@ -26,11 +26,5 @@ namespace SortMyStuffAPI.Models
                     new[] { nameof(Search) });
             }
         }
-
-        public IQueryable<TEntity> Apply(IQueryable<TEntity> query)
-        {
-            var processor = new SearchOptionsProcessor<T, TEntity>(Search);
-            return processor.Apply(query);
-        }
     }
 }

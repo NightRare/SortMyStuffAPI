@@ -17,6 +17,11 @@ namespace SortMyStuffAPI.Infrastructure
             _searchQuery = searchQuery;
         }
 
+        public SearchOptionsProcessor(SearchOptions<T, TEntity> searchOptions)
+        {
+            _searchQuery = searchOptions?.Search;
+        }
+
         public IEnumerable<SearchTerm> GetAllTerms()
         {
             if (_searchQuery == null) yield break;
@@ -44,7 +49,7 @@ namespace SortMyStuffAPI.Infrastructure
                     yield return new SearchTerm
                     {
                         ValidSyntax = false,
-                        Name = tokens[0]
+                        Name = expression
                     };
                     continue;
                 }
@@ -106,7 +111,8 @@ namespace SortMyStuffAPI.Infrastructure
                 var right = term.ExpressionProvider.GetValue(term.Value);
 
                 // x.Property == "Value"
-                var comparisonExpression = term.ExpressionProvider.GetComparison(left, term.Operator, right);
+                var comparisonExpression = term.ExpressionProvider
+                    .GetComparison(left, term.Operator, right);
 
                 // x => x.Property == "Value"
                 var lambdaExpression = ExpressionHelper

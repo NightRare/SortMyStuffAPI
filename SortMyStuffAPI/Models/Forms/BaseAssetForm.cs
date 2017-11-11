@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
+using SortMyStuffAPI.Utils;
 
 namespace SortMyStuffAPI.Models
 {
@@ -10,7 +11,7 @@ namespace SortMyStuffAPI.Models
     {
         [Required]
         [Display(Name = "name", Description = "The new name of the asset.")]
-        [StringLength(maximumLength: 60, ErrorMessage = "The length of the name must be less than 60.")]
+        [StringLength(maximumLength: ModelRules.AssetNameLength, ErrorMessage = ModelRules.AssetNameLengthErrorMessage)]
         public string Name { get; set; }
 
         [Required]

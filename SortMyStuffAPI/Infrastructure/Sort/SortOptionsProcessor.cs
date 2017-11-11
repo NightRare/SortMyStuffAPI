@@ -16,6 +16,11 @@ namespace SortMyStuffAPI.Infrastructure
             _orderBy = orderBy;
         }
 
+        public SortOptionsProcessor(SortOptions<T, TEntity> sortOptions)
+        {
+            _orderBy = sortOptions?.OrderBy;
+        }
+
         public IEnumerable<SortTerm> GetAllTerms()
         {
             if (_orderBy == null) yield break;

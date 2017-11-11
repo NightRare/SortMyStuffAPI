@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using SortMyStuffAPI.Utils;
 
 namespace SortMyStuffAPI.Models
 {
@@ -6,7 +7,7 @@ namespace SortMyStuffAPI.Models
     {
         [Required]
         [Display(Name = "name", Description = "The new name of the asset.")]
-        [StringLength(maximumLength: 60, ErrorMessage = "The length of the name must be less than 60.")]
+        [StringLength(maximumLength: ModelRules.CategoryNameLength, ErrorMessage = ModelRules.CategoryNameLengthErrorMessage)]
         public string Name { get; set; }
     }
 }

@@ -7,6 +7,7 @@ using AutoMapper.QueryableExtensions;
 using SortMyStuffAPI.Models;
 using System.Collections.Generic;
 using Microsoft.Extensions.Options;
+using SortMyStuffAPI.Infrastructure;
 
 namespace SortMyStuffAPI.Services
 {
@@ -206,12 +207,14 @@ namespace SortMyStuffAPI.Services
 
             if (searchOptions != null)
             {
-                query = searchOptions.Apply(query);
+                query = new SearchOptionsProcessor<T, TEntity>(searchOptions)
+                    .Apply(query);
             }
 
             if (sortOptions != null)
             {
-                query = sortOptions.Apply(query);
+                query = new SortOptionsProcessor<T, TEntity>(sortOptions)
+                    .Apply(query);
             }
 
             IEnumerable<T> resources = await Task.Run(

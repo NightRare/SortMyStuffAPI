@@ -8,6 +8,8 @@ namespace SortMyStuffAPI.Infrastructure
     {
         public MappingProfile()
         {
+            #region Asset
+
             CreateMap<AssetEntity, Asset>()
                 .ForMember(dest => dest.Self, opt => opt.MapFrom(src =>
                     Link.To(nameof(Controllers.AssetsController.GetAssetByIdAsync), new { assetId = src.Id })))
@@ -41,6 +43,11 @@ namespace SortMyStuffAPI.Infrastructure
 
             CreateMap<CreateAssetForm, Asset>();
 
+            #endregion
+
+
+            #region Category
+
             CreateMap<CategoryEntity, Category>()
                 .ForMember(dest => dest.Self, opt => opt.MapFrom(src =>
                     Link.To(nameof(Controllers.CategoriesController.GetCategoryByIdAsync), new {categoryId = src.Id})))
@@ -63,6 +70,8 @@ namespace SortMyStuffAPI.Infrastructure
                 .ForMember(dest => dest.CategorisedAssets, opt => opt.Ignore());
 
             CreateMap<CategoryForm, Category>();
+
+            #endregion
         }
     }
 }
