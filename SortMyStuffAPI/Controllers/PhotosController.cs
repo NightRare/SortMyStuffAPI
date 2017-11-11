@@ -31,7 +31,7 @@ namespace SortMyStuffAPI.Controllers
         [HttpGet("{assetId}.jpg", Name = nameof(GetPhotoByIdAsync))]
         public async Task<IActionResult> GetPhotoByIdAsync(string assetId, CancellationToken ct)
         {
-            if (await _assetDataService.GetAssetAsync(assetId, ct) == null)
+            if (await _assetDataService.GetResourceAsync(assetId, ct) == null)
                 return NotFound(new ApiError("Asset id not found."));
 
             var stream = await _photoService.DownloadPhoto(assetId, ct);
@@ -50,7 +50,7 @@ namespace SortMyStuffAPI.Controllers
             IFormFile photo,
             CancellationToken ct)
         {
-            if (await _assetDataService.GetAssetAsync(assetId, ct) == null)
+            if (await _assetDataService.GetResourceAsync(assetId, ct) == null)
                 return NotFound(new ApiError("Asset id not found."));
 
             if (photo == null)

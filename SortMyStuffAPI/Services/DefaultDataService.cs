@@ -9,7 +9,10 @@ using Microsoft.Extensions.Options;
 
 namespace SortMyStuffAPI.Services
 {
-    public class DefaultDataService : IAssetDataService, IDetailDataService, ICategoryDataService
+    public class DefaultDataService : 
+        IAssetDataService, 
+        IDetailDataService, 
+        ICategoryDataService
     {
         private readonly SortMyStuffContext _context;
         private readonly ApiConfigs _apiConfigs;
@@ -28,16 +31,18 @@ namespace SortMyStuffAPI.Services
             var tree = await Task.Run(() =>
             {
                 var entity = _context.Assets.SingleOrDefault(a => a.Id == id);
-                return ConvertToAssetTree(entity);
+                return entity == null ? null : ConvertToAssetTree(entity);
             }, ct);
 
             return tree;
         }
 
-        public async Task<PagedResults<Asset>> GetAllAssetsAsync(
-            CancellationToken ct,
-            PagingOptions pagingOptions = null,
-            SortOptions<Asset, AssetEntity> sortOptions = null,
+        async Task<Asset> IDataService<Asset, AssetEntity>.GetResourceAsync(string id, CancellationToken ct)
+        {
+            return await GetResourceAsync<Asset, AssetEntity>(_context.Assets, id, ct);
+        }
+
+        public async Task<PagedResults<Asset>> GetResouceCollectionAsync(CancellationToken ct, PagingOptions pagingOptions = null, SortOptions<Asset, AssetEntity> sortOptions = null,
             SearchOptions<Asset, AssetEntity> searchOptions = null)
         {
             return await GetOneTypeResourcesAsync(
@@ -46,11 +51,6 @@ namespace SortMyStuffAPI.Services
                 pagingOptions,
                 sortOptions,
                 searchOptions);
-        }
-
-        public async Task<Asset> GetAssetAsync(string id, CancellationToken ct)
-        {
-            return await GetResourceAsync<Asset, AssetEntity>(_context.Assets, id, ct);
         }
 
         public async Task<IEnumerable<PathUnit>> GetAssetPathAsync(
@@ -116,15 +116,29 @@ namespace SortMyStuffAPI.Services
 
 
         #region IDetailDataService METHODS
+        
+        async Task<Detail> IDataService<Detail, DetailEntity>.GetResourceAsync(string id, CancellationToken ct)
+        {
+            throw new System.NotImplementedException();
+        }
 
-
+        public Task<PagedResults<Detail>> GetResouceCollectionAsync(CancellationToken ct, PagingOptions pagingOptions = null, SortOptions<Detail, DetailEntity> sortOptions = null,
+            SearchOptions<Detail, DetailEntity> searchOptions = null)
+        {
+            throw new System.NotImplementedException();
+        }
 
         #endregion
 
 
         #region ICategoryDataService METHODS
 
-        public async Task<PagedResults<Category>> GetAllCategoriesAsync(
+        async Task<Category> IDataService<Category, CategoryEntity>.GetResourceAsync(string id, CancellationToken ct)
+        {
+            return await GetResourceAsync<Category, CategoryEntity>(_context.Categories, id, ct);
+        }
+
+        public async Task<PagedResults<Category>> GetResouceCollectionAsync(
             CancellationToken ct, 
             PagingOptions pagingOptions = null, 
             SortOptions<Category, CategoryEntity> sortOptions = null,
@@ -136,11 +150,6 @@ namespace SortMyStuffAPI.Services
                 pagingOptions,
                 sortOptions,
                 searchOptions);
-        }
-
-        public async Task<Category> GetCategoryAsync(string id, CancellationToken ct)
-        {
-            return await GetResourceAsync<Category, CategoryEntity>(_context.Categories, id, ct);
         }
 
         public Task AddOrUpdateAssetAsync(Category category, CancellationToken ct)
@@ -255,6 +264,5 @@ namespace SortMyStuffAPI.Services
         }
 
         #endregion
-
     }
 }

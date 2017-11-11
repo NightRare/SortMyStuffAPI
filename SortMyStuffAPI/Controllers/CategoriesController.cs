@@ -12,20 +12,17 @@ namespace SortMyStuffAPI.Controllers
 {
     [Route("/[controller]")]
     [ApiVersion("0.1")]
-    public class CategoriesController : Controller
+    public class CategoriesController : JsonResourcesController<Category, CategoryEntity>
     {
         private readonly ICategoryDataService _categoryDataService;
-        private readonly PagingOptions _defaultPagingOptions;
-        private readonly ApiConfigs _apiConfigs;
 
         public CategoriesController(
             ICategoryDataService categoryDataService,
             IOptions<PagingOptions> pagingOptions,
-            IOptions<ApiConfigs> apiConfigs)
+            IOptions<ApiConfigs> apiConfigs) :
+            base(categoryDataService, pagingOptions, apiConfigs)
         {
             _categoryDataService = categoryDataService;
-            _defaultPagingOptions = pagingOptions.Value;
-            _apiConfigs = apiConfigs.Value;
         }
 
         // GET /categories
@@ -36,31 +33,19 @@ namespace SortMyStuffAPI.Controllers
             [FromQuery] SortOptions<Category, CategoryEntity> sortOptions,
             [FromQuery] SearchOptions<Category, CategoryEntity> searchOptions)
         {
-            if (!ModelState.IsValid) return BadRequest(new ApiError(ModelState));
-
-            pagingOptions.Offset = pagingOptions.Offset ?? _defaultPagingOptions.Offset;
-            pagingOptions.PageSize = pagingOptions.PageSize ?? _defaultPagingOptions.PageSize;
-
-            var categories = await _categoryDataService
-                .GetAllCategoriesAsync(ct, pagingOptions, sortOptions, searchOptions);
-
-            var response = PagedCollection<Category>.Create(
-                Link.ToCollection(nameof(GetCategoriesAsync)),
-                categories.PagedItems.ToArray(),
-                categories.TotalSize,
-                pagingOptions);
-
-            return Ok(response);
+            return await GetResourcesAsync(
+                nameof(GetCategoriesAsync),
+                ct,
+                pagingOptions,
+                sortOptions,
+                searchOptions);
         }
 
         // GET /categories/{categoryId}
         [HttpGet("{categoryId}", Name = nameof(GetCategoryByIdAsync))]
         public async Task<IActionResult> GetCategoryByIdAsync(string categoryId, CancellationToken ct)
         {
-            var category = await _categoryDataService.GetCategoryAsync(categoryId, ct);
-            if (category == null) return NotFound();
-
-            return Ok(category);
+            return await GetResourceByIdAsync(categoryId, ct);
         }
 
         // PUT /categories/{categoryId}

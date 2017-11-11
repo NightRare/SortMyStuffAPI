@@ -25,7 +25,7 @@ namespace SortMyStuffAPI.Controllers
         [HttpGet("{assetId}.jpg", Name = nameof(GetThumbnailByIdAsync))]
         public async Task<IActionResult> GetThumbnailByIdAsync(string assetId, CancellationToken ct)
         {
-            if (await _assetDataService.GetAssetAsync(assetId, ct) == null)
+            if (await _assetDataService.GetResourceAsync(assetId, ct) == null)
                 return NotFound(new ApiError("Asset id not found."));
 
             var stream = await _thumbnailService.DownloadThumbnail(assetId, ct);

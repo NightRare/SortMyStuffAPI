@@ -6,17 +6,9 @@ using SortMyStuffAPI.Models;
 
 namespace SortMyStuffAPI.Services
 {
-    public interface IAssetDataService : IDataService
+    public interface IAssetDataService : IDataService<Asset, AssetEntity>
     {
         Task<AssetTree> GetAssetTreeAsync(string id, CancellationToken ct);
-
-        Task<PagedResults<Asset>> GetAllAssetsAsync(
-            CancellationToken ct, 
-            PagingOptions pagingOptions = null,
-            SortOptions<Asset, AssetEntity> sortOptions = null,
-            SearchOptions<Asset, AssetEntity> searchOptions = null);
-
-        Task<Asset> GetAssetAsync(string id, CancellationToken ct);
 
         Task<IEnumerable<PathUnit>> GetAssetPathAsync(string id, CancellationToken ct);
 

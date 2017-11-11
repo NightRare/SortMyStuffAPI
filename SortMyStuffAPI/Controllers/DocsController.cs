@@ -61,7 +61,7 @@ namespace SortMyStuffAPI.Controllers
         {
             if (resourceType.Equals(nameof(Asset), StringComparison.OrdinalIgnoreCase))
             {
-                if (await _assetDataService.GetAssetAsync(resourceId, ct) == null)
+                if (await _assetDataService.GetResourceAsync(resourceId, ct) == null)
                     return NotFound(new ApiError($"Resource '{resourceType}/{resourceId}' not found."));
 
                 return Ok(GetAssetDocs(nameof(GetDocsByResourceId), resourceId));

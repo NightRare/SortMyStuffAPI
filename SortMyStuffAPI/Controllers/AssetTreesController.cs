@@ -20,14 +20,14 @@ namespace SortMyStuffAPI.Controllers
             _apiConfigs = apiConfigs.Value;
         }
 
-        [HttpGet(Name = nameof(GetAssetTreeAsync))]
-        public async Task<IActionResult> GetAssetTreeAsync(CancellationToken ct)
+        [HttpGet(Name = nameof(GetAssetTreesAsync))]
+        public async Task<IActionResult> GetAssetTreesAsync(CancellationToken ct)
         {
             var rootTree = await _ads.GetAssetTreeAsync(_apiConfigs.RootAssetId, ct);
 
             var response = new Collection<AssetTree>
             {
-                Self = Link.ToCollection(nameof(GetAssetTreeAsync)),
+                Self = Link.ToCollection(nameof(GetAssetTreesAsync)),
                 Value = new AssetTree[] { rootTree }
             };
 
@@ -38,6 +38,7 @@ namespace SortMyStuffAPI.Controllers
         public async Task<IActionResult> GetAssetTreeByIdAsync(string assetTreeId, CancellationToken ct)
         {
             var assetTree = await _ads.GetAssetTreeAsync(assetTreeId, ct);
+            if (assetTree == null) return NotFound();
 
             return Ok(assetTree);
         }

@@ -13,23 +13,20 @@ namespace SortMyStuffAPI.Controllers
 {
     [Route("/[controller]")]
     [ApiVersion("0.1")]
-    public class AssetsController : Controller
+    public class AssetsController : 
+        JsonResourcesController<Asset, AssetEntity>
     {
-
         private readonly IAssetDataService _assetDataService;
-        private readonly PagingOptions _defaultPagingOptions;
-        private readonly ApiConfigs _apiConfigs;
 
         public AssetsController(
-            IAssetDataService assetDataService, 
+            IAssetDataService assetDataService,
             IOptions<PagingOptions> pagingOptions,
-            IOptions<ApiConfigs> apiConfigs)
+            IOptions<ApiConfigs> apiConfigs) : 
+            base(assetDataService, pagingOptions, apiConfigs)
         {
             _assetDataService = assetDataService;
-            _defaultPagingOptions = pagingOptions.Value;
-            _apiConfigs = apiConfigs.Value;
         }
-
+        
         // GET /assets
         [HttpGet(Name = nameof(GetAssetsAsync))]
         public async Task<IActionResult> GetAssetsAsync(
@@ -38,31 +35,19 @@ namespace SortMyStuffAPI.Controllers
             [FromQuery] SortOptions<Asset, AssetEntity> sortOptions,
             [FromQuery] SearchOptions<Asset, AssetEntity> searchOptions)
         {
-            // if any Model (in this case PagingOptions) property is not valid according to the Range attributes
-            if (!ModelState.IsValid) return BadRequest(new ApiError(ModelState));
-
-            pagingOptions.Offset = pagingOptions.Offset ?? _defaultPagingOptions.Offset;
-            pagingOptions.PageSize = pagingOptions.PageSize ?? _defaultPagingOptions.PageSize;
-
-            var assets = await _assetDataService.GetAllAssetsAsync(ct, pagingOptions, sortOptions, searchOptions);
-
-            var response = PagedCollection<Asset>.Create(
-                Link.ToCollection(nameof(GetAssetsAsync)),
-                assets.PagedItems.ToArray(),
-                assets.TotalSize,
-                pagingOptions);
-
-            return Ok(response);
+            return await GetResourcesAsync(
+                nameof(GetAssetsAsync),
+                ct,
+                pagingOptions,
+                sortOptions,
+                searchOptions);
         }
 
         // GET /assets/{assetId}
         [HttpGet("{assetId}", Name = nameof(GetAssetByIdAsync))]
         public async Task<IActionResult> GetAssetByIdAsync(string assetId, CancellationToken ct)
         {
-            var asset = await _assetDataService.GetAssetAsync(assetId, ct);
-            if (asset == null) return NotFound();
-
-            return Ok(asset);
+            return await GetResourceByIdAsync(assetId, ct);
         }
 
         // GET /assets/{assetId}/path
@@ -100,7 +85,7 @@ namespace SortMyStuffAPI.Controllers
 
             // TODO: check whether category exists
 
-            var container = await _assetDataService.GetAssetAsync(body.ContainerId, ct);
+            var container = await _assetDataService.GetResourceAsync(body.ContainerId, ct);
             if (container == null) return BadRequest(new ApiError("Container not found."));
 
             var currentTime = DateTimeOffset.UtcNow;
@@ -112,7 +97,7 @@ namespace SortMyStuffAPI.Controllers
 
             await _assetDataService.AddOrUpdateAssetAsync(asset, ct);
 
-            var assetCreated = await _assetDataService.GetAssetAsync(asset.Id, ct);
+            var assetCreated = await _assetDataService.GetResourceAsync(asset.Id, ct);
 
             return Created(
                 Url.Link(nameof(GetAssetByIdAsync), 
@@ -129,18 +114,18 @@ namespace SortMyStuffAPI.Controllers
         {
             if (!ModelState.IsValid) return BadRequest(new ApiError(ModelState));
 
-            if (assetId.Equals(_apiConfigs.RootAssetId, StringComparison.OrdinalIgnoreCase))
+            if (assetId.Equals(ApiConfigs.RootAssetId, StringComparison.OrdinalIgnoreCase))
                 return BadRequest(new ApiError("Cannot create or modify the root asset."));
 
             // TODO: check whether category exists
 
-            var container = await _assetDataService.GetAssetAsync(body.ContainerId, ct);
+            var container = await _assetDataService.GetResourceAsync(body.ContainerId, ct);
             if (container == null) return BadRequest(new ApiError("Container not found."));
 
             if (DateTimeOffset.Compare(body.CreateTimestamp.Value, body.ModifyTimestamp.Value) > 0)
                 return BadRequest(new ApiError("The create timestamp cannot be later than the modify timestamp."));
 
-            var record = await _assetDataService.GetAssetAsync(assetId, ct);
+            var record = await _assetDataService.GetResourceAsync(assetId, ct);
             if (record == null)
             {
                 // newly added asset via api must have a correctly formatted guid
@@ -177,7 +162,7 @@ namespace SortMyStuffAPI.Controllers
         {
             if (!ModelState.IsValid) return BadRequest(new ApiError(ModelState));
 
-            if (assetId.Equals(_apiConfigs.RootAssetId, StringComparison.OrdinalIgnoreCase))
+            if (assetId.Equals(ApiConfigs.RootAssetId, StringComparison.OrdinalIgnoreCase))
                 return BadRequest(new ApiError("Cannot delete the root asset"));
 
             try
