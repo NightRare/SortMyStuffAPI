@@ -12,7 +12,5 @@ namespace SortMyStuffAPI.Models
         public UserRoleEntity(string roleName)
             : base(roleName)
         { }
-
-
     }
 }

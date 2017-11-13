@@ -79,7 +79,7 @@ namespace SortMyStuffAPI.Infrastructure
 
             CreateMap<UserEntity, User>()
                 .ForMember(dest => dest.Self, opt => opt.MapFrom(src =>
-                    Link.To(nameof(Controllers.UsersController.GetMeAsync), null)))
+                    Link.To(nameof(Controllers.UsersController.GetUserByIdAsync), new { userId = src.Id })))
 
                 .ForMember(dest => dest.Provider, opt => opt.MapFrom(src =>
                     src.Provider.ToString()));

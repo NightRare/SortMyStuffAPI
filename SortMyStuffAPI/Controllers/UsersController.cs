@@ -27,24 +27,7 @@ namespace SortMyStuffAPI.Controllers
             : base(dataService, defaultPagingOptions, apiConfigs)
         {
             _userDataService = dataService;
-        }
-
-        // GET /users
-        [Authorize(Roles = ApiStrings.RoleAdmin)]
-        [HttpGet(Name = nameof(GetUsersAsync))]
-        public async Task<IActionResult> GetUsersAsync(
-            CancellationToken ct,
-            [FromQuery] PagingOptions pagingOptions,
-            [FromQuery] SortOptions<User, UserEntity> sortOptions,
-            [FromQuery] SearchOptions<User, UserEntity> searchOptions)
-        {
-            return await GetResourcesAsync(
-
-                nameof(GetUsersAsync),
-                ct,
-                pagingOptions,
-                sortOptions,
-                searchOptions);
+            _authorizationService = authorizationService;
         }
 
         // GET /users/me
@@ -58,11 +41,38 @@ namespace SortMyStuffAPI.Controllers
             var user = await _userDataService.GetUserAsync(User);
             if (user == null) return NotFound();
 
+            var adminPolicy = await _authorizationService
+                .AuthorizeAsync(User, ApiStrings.PolicyAdmin);
+
+            // if it voliates the admin policy, then erase user id information
+            if (!adminPolicy.Succeeded)
+            {
+                user.Self = Link.To(nameof(GetMeAsync));
+                user.Id = null;
+            }
+
             return Ok(user);
         }
 
+        // GET /users
+        [Authorize(Policy = ApiStrings.PolicyAdmin)]
+        [HttpGet(Name = nameof(GetUsersAsync))]
+        public async Task<IActionResult> GetUsersAsync(
+            CancellationToken ct,
+            [FromQuery] PagingOptions pagingOptions,
+            [FromQuery] SortOptions<User, UserEntity> sortOptions,
+            [FromQuery] SearchOptions<User, UserEntity> searchOptions)
+        {
+            return await GetResourcesAsync(
+                nameof(GetUsersAsync),
+                ct,
+                pagingOptions,
+                sortOptions,
+                searchOptions);
+        }
+
         // GET /users/{userId}
-        [Authorize(Roles = ApiStrings.RoleAdmin)]
+        [Authorize(Policy = ApiStrings.PolicyAdmin)]
         [HttpGet("{userId}", Name = nameof(GetUserByIdAsync))]
         public async Task<IActionResult> GetUserByIdAsync(
             string userId,

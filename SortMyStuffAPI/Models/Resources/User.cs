@@ -18,9 +18,11 @@ namespace SortMyStuffAPI.Models
 
         public DateTimeOffset CreateTimestamp { get; set; }
 
-        [JsonIgnore]
-        public string Id { get; set; }
+        public string RootAssetId { get; set; }
 
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public string Id { get; set; }
+        
         [JsonIgnore]
         [Secret]
         public string Password { get; set; }

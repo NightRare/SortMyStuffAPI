@@ -63,7 +63,7 @@ namespace SortMyStuffAPI
 
             services.AddAuthorization(opt =>
             {
-                opt.AddPolicy(ApiStrings.PolicyViewAllUsers,
+                opt.AddPolicy(ApiStrings.PolicyAdmin,
                     p => p.RequireAuthenticatedUser().RequireRole(ApiStrings.RoleAdmin));
             });
 

@@ -34,8 +34,8 @@ namespace SortMyStuffAPI.Controllers
             CancellationToken ct,
             [FromQuery] PagingOptions pagingOptions,
             [FromQuery] SortOptions<T, TEntity> sortOptions,
-            [FromQuery] SearchOptions<T, TEntity> searchOptions
-        )
+            [FromQuery] SearchOptions<T, TEntity> searchOptions,
+            Action<PagedResults<T>> operation = null)
         {
             // if any Model (in this case PagingOptions) property is not valid according to the Range attributes
             if (!ModelState.IsValid) return BadRequest(new ApiError(ModelState));
@@ -54,6 +54,8 @@ namespace SortMyStuffAPI.Controllers
                 return BadRequest(new ApiError(ex.Message));
             }
 
+            operation?.Invoke(results);
+
             var response = PagedCollection<T>.Create(
                 Link.ToCollection(httpMethodName),
                 results.PagedItems.ToArray(),
@@ -65,12 +67,15 @@ namespace SortMyStuffAPI.Controllers
 
         protected virtual async Task<IActionResult> GetResourceByIdAsync(
             string id,
-            CancellationToken ct)
+            CancellationToken ct,
+            Action<T> operation = null)
         {
-            var asset = await DataService.GetResourceAsync(id, ct);
-            if (asset == null) return NotFound();
+            var result = await DataService.GetResourceAsync(id, ct);
+            if (result == null) return NotFound();
 
-            return Ok(asset);
+            operation?.Invoke(result);
+
+            return Ok(result);
         }
     }
 }

@@ -55,11 +55,25 @@ namespace SortMyStuffAPI.Utils
 
         #endregion
 
-        #region AUTHORISATION ROLE NAMES
+        #region AUTHORISATION NAMES
 
         public const string RoleAdmin = "Admin";
 
-        public const string PolicyViewAllUsers = "ViewAllUsersPolicy";
+        public const string PolicyAdmin = "AdminPolicy";
+
+        #endregion
+
+        #region INDEX
+
+        public const string IndexAssetContainerId = "AssetContainerIdIndex";
+
+        public const string IndexAssetUserId = "AssetUserIdIndex";
+
+        public const string IndexCategoryUserId = "CategoryUserIdIndex";
+
+        public const string IndexBaseDetailUserId = "BaseDetailUserIdIndex";
+
+        public const string IndexDetailUserId = "DetailUserIdIndex";
 
         #endregion
     }

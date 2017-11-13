@@ -42,5 +42,9 @@ namespace SortMyStuffAPI.Models
         [JsonIgnore]
         [Searchable]
         public string CategoryId { get; set; }
+
+        [JsonIgnore]
+        [Searchable]
+        public string UserId { get; set; }
     }
 }

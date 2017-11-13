@@ -10,5 +10,7 @@ namespace SortMyStuffAPI.Services
         Task<(bool Succeeded, string Error)> CreateUserAsync(User user, CancellationToken ct);
 
         Task<User> GetUserAsync(ClaimsPrincipal user);
+
+        Task<UserEntity> GetUserEntityAsync(ClaimsPrincipal user);
     }
 }

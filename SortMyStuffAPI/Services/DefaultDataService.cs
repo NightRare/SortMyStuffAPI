@@ -50,13 +50,20 @@ namespace SortMyStuffAPI.Services
             return tree;
         }
 
-        async Task<Asset> IDataService<Asset, AssetEntity>.GetResourceAsync(string id, CancellationToken ct)
+        async Task<Asset> IDataService<Asset, AssetEntity>.GetResourceAsync(
+            string id,
+            CancellationToken ct,
+            string userId = null)
         {
             return await GetResourceAsync<Asset, AssetEntity>(_context.Assets, id, ct);
         }
 
-        public async Task<PagedResults<Asset>> GetResouceCollectionAsync(CancellationToken ct, PagingOptions pagingOptions = null, SortOptions<Asset, AssetEntity> sortOptions = null,
-            SearchOptions<Asset, AssetEntity> searchOptions = null)
+        public async Task<PagedResults<Asset>> GetResouceCollectionAsync(
+            CancellationToken ct,
+            PagingOptions pagingOptions = null,
+            SortOptions<Asset, AssetEntity> sortOptions = null,
+            SearchOptions<Asset, AssetEntity> searchOptions = null,
+            string userId = null)
         {
             return await GetOneTypeResourcesAsync(
                 _context.Assets,
@@ -130,7 +137,10 @@ namespace SortMyStuffAPI.Services
 
         #region IDetailDataService METHODS
 
-        async Task<Detail> IDataService<Detail, DetailEntity>.GetResourceAsync(string id, CancellationToken ct)
+        async Task<Detail> IDataService<Detail, DetailEntity>.GetResourceAsync(
+            string id,
+            CancellationToken ct,
+            string userId = null)
         {
             throw new System.NotImplementedException();
         }
@@ -139,7 +149,8 @@ namespace SortMyStuffAPI.Services
             CancellationToken ct,
             PagingOptions pagingOptions = null,
             SortOptions<Detail, DetailEntity> sortOptions = null,
-            SearchOptions<Detail, DetailEntity> searchOptions = null)
+            SearchOptions<Detail, DetailEntity> searchOptions = null,
+            string userId = null)
         {
             throw new System.NotImplementedException();
         }
@@ -149,7 +160,10 @@ namespace SortMyStuffAPI.Services
 
         #region ICategoryDataService METHODS
 
-        async Task<Category> IDataService<Category, CategoryEntity>.GetResourceAsync(string id, CancellationToken ct)
+        async Task<Category> IDataService<Category, CategoryEntity>.GetResourceAsync(
+            string id,
+            CancellationToken ct,
+            string userId = null)
         {
             return await GetResourceAsync<Category, CategoryEntity>(_context.Categories, id, ct);
         }
@@ -158,7 +172,8 @@ namespace SortMyStuffAPI.Services
             CancellationToken ct,
             PagingOptions pagingOptions = null,
             SortOptions<Category, CategoryEntity> sortOptions = null,
-            SearchOptions<Category, CategoryEntity> searchOptions = null)
+            SearchOptions<Category, CategoryEntity> searchOptions = null,
+            string userId = null)
         {
             return await GetOneTypeResourcesAsync(
                 _context.Categories,
@@ -210,7 +225,10 @@ namespace SortMyStuffAPI.Services
 
         #region IUserDataService METHODS
 
-        async Task<User> IDataService<User, UserEntity>.GetResourceAsync(string id, CancellationToken ct)
+        async Task<User> IDataService<User, UserEntity>.GetResourceAsync(
+            string id,
+            CancellationToken ct,
+            string userId = null)
         {
             return await GetResourceAsync<User, UserEntity>(_context.Users, id, ct);
         }
@@ -219,7 +237,8 @@ namespace SortMyStuffAPI.Services
             CancellationToken ct,
             PagingOptions pagingOptions = null,
             SortOptions<User, UserEntity> sortOptions = null,
-            SearchOptions<User, UserEntity> searchOptions = null)
+            SearchOptions<User, UserEntity> searchOptions = null,
+            string userId = null)
         {
             return await GetOneTypeResourcesAsync(
                 _context.Users,
@@ -230,7 +249,7 @@ namespace SortMyStuffAPI.Services
         }
 
         public async Task<(bool Succeeded, string Error)> CreateUserAsync(
-            User user, 
+            User user,
             CancellationToken ct)
         {
             var record = await _userManager.FindByNameAsync(user.UserName);
@@ -240,7 +259,7 @@ namespace SortMyStuffAPI.Services
             record = await _userManager.FindByEmailAsync(user.Email);
             if (record != null)
                 return (false, "Existing Email.");
-            
+
             var entity = Mapper.Map<User, UserEntity>(user);
             var result = await _userManager.CreateAsync(entity, user.Password);
             if (!result.Succeeded)
@@ -257,6 +276,11 @@ namespace SortMyStuffAPI.Services
             return Mapper.Map<UserEntity, User>(entity);
         }
 
+        public async Task<UserEntity> GetUserEntityAsync(ClaimsPrincipal user)
+        {
+            return await _userManager.GetUserAsync(user);
+        }
+
         #endregion
 
 
@@ -267,7 +291,8 @@ namespace SortMyStuffAPI.Services
             CancellationToken ct,
             PagingOptions pagingOptions = null,
             SortOptions<T, TEntity> sortOptions = null,
-            SearchOptions<T, TEntity> searchOptions = null) where TEntity : IEntity
+            SearchOptions<T, TEntity> searchOptions = null,
+            string userId = null) where TEntity : IEntity
         {
             IQueryable<TEntity> query = dbSet;
 
@@ -286,6 +311,7 @@ namespace SortMyStuffAPI.Services
             IEnumerable<T> resources = await Task.Run(
                 () => query.ProjectTo<T>().ToArray(),
                 ct);
+
             var totalSize = resources.Count();
 
             if (pagingOptions != null)
@@ -306,7 +332,8 @@ namespace SortMyStuffAPI.Services
         private async Task<T> GetResourceAsync<T, TEntity>(
             IQueryable<TEntity> dbSet,
             string id,
-            CancellationToken ct) where TEntity : IEntity
+            CancellationToken ct,
+            string userId = null) where TEntity : IEntity
         {
             var entity = await Task.Run(() => dbSet.SingleOrDefault(a => a.Id == id), ct);
             return entity == null ? default(T) : Mapper.Map<TEntity, T>(entity);
