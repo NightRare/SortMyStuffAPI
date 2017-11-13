@@ -19,6 +19,9 @@ namespace SortMyStuffAPI.Models
         [JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
         public bool Required { get; set; }
 
+        [JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
+        public bool Secret { get; set; }
+
         [JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore, NullValueHandling = NullValueHandling.Ignore)]
         [DefaultValue(DefaultType)]
         public string Type { get; set; } = DefaultType;

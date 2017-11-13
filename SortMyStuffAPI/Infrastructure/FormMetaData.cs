@@ -27,6 +27,7 @@ namespace SortMyStuffAPI.Infrastructure
                 var description = attributes.OfType<DisplayAttribute>()
                     .SingleOrDefault()?.Description;
 
+                var secret = attributes.OfType<SecretAttribute>().Any();
                 var required = attributes.OfType<RequiredAttribute>().Any();
                 var type = GetFriendlyType(prop, attributes);
 
@@ -42,6 +43,7 @@ namespace SortMyStuffAPI.Infrastructure
                 {
                     Name = name,
                     Required = required,
+                    Secret = secret,
                     Type = type,
                     StringLength = stringLength,
                     Value = value,

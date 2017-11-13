@@ -23,5 +23,7 @@ namespace SortMyStuffAPI.Models
         public string DefaultPhoto { get; set; }
         [LocalResource]
         public string DefaultThumbnail { get; set; }
+
+        public int BearerTokenLifeTimeInMin { get; set; }
     }
 }

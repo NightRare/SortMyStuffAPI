@@ -1,4 +1,5 @@
-﻿using AutoMapper;
+﻿using System;
+using AutoMapper;
 using SortMyStuffAPI.Models;
 using SortMyStuffAPI.Utils;
 
@@ -31,8 +32,8 @@ namespace SortMyStuffAPI.Infrastructure
                         nameof(Controllers.AssetsController.GetAssetsAsync),
                         new { search = $"{ nameof(Asset.ContainerId).ToCamelCase() } { ApiStrings.ParameterOpEqual } { src.Id }" })))
 
-                .ForMember(dest => dest.FormSpecs, opt => opt.MapFrom(src => 
-                    src.Id == "rootassetid" ? 
+                .ForMember(dest => dest.FormSpecs, opt => opt.MapFrom(src =>
+                    src.Id == "rootassetid" ?
                     null : Link.ToCollection(
                             nameof(Controllers.DocsController.GetDocsByResourceId),
                             new { resourceType = Controllers.DocsController.AssetsTypeName, resourceId = src.Id })));
@@ -50,7 +51,7 @@ namespace SortMyStuffAPI.Infrastructure
 
             CreateMap<CategoryEntity, Category>()
                 .ForMember(dest => dest.Self, opt => opt.MapFrom(src =>
-                    Link.To(nameof(Controllers.CategoriesController.GetCategoryByIdAsync), new {categoryId = src.Id})))
+                    Link.To(nameof(Controllers.CategoriesController.GetCategoryByIdAsync), new { categoryId = src.Id })))
 
                 // TODO: change BaseDetails mapping
                 .ForMember(dest => dest.BaseDetails, opt => opt.MapFrom(src =>
@@ -70,6 +71,24 @@ namespace SortMyStuffAPI.Infrastructure
                 .ForMember(dest => dest.CategorisedAssets, opt => opt.Ignore());
 
             CreateMap<CategoryForm, Category>();
+
+            #endregion
+
+
+            #region User
+
+            CreateMap<UserEntity, User>()
+                .ForMember(dest => dest.Self, opt => opt.MapFrom(src =>
+                    Link.To(nameof(Controllers.UsersController.GetMeAsync), null)))
+
+                .ForMember(dest => dest.Provider, opt => opt.MapFrom(src =>
+                    src.Provider.ToString()));
+
+            CreateMap<User, UserEntity>()
+                .ForMember(dest => dest.Provider, opt => opt.MapFrom(src =>
+                    Enum.Parse<AuthProvider>(src.Provider)));
+
+            CreateMap<RegisterForm, User>();
 
             #endregion
         }

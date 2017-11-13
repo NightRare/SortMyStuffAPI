@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
@@ -70,6 +71,15 @@ namespace SortMyStuffAPI.Controllers
             }
 
             return BadRequest(new ApiError("Uploading image file failed."));
+        }
+
+        // DELETE /photos/{assetId}.jpg
+        [HttpDelete("{assetId}.jpg", Name = nameof(DeletePhotoAsync))]
+        public async Task<IActionResult> DeletePhotoAsync(
+            string assetId,
+            CancellationToken ct)
+        {
+            throw new NotImplementedException();
         }
     }
 }

@@ -86,6 +86,8 @@ namespace SortMyStuffAPI.Services
         {
             await InitialiseFirebaseStorage();
 
+            //TODO: check the format of photo
+
             try
             {
                 photo.Position = 0;

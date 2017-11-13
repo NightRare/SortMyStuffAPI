@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Identity;
 using SortMyStuffAPI.Services;
 using SortMyStuffAPI.Models;
 using SortMyStuffAPI.Infrastructure;
@@ -10,12 +12,53 @@ namespace SortMyStuffAPI.Utils
     {
         private const string RootAssetId = "rootassetid";
 
-        public static void LoadAllIntoContext(SortMyStuffContext context)
+        public static async Task LoadRolesAndUsers(
+            RoleManager<UserRoleEntity> roleManager,
+            UserManager<UserEntity> userManager)
+        {
+            if (roleManager != null)
+            {
+                await LoadUserRoles(roleManager);
+            }
+
+            if (userManager != null)
+            {
+                await LoadUsers(userManager);
+            }
+        }
+
+        public static void LoadData(
+            SortMyStuffContext context)
         {
             var categories = LoadCategories(context);
             var assets = LoadAssets(context, categories);
 
             context.SaveChanges();
+        }
+
+        private static async Task LoadUserRoles(
+            RoleManager<UserRoleEntity> roleManager)
+        {
+            await roleManager.CreateAsync(new UserRoleEntity("Admin"));
+        }
+
+        private async static Task LoadUsers(
+            UserManager<UserEntity> userManager)
+        {
+            var user = new UserEntity
+            {
+                Id = Guid.NewGuid().ToString(),
+                Email = Environment.GetEnvironmentVariable(ApiStrings.EnvFirebaseAuthEmail),
+                UserName = "Admin",
+                CreateTimestamp = DateTimeOffset.UtcNow
+            };
+
+            await userManager.CreateAsync(
+                user, 
+                Environment.GetEnvironmentVariable(ApiStrings.EnvFirebaseAuthPassword));
+
+            await userManager.AddToRoleAsync(user, "Admin");
+            await userManager.UpdateAsync(user);
         }
 
         private static IList<CategoryEntity> LoadCategories(SortMyStuffContext context)

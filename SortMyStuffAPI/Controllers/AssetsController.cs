@@ -21,8 +21,9 @@ namespace SortMyStuffAPI.Controllers
 
         public AssetsController(
             IAssetDataService assetDataService,
+            ICategoryDataService categoryDataService, 
             IOptions<PagingOptions> pagingOptions,
-            IOptions<ApiConfigs> apiConfigs, ICategoryDataService categoryDataService) : 
+            IOptions<ApiConfigs> apiConfigs) : 
             base(assetDataService, pagingOptions, apiConfigs)
         {
             _assetDataService = assetDataService;

@@ -54,5 +54,13 @@ namespace SortMyStuffAPI.Utils
         public const string EnvFirebaseAuthPassword = "FIREBASE_AUTH_PASSWORD";
 
         #endregion
+
+        #region AUTHORISATION ROLE NAMES
+
+        public const string RoleAdmin = "Admin";
+
+        public const string PolicyViewAllUsers = "ViewAllUsersPolicy";
+
+        #endregion
     }
 }

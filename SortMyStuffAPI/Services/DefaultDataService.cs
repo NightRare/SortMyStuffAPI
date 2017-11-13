@@ -6,22 +6,33 @@ using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using SortMyStuffAPI.Models;
 using System.Collections.Generic;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 using SortMyStuffAPI.Infrastructure;
+using System.Security.Claims;
 
 namespace SortMyStuffAPI.Services
 {
-    public class DefaultDataService : 
-        IAssetDataService, 
-        IDetailDataService, 
-        ICategoryDataService
+    public class DefaultDataService :
+        IAssetDataService,
+        IDetailDataService,
+        ICategoryDataService,
+        IUserDataService
     {
         private readonly SortMyStuffContext _context;
         private readonly ApiConfigs _apiConfigs;
+        private readonly UserManager<UserEntity> _userManager;
+        private readonly RoleManager<UserRoleEntity> _roleManager;
 
-        public DefaultDataService(SortMyStuffContext context, IOptions<ApiConfigs> apiConfigs)
+        public DefaultDataService(
+            SortMyStuffContext context,
+            IOptions<ApiConfigs> apiConfigs,
+            UserManager<UserEntity> userManager,
+            RoleManager<UserRoleEntity> roleManager)
         {
             _context = context;
+            _userManager = userManager;
+            _roleManager = roleManager;
             _apiConfigs = apiConfigs.Value;
         }
 
@@ -118,13 +129,16 @@ namespace SortMyStuffAPI.Services
 
 
         #region IDetailDataService METHODS
-        
+
         async Task<Detail> IDataService<Detail, DetailEntity>.GetResourceAsync(string id, CancellationToken ct)
         {
             throw new System.NotImplementedException();
         }
 
-        public Task<PagedResults<Detail>> GetResouceCollectionAsync(CancellationToken ct, PagingOptions pagingOptions = null, SortOptions<Detail, DetailEntity> sortOptions = null,
+        public Task<PagedResults<Detail>> GetResouceCollectionAsync(
+            CancellationToken ct,
+            PagingOptions pagingOptions = null,
+            SortOptions<Detail, DetailEntity> sortOptions = null,
             SearchOptions<Detail, DetailEntity> searchOptions = null)
         {
             throw new System.NotImplementedException();
@@ -141,8 +155,8 @@ namespace SortMyStuffAPI.Services
         }
 
         public async Task<PagedResults<Category>> GetResouceCollectionAsync(
-            CancellationToken ct, 
-            PagingOptions pagingOptions = null, 
+            CancellationToken ct,
+            PagingOptions pagingOptions = null,
             SortOptions<Category, CategoryEntity> sortOptions = null,
             SearchOptions<Category, CategoryEntity> searchOptions = null)
         {
@@ -157,7 +171,7 @@ namespace SortMyStuffAPI.Services
         public async Task<Category> GetCategoryByNameAsync(string name, CancellationToken ct)
         {
             var entity = await Task.Run(() =>
-                _context.Categories.SingleOrDefault(c => 
+                _context.Categories.SingleOrDefault(c =>
                     c.Name.Equals(name, StringComparison.OrdinalIgnoreCase)));
             return entity == null ? null : Mapper.Map<CategoryEntity, Category>(entity);
         }
@@ -189,6 +203,58 @@ namespace SortMyStuffAPI.Services
 
             _context.Categories.Remove(delCategory);
             _context.SaveChanges();
+        }
+
+        #endregion
+
+
+        #region IUserDataService METHODS
+
+        async Task<User> IDataService<User, UserEntity>.GetResourceAsync(string id, CancellationToken ct)
+        {
+            return await GetResourceAsync<User, UserEntity>(_context.Users, id, ct);
+        }
+
+        public async Task<PagedResults<User>> GetResouceCollectionAsync(
+            CancellationToken ct,
+            PagingOptions pagingOptions = null,
+            SortOptions<User, UserEntity> sortOptions = null,
+            SearchOptions<User, UserEntity> searchOptions = null)
+        {
+            return await GetOneTypeResourcesAsync(
+                _context.Users,
+                ct,
+                pagingOptions,
+                sortOptions,
+                searchOptions);
+        }
+
+        public async Task<(bool Succeeded, string Error)> CreateUserAsync(
+            User user, 
+            CancellationToken ct)
+        {
+            var record = await _userManager.FindByNameAsync(user.UserName);
+            if (record != null)
+                return (false, "Existing UserName.");
+
+            record = await _userManager.FindByEmailAsync(user.Email);
+            if (record != null)
+                return (false, "Existing Email.");
+            
+            var entity = Mapper.Map<User, UserEntity>(user);
+            var result = await _userManager.CreateAsync(entity, user.Password);
+            if (!result.Succeeded)
+            {
+                var defaultError = result.Errors.FirstOrDefault()?.Description;
+                return (false, defaultError);
+            }
+            return (true, null);
+        }
+
+        public async Task<User> GetUserAsync(ClaimsPrincipal user)
+        {
+            var entity = await _userManager.GetUserAsync(user);
+            return Mapper.Map<UserEntity, User>(entity);
         }
 
         #endregion

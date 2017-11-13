@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Linq;
+using AspNet.Security.OpenIdConnect.Primitives;
 using AutoMapper;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Mvc.Formatters;
@@ -14,6 +16,7 @@ using SortMyStuffAPI.Filters;
 using SortMyStuffAPI.Services;
 using SortMyStuffAPI.Utils;
 using SortMyStuffAPI.Models;
+using AspNet.Security.OAuth.Validation;
 
 namespace SortMyStuffAPI
 {
@@ -39,13 +42,59 @@ namespace SortMyStuffAPI
 
             // Use in-memroy db for dev, change the scope of the DbContext and the option to Singleton
             // TODO: Swap out with a real database in production
-            services.AddDbContext<SortMyStuffContext>(opt => opt.UseInMemoryDatabase(Guid.NewGuid().ToString()),
+            services.AddDbContext<SortMyStuffContext>(opt =>
+                {
+                    opt.UseInMemoryDatabase(Guid.NewGuid().ToString());
+                    opt.UseOpenIddict();
+                },
                 ServiceLifetime.Singleton, ServiceLifetime.Singleton);
+
+            // Add ASP.NET Core Identity
+            services.AddIdentity<UserEntity, UserRoleEntity>()
+                .AddEntityFrameworkStores<SortMyStuffContext>()
+                .AddDefaultTokenProviders();
+
+            services.AddAuthentication(opt =>
+            {
+                opt.DefaultScheme = OAuthValidationDefaults.AuthenticationScheme;
+                opt.DefaultChallengeScheme = OAuthValidationDefaults.AuthenticationScheme;
+                opt.DefaultAuthenticateScheme = OAuthValidationDefaults.AuthenticationScheme;
+            }).AddOAuthValidation();
+
+            services.AddAuthorization(opt =>
+            {
+                opt.AddPolicy(ApiStrings.PolicyViewAllUsers,
+                    p => p.RequireAuthenticatedUser().RequireRole(ApiStrings.RoleAdmin));
+            });
+
+            // Map some of the default claim names to the proper OpenID Connect claim names
+            services.Configure<IdentityOptions>(opt =>
+            {
+                opt.ClaimsIdentity.UserNameClaimType = OpenIdConnectConstants.Claims.Name;
+                opt.ClaimsIdentity.UserIdClaimType = OpenIdConnectConstants.Claims.Subject;
+                opt.ClaimsIdentity.RoleClaimType = OpenIdConnectConstants.Claims.Role;
+            });
+
+            // Add OpenIddict services
+            services.AddOpenIddict<string>(opt =>
+            {
+                opt.AddEntityFrameworkCoreStores<SortMyStuffContext>();
+                opt.AddMvcBinders();
+
+                opt.EnableTokenEndpoint("/token");
+                opt.AllowPasswordFlow();
+            });
 
             services.AddAutoMapper();
 
             services.AddMvc(opt =>
             {
+                //*********************************************
+                // TODO: DISABLE THIS IN PRODUCTION
+                // toggle authentication in development
+                //*********************************************
+                //opt.Filters.Add(new AllowAnonymousFilter());
+
                 // add Filters
                 opt.Filters.Add(typeof(JsonExceptionFilter));
                 opt.Filters.Add(typeof(LinkRewrittingFilter));
@@ -60,8 +109,11 @@ namespace SortMyStuffAPI
                 var jsonFormatter = opt.OutputFormatters.OfType<JsonOutputFormatter>().Single();
                 opt.OutputFormatters.Remove(jsonFormatter);
                 opt.OutputFormatters.Add(new IonOutputFormatter(jsonFormatter));
+
+
             });
 
+            // lower case routes
             services.AddRouting(opt => opt.LowercaseUrls = true);
 
             services.AddApiVersioning(opt =>
@@ -74,23 +126,38 @@ namespace SortMyStuffAPI
             });
 
             // Dependency injeciton
-            services.AddSingleton<IAssetDataService, DefaultDataService>();
-            services.AddSingleton<ICategoryDataService, DefaultDataService>();
-            services.AddSingleton<IPhotoFileService, DefaultFileService>();
-            services.AddSingleton<IThumbnailFileService, DefaultFileService>();
+            services.AddScoped<IAssetDataService, DefaultDataService>();
+            services.AddScoped<ICategoryDataService, DefaultDataService>();
+            services.AddScoped<IUserDataService, DefaultDataService>();
+
+            services.AddScoped<IPhotoFileService, DefaultFileService>();
+            services.AddScoped<IThumbnailFileService, DefaultFileService>();
+
             services.AddSingleton<ILocalResourceService, DefaultLocalResourceService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
+            app.UseAuthentication();
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
 
+                // Add test roles and users in development
+                using (var scope = app.ApplicationServices.GetRequiredService<IServiceScopeFactory>().CreateScope())
+                {
+                    var roleManager = scope.ServiceProvider
+                        .GetRequiredService<RoleManager<UserRoleEntity>>();
+                    var userManager = scope.ServiceProvider
+                        .GetRequiredService<UserManager<UserEntity>>();
+                    TestDataRepository.LoadRolesAndUsers(roleManager, userManager).Wait();
+                }
+
                 // Add test data in development
                 var dbContext = app.ApplicationServices.GetRequiredService<SortMyStuffContext>();
-                TestDataRepository.LoadAllIntoContext(dbContext);
+                TestDataRepository.LoadData(dbContext);
             }
 
             // include HSTS header
@@ -102,7 +169,6 @@ namespace SortMyStuffAPI
             });
 
             app.UseMvc();
-
         }
     }
 }

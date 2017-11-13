@@ -1,9 +1,11 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using SortMyStuffAPI.Models;
 
 namespace SortMyStuffAPI.Services
 {
-    public class SortMyStuffContext : DbContext
+    public class SortMyStuffContext : IdentityDbContext<UserEntity, UserRoleEntity, string>
     {
         public SortMyStuffContext(DbContextOptions opt) : base(opt)
         { }

@@ -1,11 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.27004.2006
+VisualStudioVersion = 15.0.27004.2008
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SortMyStuffAPI", "SortMyStuffAPI\SortMyStuffAPI.csproj", "{703ADEE0-D3D3-464A-A1B1-9047E4B8ABF0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SortMyStuffAPI.Tests", "SortMyStuffAPI.Tests\SortMyStuffAPI.Tests.csproj", "{2E305E6E-807C-4143-A563-533671ADA0F1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SortMyStuffAPI.Tests", "SortMyStuffAPI.Tests\SortMyStuffAPI.Tests.csproj", "{2E305E6E-807C-4143-A563-533671ADA0F1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
