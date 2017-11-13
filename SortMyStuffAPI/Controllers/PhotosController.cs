@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using SortMyStuffAPI.Models;
 using SortMyStuffAPI.Services;
+using Microsoft.AspNetCore.Authorization;
 
 namespace SortMyStuffAPI.Controllers
 {
@@ -29,6 +30,7 @@ namespace SortMyStuffAPI.Controllers
         }
 
         // GET /photos/{assetId}.jpg
+        [Authorize]
         [HttpGet("{assetId}.jpg", Name = nameof(GetPhotoByIdAsync))]
         public async Task<IActionResult> GetPhotoByIdAsync(string assetId, CancellationToken ct)
         {

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using SortMyStuffAPI.Models;
 using SortMyStuffAPI.Services;
+using Microsoft.AspNetCore.Authorization;
 
 namespace SortMyStuffAPI.Controllers
 {
@@ -20,6 +21,8 @@ namespace SortMyStuffAPI.Controllers
             _apiConfigs = apiConfigs.Value;
         }
 
+        // GET /assettrees/
+        [Authorize]
         [HttpGet(Name = nameof(GetAssetTreesAsync))]
         public async Task<IActionResult> GetAssetTreesAsync(CancellationToken ct)
         {
@@ -34,6 +37,8 @@ namespace SortMyStuffAPI.Controllers
             return Ok(response);
         }
 
+        // GET /assettrees/{assetId}
+        [Authorize]
         [HttpGet("{assetTreeId}", Name = nameof(GetAssetTreeByIdAsync))]
         public async Task<IActionResult> GetAssetTreeByIdAsync(string assetTreeId, CancellationToken ct)
         {

@@ -1,6 +1,7 @@
 ﻿using System;
 using Microsoft.AspNetCore.Mvc;
 using SortMyStuffAPI.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace SortMyStuffAPI.Controllers
 {
@@ -9,6 +10,7 @@ namespace SortMyStuffAPI.Controllers
     public class NewGuidController : Controller
     {
         // GET /newguid
+        [Authorize]
         [HttpGet(Name = nameof(GetNewGuid))]
         public IActionResult GetNewGuid()
         {

@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using SortMyStuffAPI.Models;
 using SortMyStuffAPI.Services;
+using Microsoft.AspNetCore.Authorization;
 
 namespace SortMyStuffAPI.Controllers
 {
@@ -27,6 +28,7 @@ namespace SortMyStuffAPI.Controllers
         }
 
         // GET /categories
+        [Authorize]
         [HttpGet(Name = nameof(GetCategoriesAsync))]
         public async Task<IActionResult> GetCategoriesAsync(
             CancellationToken ct,
@@ -43,6 +45,7 @@ namespace SortMyStuffAPI.Controllers
         }
 
         // GET /categories/{categoryId}
+        [Authorize]
         [HttpGet("{categoryId}", Name = nameof(GetCategoryByIdAsync))]
         public async Task<IActionResult> GetCategoryByIdAsync(string categoryId, CancellationToken ct)
         {
@@ -50,6 +53,7 @@ namespace SortMyStuffAPI.Controllers
         }
 
         // POST /categories/
+        [Authorize]
         [HttpPost(Name = nameof(CreateCatgegoryAsync))]
         public async Task<IActionResult> CreateCatgegoryAsync(
             [FromBody] CategoryForm body,
@@ -78,6 +82,7 @@ namespace SortMyStuffAPI.Controllers
         }
 
         // PUT /categories/{categoryId}
+        [Authorize]
         [HttpPut("{categoryId}", Name = nameof(AddOrUpdateCategoryAsync))]
         public async Task<IActionResult> AddOrUpdateCategoryAsync(
             string categoryId,
@@ -110,6 +115,7 @@ namespace SortMyStuffAPI.Controllers
         }
 
         // DELETE /categories/{categoryId}
+        [Authorize]
         [HttpDelete("{categoryId}", Name = nameof(DeleteCategoryByIdAsync))]
         public async Task<IActionResult> DeleteCategoryByIdAsync(
             string categoryId,

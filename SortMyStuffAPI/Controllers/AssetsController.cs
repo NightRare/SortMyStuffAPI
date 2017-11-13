@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using SortMyStuffAPI.Services;
 using SortMyStuffAPI.Models;
 using Microsoft.Extensions.Options;
+using Microsoft.AspNetCore.Authorization;
 
 namespace SortMyStuffAPI.Controllers
 {
@@ -29,8 +30,9 @@ namespace SortMyStuffAPI.Controllers
             _assetDataService = assetDataService;
             _categoryDataService = categoryDataService;
         }
-        
+
         // GET /assets
+        [Authorize]
         [HttpGet(Name = nameof(GetAssetsAsync))]
         public async Task<IActionResult> GetAssetsAsync(
             CancellationToken ct,
@@ -47,6 +49,7 @@ namespace SortMyStuffAPI.Controllers
         }
 
         // GET /assets/{assetId}
+        [Authorize]
         [HttpGet("{assetId}", Name = nameof(GetAssetByIdAsync))]
         public async Task<IActionResult> GetAssetByIdAsync(string assetId, CancellationToken ct)
         {
@@ -54,6 +57,7 @@ namespace SortMyStuffAPI.Controllers
         }
 
         // GET /assets/{assetId}/path
+        [Authorize]
         [HttpGet("{assetId}/path", Name = nameof(GetAssetPathByIdAsync))]
         public async Task<IActionResult> GetAssetPathByIdAsync(
             string assetId,
@@ -79,6 +83,7 @@ namespace SortMyStuffAPI.Controllers
         }
 
         // POST /assets
+        [Authorize]
         [HttpPost(Name = nameof(CreateAssetAsync))]
         public async Task<IActionResult> CreateAssetAsync(
             [FromBody] CreateAssetForm body,
@@ -108,6 +113,7 @@ namespace SortMyStuffAPI.Controllers
         }
 
         // PUT /assets/{assetId}
+        [Authorize]
         [HttpPut("{assetId}", Name = nameof(AddOrUpdateAssetAsync))]
         public async Task<IActionResult> AddOrUpdateAssetAsync(
             string assetId,
@@ -155,6 +161,7 @@ namespace SortMyStuffAPI.Controllers
         }
 
         // DELETE /assets/{assetId}
+        [Authorize]
         [HttpDelete("{assetId}", Name = nameof(DeleteAssetByIdAsync))]
         public async Task<IActionResult> DeleteAssetByIdAsync(
             string assetId,

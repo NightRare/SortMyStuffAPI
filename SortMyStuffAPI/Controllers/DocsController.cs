@@ -7,6 +7,7 @@ using SortMyStuffAPI.Infrastructure;
 using SortMyStuffAPI.Models;
 using SortMyStuffAPI.Services;
 using SortMyStuffAPI.Utils;
+using Microsoft.AspNetCore.Authorization;
 
 namespace SortMyStuffAPI.Controllers
 {
@@ -29,6 +30,7 @@ namespace SortMyStuffAPI.Controllers
         }
 
         // GET /docs
+        [Authorize]
         [HttpGet(Name = nameof(GetDocs))]
         public IActionResult GetDocs()
         {
@@ -46,6 +48,7 @@ namespace SortMyStuffAPI.Controllers
 
 
         // GET /docs/{resourceType}
+        [Authorize]
         [HttpGet("{resourceType}", Name = nameof(GetDocsByType))]
         public IActionResult GetDocsByType(
             string resourceType,
@@ -60,6 +63,7 @@ namespace SortMyStuffAPI.Controllers
         }
 
         // GET /docs/{resourceType}/{resourceId}
+        [Authorize]
         [HttpGet("{resourceType}/{resourceId}", Name = nameof(GetDocsByResourceId))]
         public async Task<IActionResult> GetDocsByResourceId(
             string resourceType,
