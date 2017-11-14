@@ -14,5 +14,6 @@ namespace SortMyStuffAPI.Services
         public DbSet<CategoryEntity> Categories { get; set; }
         public DbSet<BaseDetailEntity> BaseDetails { get; set; }
         public DbSet<DetailEntity> Details { get; set; }
+        public DbSet<UserRootAssetEntity> UserRootAssetContracts { get; set; }
     }
 }

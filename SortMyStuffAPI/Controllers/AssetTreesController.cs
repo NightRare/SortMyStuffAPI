@@ -5,44 +5,41 @@ using Microsoft.Extensions.Options;
 using SortMyStuffAPI.Models;
 using SortMyStuffAPI.Services;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting;
+using SortMyStuffAPI.Infrastructure;
+using SortMyStuffAPI.Utils;
+using System.Collections.Generic;
 
 namespace SortMyStuffAPI.Controllers
 {
     [Route("/[controller]")]
     [ApiVersion("0.1")]
-    public class AssetTreesController : Controller
+    public class AssetTreesController : ApiBaseController
     {
-        private readonly IAssetDataService _ads;
-        private readonly ApiConfigs _apiConfigs;
+        private readonly IAssetDataService _assetDataService;
 
-        public AssetTreesController(IAssetDataService assetDataService, IOptions<ApiConfigs> apiConfigs)
+        public AssetTreesController(
+            IAssetDataService assetDataService, 
+            IOptions<ApiConfigs> apiConfigs,
+            IUserDataService userDataService,
+            IHostingEnvironment env,
+            IAuthorizationService authService)
+            : base(userDataService,
+                  apiConfigs,
+                  env,
+                  authService)
         {
-            _ads = assetDataService;
-            _apiConfigs = apiConfigs.Value;
-        }
-
-        // GET /assettrees/
-        [Authorize]
-        [HttpGet(Name = nameof(GetAssetTreesAsync))]
-        public async Task<IActionResult> GetAssetTreesAsync(CancellationToken ct)
-        {
-            var rootTree = await _ads.GetAssetTreeAsync(_apiConfigs.RootAssetId, ct);
-
-            var response = new Collection<AssetTree>
-            {
-                Self = Link.ToCollection(nameof(GetAssetTreesAsync)),
-                Value = new AssetTree[] { rootTree }
-            };
-
-            return Ok(response);
+            _assetDataService = assetDataService;
         }
 
         // GET /assettrees/{assetId}
         [Authorize]
-        [HttpGet("{assetTreeId}", Name = nameof(GetAssetTreeByIdAsync))]
-        public async Task<IActionResult> GetAssetTreeByIdAsync(string assetTreeId, CancellationToken ct)
+        [HttpGet("{assetId}", Name = nameof(GetAssetTreeByIdAsync))]
+        public async Task<IActionResult> GetAssetTreeByIdAsync(string assetId, CancellationToken ct)
         {
-            var assetTree = await _ads.GetAssetTreeAsync(assetTreeId, ct);
+            string userId = await GetUserId();
+
+            var assetTree = await _assetDataService.GetAssetTreeAsync(userId, assetId, ct);
             if (assetTree == null) return NotFound();
 
             return Ok(assetTree);

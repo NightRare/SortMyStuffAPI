@@ -8,22 +8,32 @@ using SortMyStuffAPI.Models;
 using SortMyStuffAPI.Services;
 using SortMyStuffAPI.Utils;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Options;
 
 namespace SortMyStuffAPI.Controllers
 {
     [Route("/[controller]")]
     [ApiVersion("0.1")]
-    public class DocsController : Controller
+    public class DocsController : ApiBaseController
     {
-        public const string AssetsTypeName = "assets";
-        public const string CategoriesTypeName = "categories";
+        public const string Assets = "assets";
+        public const string Categories = "categories";
 
         private readonly IAssetDataService _assetDataService;
         private readonly ICategoryDataService _categoryDataService;
 
         public DocsController(
             IAssetDataService assetDataService,
-            ICategoryDataService categoryDataService)
+            ICategoryDataService categoryDataService,
+            IOptions<ApiConfigs> apiConfigs,
+            IUserDataService userDataService,
+            IHostingEnvironment env,
+            IAuthorizationService authService)
+            : base(userDataService,
+                  apiConfigs,
+                  env,
+                  authService)
         {
             _assetDataService = assetDataService;
             _categoryDataService = categoryDataService;
@@ -39,7 +49,12 @@ namespace SortMyStuffAPI.Controllers
                 Self = Link.ToCollection(nameof(GetDocs)),
                 Value = new[]
                 {
-                    Link.ToCollection(nameof(GetDocsByType), new { resourceType = nameof(Asset).ToCamelCase() })
+                    Link.ToCollection(
+                        nameof(GetDocsByType),
+                        new { resourceType = Assets }),
+                    Link.ToCollection(
+                        nameof(GetDocsByType),
+                        new { resourceType = Categories })
                 }
             };
 
@@ -54,12 +69,21 @@ namespace SortMyStuffAPI.Controllers
             string resourceType,
             CancellationToken ct)
         {
-            if (resourceType.Equals(nameof(Asset), StringComparison.OrdinalIgnoreCase))
+            switch (resourceType.ToLower())
             {
-                return Ok(GetAssetDocs(nameof(GetDocsByType)));
+                case Assets:
+                    {
+                        return Ok(GetAssetDocs(null));
+                    }
+                case Categories:
+                    {
+                        return Ok(GetCategoryDocs(null));
+                    }
+                default:
+                    {
+                        return NotFound(new ApiError($"Resource type '{resourceType}' not found."));
+                    }
             }
-
-            return NotFound();
         }
 
         // GET /docs/{resourceType}/{resourceId}
@@ -70,17 +94,19 @@ namespace SortMyStuffAPI.Controllers
             string resourceId,
             CancellationToken ct)
         {
+            var userId = await GetUserId();
+
             switch (resourceType.ToLower())
             {
-                case AssetsTypeName:
+                case Assets:
                     {
-                        return await _assetDataService.GetResourceAsync(resourceId, ct) == null ?
+                        return await _assetDataService.GetResourceAsync(userId, resourceId, ct) == null ?
                             NotFound(new ApiError($"Resource '{resourceType}/{resourceId}' not found.")) :
                             Ok(GetAssetDocs(resourceId)) as IActionResult;
                     }
-                case CategoriesTypeName:
+                case Categories:
                     {
-                        return await _categoryDataService.GetResourceAsync(resourceId, ct) == null ?
+                        return await _categoryDataService.GetResourceAsync(userId, resourceId, ct) == null ?
                             NotFound(new ApiError($"Resource '{resourceType}/{resourceId}' not found.")) :
                             Ok(GetCategoryDocs(resourceId)) as IActionResult;
                     }
@@ -118,10 +144,8 @@ namespace SortMyStuffAPI.Controllers
 
             var response = new Documentation
             {
-                Self = Link.ToCollection(
-                    nameof(GetDocsByResourceId), 
-                    new { resourceType = CategoriesTypeName }),
-                ResourceType = CategoriesTypeName,
+                Self = GenerateSelfLink(Categories, categoryId),
+                ResourceType = Categories,
                 Value = list.ToArray()
             };
 
@@ -155,14 +179,30 @@ namespace SortMyStuffAPI.Controllers
 
             var response = new Documentation
             {
-                Self = Link.ToCollection(
-                    nameof(GetDocsByResourceId), 
-                    new { resourceType = AssetsTypeName }),
-                ResourceType = AssetsTypeName,
+                Self = GenerateSelfLink(Assets, assetId),
+                ResourceType = Assets,
                 Value = list.ToArray()
             };
 
             return response;
+        }
+
+        private static Link GenerateSelfLink(string type, string id)
+        {
+            return id == null ?
+                Link.ToCollection(
+                    nameof(GetDocsByType),
+                    new
+                    {
+                        resourceType = type,
+                    }) :
+                Link.ToCollection(
+                    nameof(GetDocsByResourceId),
+                    new
+                    {
+                        resourceType = type,
+                        resourceId = id
+                    });
         }
     }
 }

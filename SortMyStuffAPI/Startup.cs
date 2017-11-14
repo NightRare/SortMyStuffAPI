@@ -17,6 +17,7 @@ using SortMyStuffAPI.Services;
 using SortMyStuffAPI.Utils;
 using SortMyStuffAPI.Models;
 using AspNet.Security.OAuth.Validation;
+using Microsoft.AspNetCore.Mvc.Authorization;
 
 namespace SortMyStuffAPI
 {
@@ -63,8 +64,8 @@ namespace SortMyStuffAPI
 
             services.AddAuthorization(opt =>
             {
-                opt.AddPolicy(ApiStrings.PolicyAdmin,
-                    p => p.RequireAuthenticatedUser().RequireRole(ApiStrings.RoleAdmin));
+                opt.AddPolicy(ApiStrings.PolicyDeveloper,
+                    p => p.RequireAuthenticatedUser().RequireRole(ApiStrings.RoleDeveloper));
             });
 
             // Map some of the default claim names to the proper OpenID Connect claim names
@@ -148,16 +149,17 @@ namespace SortMyStuffAPI
                 // Add test roles and users in development
                 using (var scope = app.ApplicationServices.GetRequiredService<IServiceScopeFactory>().CreateScope())
                 {
+                    var dbContext = app.ApplicationServices.GetRequiredService<SortMyStuffContext>();
+
                     var roleManager = scope.ServiceProvider
                         .GetRequiredService<RoleManager<UserRoleEntity>>();
                     var userManager = scope.ServiceProvider
                         .GetRequiredService<UserManager<UserEntity>>();
                     TestDataRepository.LoadRolesAndUsers(roleManager, userManager).Wait();
-                }
 
-                // Add test data in development
-                var dbContext = app.ApplicationServices.GetRequiredService<SortMyStuffContext>();
-                TestDataRepository.LoadData(dbContext);
+                    // Add test data in development
+                    TestDataRepository.LoadData(dbContext, userManager);
+                }
             }
 
             // include HSTS header

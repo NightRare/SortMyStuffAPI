@@ -4,22 +4,32 @@ using Microsoft.AspNetCore.Mvc;
 using SortMyStuffAPI.Models;
 using SortMyStuffAPI.Services;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Options;
 
 namespace SortMyStuffAPI.Controllers
 {
     [Route("/[controller]")]
     [ApiVersion("0.1")]
-    public class ThumbnailsController : Controller
+    public class ThumbnailsController : ApiBaseController
     {
         private readonly IThumbnailFileService _thumbnailService;
         private readonly IAssetDataService _assetDataService;
 
         public ThumbnailsController(
-            IThumbnailFileService thumbnailService, 
-            IAssetDataService assetDataService)
+            IUserDataService userDataService, 
+            IOptions<ApiConfigs> apiConfigs, 
+            IHostingEnvironment env, 
+            IAuthorizationService authService,
+            IThumbnailFileService thumbnailService,
+            IAssetDataService assetService) 
+            : base(userDataService, 
+                  apiConfigs, 
+                  env, 
+                  authService)
         {
             _thumbnailService = thumbnailService;
-            _assetDataService = assetDataService;
+            _assetDataService = assetService;
         }
 
         // GET /thumbnails/{assetId}.jpg
@@ -27,10 +37,12 @@ namespace SortMyStuffAPI.Controllers
         [HttpGet("{assetId}.jpg", Name = nameof(GetThumbnailByIdAsync))]
         public async Task<IActionResult> GetThumbnailByIdAsync(string assetId, CancellationToken ct)
         {
-            if (await _assetDataService.GetResourceAsync(assetId, ct) == null)
+            var userId = await GetUserId();
+
+            if (await _assetDataService.GetResourceAsync(userId, assetId, ct) == null)
                 return NotFound(new ApiError("Asset id not found."));
 
-            var stream = await _thumbnailService.DownloadThumbnail(assetId, ct);
+            var stream = await _thumbnailService.DownloadThumbnail(userId, assetId, ct);
 
             if (stream == null)
                 return BadRequest(new ApiError("Downloading image file failed."));

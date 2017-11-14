@@ -49,17 +49,19 @@ namespace SortMyStuffAPI.Utils
 
         public const string EnvFirebaseApiKey = "FIREBASE_API_KEY";
 
-        public const string EnvFirebaseAuthEmail = "FIREBASE_AUTH_EMAIL";
+        public const string EnvDeveloperEmail = "DEVELOPER_EMAIL";
 
-        public const string EnvFirebaseAuthPassword = "FIREBASE_AUTH_PASSWORD";
+        public const string EnvDeveloperPassword = "DEVELOPER_PASSWORD";
+
+        public const string EnvDeveloperUid = "DEVELOPER_UID";
 
         #endregion
 
         #region AUTHORISATION NAMES
 
-        public const string RoleAdmin = "Admin";
+        public const string RoleDeveloper = "DeveloperRole";
 
-        public const string PolicyAdmin = "AdminPolicy";
+        public const string PolicyDeveloper = "DeveloperPolicy";
 
         #endregion
 

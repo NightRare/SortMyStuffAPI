@@ -12,11 +12,11 @@ namespace SortMyStuffAPI.Models
 
         public DateTimeOffset CreateTimestamp { get; set; }
 
-        public string RootAssetId { get; set; }
+        public string RootAssetContractId { get; set; }
 
 
-        [ForeignKey(nameof(RootAssetId))]
-        public virtual AssetEntity RootAsset { get; set; }
+        [ForeignKey(nameof(RootAssetContractId))]
+        public UserRootAssetEntity RootAssetContract { get; set; }
 
         public virtual ICollection<AssetEntity> Assets { get; set; }
 
@@ -26,5 +26,25 @@ namespace SortMyStuffAPI.Models
 
         public virtual ICollection<DetailEntity> Details { get; set; }
 
+        [NotMapped]
+        public string UserId
+        {
+            get { return Id; }
+            set { }
+        }
+
+        [NotMapped]
+        public string RootAssetId
+        {
+            get { return RootAssetContract?.RootAssetId; }
+            set { }
+        }
+
+        [NotMapped]
+        public AssetEntity RootAsset
+        {
+            get { return RootAssetContract?.RootAsset; }
+            set { }
+        }
     }
 }

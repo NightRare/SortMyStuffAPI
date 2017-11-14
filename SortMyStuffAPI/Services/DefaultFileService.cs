@@ -24,7 +24,9 @@ namespace SortMyStuffAPI.Services
         private ApiConfigs _apiConfigs;
         private ILocalResourceService _localRes;
 
-        public DefaultFileService(IOptions<ApiConfigs> apiConfigs, ILocalResourceService localResourceService)
+        public DefaultFileService(
+            IOptions<ApiConfigs> apiConfigs, 
+            ILocalResourceService localResourceService)
         {
             _apiConfigs = apiConfigs.Value;
             _localRes = localResourceService;
@@ -33,7 +35,10 @@ namespace SortMyStuffAPI.Services
 
         #region IThumbnailFileService METHODS
 
-        public async Task<Stream> DownloadThumbnail(string id, CancellationToken ct)
+        public async Task<Stream> DownloadThumbnail(
+            string userId,
+            string id, 
+            CancellationToken ct)
         {
             await InitialiseFirebaseStorage();
 
@@ -41,7 +46,7 @@ namespace SortMyStuffAPI.Services
             {
                 var downloadUrl = await _storage
                     .Child(_apiConfigs.StorageUserData)
-                    .Child(TestUser)
+                    .Child(userId)
                     .Child(_apiConfigs.StorageThumbnails)
                     .Child(id + _apiConfigs.ImageFormat)
                     .GetDownloadUrlAsync();
@@ -60,7 +65,10 @@ namespace SortMyStuffAPI.Services
 
         #region IPhotoFileService METHODS
 
-        public async Task<Stream> DownloadPhoto(string id, CancellationToken ct)
+        public async Task<Stream> DownloadPhoto(
+            string userId,
+            string id, 
+            CancellationToken ct)
         {
             await InitialiseFirebaseStorage();
 
@@ -68,7 +76,7 @@ namespace SortMyStuffAPI.Services
             {
                 var downloadUrl = await _storage
                     .Child(_apiConfigs.StorageUserData)
-                    .Child(TestUser)
+                    .Child(userId)
                     .Child(_apiConfigs.StoragePhotos)
                     .Child(id + _apiConfigs.ImageFormat)
                     .GetDownloadUrlAsync();
@@ -82,7 +90,11 @@ namespace SortMyStuffAPI.Services
             }
         }
 
-        public async Task<bool> UploadPhoto(string id, Stream photo, CancellationToken ct)
+        public async Task<bool> UploadPhoto(
+            string userId,
+            string id, 
+            Stream photo, 
+            CancellationToken ct)
         {
             await InitialiseFirebaseStorage();
 
@@ -93,14 +105,14 @@ namespace SortMyStuffAPI.Services
                 photo.Position = 0;
                 await _storage
                     .Child(_apiConfigs.StorageUserData)
-                    .Child(TestUser)
+                    .Child(userId)
                     .Child(_apiConfigs.StoragePhotos)
                     .Child(id + _apiConfigs.ImageFormat)
                     .PutAsync(photo, ct);
 
                 await _storage
                     .Child(_apiConfigs.StorageUserData)
-                    .Child(TestUser)
+                    .Child(userId)
                     .Child(_apiConfigs.StorageThumbnails)
                     .Child(id + _apiConfigs.ImageFormat)
                     .PutAsync(ToThumbnail(photo), ct);
@@ -114,7 +126,10 @@ namespace SortMyStuffAPI.Services
             return true;
         }
 
-        public Task<bool> DeletePhoto(string id, CancellationToken ct)
+        public Task<bool> DeletePhoto(
+            string userId,
+            string id, 
+            CancellationToken ct)
         {
             throw new NotImplementedException();
         }
@@ -130,8 +145,8 @@ namespace SortMyStuffAPI.Services
 
             var bucket = Environment.GetEnvironmentVariable(ApiStrings.EnvFirebaseStorageUrl);
             var apiKey = Environment.GetEnvironmentVariable(ApiStrings.EnvFirebaseApiKey);
-            var email = Environment.GetEnvironmentVariable(ApiStrings.EnvFirebaseAuthEmail);
-            var password = Environment.GetEnvironmentVariable(ApiStrings.EnvFirebaseAuthPassword);
+            var email = Environment.GetEnvironmentVariable(ApiStrings.EnvDeveloperEmail);
+            var password = Environment.GetEnvironmentVariable(ApiStrings.EnvDeveloperPassword);
 
             var auth = new FirebaseAuthProvider(new FirebaseConfig(apiKey));
             var a = await auth.SignInWithEmailAndPasswordAsync(email, password);

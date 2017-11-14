@@ -22,6 +22,8 @@ namespace SortMyStuffAPI.Models
 
         public Link ContentAssets { get; set; }
 
+        public Link AssetTree { get; set; }
+
         public Link Thumbnail { get; set; }
 
         public Link Photo { get; set; }

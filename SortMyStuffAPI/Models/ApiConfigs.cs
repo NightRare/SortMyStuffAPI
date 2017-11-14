@@ -4,7 +4,7 @@ namespace SortMyStuffAPI.Models
 {
     public class ApiConfigs
     {
-        public string RootAssetId { get; set; }
+        public bool AllowAnonymous { get; set; }
 
         public string StorageAppData { get; set; }
         public string StorageUserData { get; set; }

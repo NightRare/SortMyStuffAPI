@@ -21,6 +21,9 @@ namespace SortMyStuffAPI.Infrastructure
                 .ForMember(dest => dest.Path, opt => opt.MapFrom(src =>
                     Link.ToCollection(nameof(Controllers.AssetsController.GetAssetPathByIdAsync), new { assetId = src.Id })))
 
+                .ForMember(dest => dest.AssetTree, opt => opt.MapFrom(src =>
+                    Link.To(nameof(Controllers.AssetTreesController.GetAssetTreeByIdAsync), new { assetId = src.Id })))
+
                 .ForMember(dest => dest.Thumbnail, opt => opt.MapFrom(src =>
                     Link.To(nameof(Controllers.ThumbnailsController.GetThumbnailByIdAsync), new { assetId = src.Id })))
 
@@ -36,7 +39,7 @@ namespace SortMyStuffAPI.Infrastructure
                     src.Id == "rootassetid" ?
                     null : Link.ToCollection(
                             nameof(Controllers.DocsController.GetDocsByResourceId),
-                            new { resourceType = Controllers.DocsController.AssetsTypeName, resourceId = src.Id })));
+                            new { resourceType = Controllers.DocsController.Assets, resourceId = src.Id })));
 
             CreateMap<Asset, AssetEntity>();
 
@@ -64,7 +67,7 @@ namespace SortMyStuffAPI.Infrastructure
                 .ForMember(dest => dest.FormSpecs, opt => opt.MapFrom(src =>
                     Link.ToCollection(
                             nameof(Controllers.DocsController.GetDocsByResourceId),
-                            new { resourceType = Controllers.DocsController.CategoriesTypeName, resourceId = src.Id })));
+                            new { resourceType = Controllers.DocsController.Categories, resourceId = src.Id })));
 
             CreateMap<Category, CategoryEntity>()
                 .ForMember(dest => dest.BaseDetails, opt => opt.Ignore())

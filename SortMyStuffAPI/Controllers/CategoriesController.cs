@@ -8,21 +8,32 @@ using Microsoft.Extensions.Options;
 using SortMyStuffAPI.Models;
 using SortMyStuffAPI.Services;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting;
+using SortMyStuffAPI.Utils;
+using SortMyStuffAPI.Infrastructure;
 
 namespace SortMyStuffAPI.Controllers
 {
     [Route("/[controller]")]
     [ApiVersion("0.1")]
     public class CategoriesController :
-        JsonResourcesController<Category, CategoryEntity>
+        EntityResourceBaseController<Category, CategoryEntity>
     {
         private readonly ICategoryDataService _categoryDataService;
 
         public CategoriesController(
             ICategoryDataService categoryDataService,
             IOptions<PagingOptions> pagingOptions,
-            IOptions<ApiConfigs> apiConfigs) :
-            base(categoryDataService, pagingOptions, apiConfigs)
+            IOptions<ApiConfigs> apiConfigs,
+            IUserDataService userDataService,
+            IHostingEnvironment env,
+            IAuthorizationService authService) :
+            base(categoryDataService, 
+                pagingOptions, 
+                apiConfigs, 
+                userDataService,
+                env,
+                authService)
         {
             _categoryDataService = categoryDataService;
         }
@@ -61,8 +72,10 @@ namespace SortMyStuffAPI.Controllers
         {
             if (!ModelState.IsValid) return BadRequest(new ApiError(ModelState));
 
+            string userId = await GetUserId();
+
             ApiError error;
-            if ((error = await CheckNameConflict(body.Name, ct)) != null)
+            if ((error = await CheckNameConflict(userId, body.Name, ct)) != null)
                 return BadRequest(error);
 
             var category = new Category
@@ -71,9 +84,13 @@ namespace SortMyStuffAPI.Controllers
                 Name = body.Name
             };
 
-            await _categoryDataService.AddOrUpdateAssetAsync(category, ct);
+            var result = await _categoryDataService.AddCategoryAsync(userId, category, ct);
+            if (!result.Succeeded)
+            {
+                return BadRequest(new ApiError("Create category failed.", result.Error));
+            }
 
-            var categoryCreated = await _categoryDataService.GetResourceAsync(category.Id, ct);
+            var categoryCreated = await _categoryDataService.GetResourceAsync(userId, category.Id, ct);
 
             return Created(
                 Url.Link(nameof(GetCategoryByIdAsync),
@@ -91,25 +108,41 @@ namespace SortMyStuffAPI.Controllers
         {
             if (!ModelState.IsValid) return BadRequest(new ApiError(ModelState));
 
-            var record = await _categoryDataService.GetResourceAsync(categoryId, ct);
+            string userId = await GetUserId();
+
+            var record = await _categoryDataService.GetResourceAsync(userId, categoryId, ct);
+
+            // [Start Create Category]
             if (record == null)
             {
-                if (!Guid.TryParse(categoryId, out var result))
-                    return BadRequest(new ApiError("The assetId must be a correctly formatted Guid."));
+                userId = await GetUserId();
+
+                if (!Guid.TryParse(categoryId, out var guid))
+                    return BadRequest(new ApiError("The categoryId must be a correctly formatted Guid."));
 
                 ApiError error;
-                if ((error = await CheckNameConflict(body.Name, ct)) != null)
+                if ((error = await CheckNameConflict(userId, body.Name, ct)) != null)
                     return BadRequest(error);
 
                 var category = Mapper.Map<CategoryForm, Category>(body);
                 category.Id = categoryId;
-                await _categoryDataService.AddOrUpdateAssetAsync(category, ct);
+                var createResult = await _categoryDataService.AddCategoryAsync(userId, category, ct);
+                if (!createResult.Succeeded)
+                {
+                    return BadRequest(new ApiError("Create category failed.", createResult.Error));
+                }
+
                 return Ok();
             }
+            // [End Create Category]
 
             record.Name = body.Name;
 
-            await _categoryDataService.AddOrUpdateAssetAsync(record, ct);
+            var updateResult = await _categoryDataService.UpdateCategoryAsync(userId, record, ct);
+            if (!updateResult.Succeeded)
+            {
+                return BadRequest(new ApiError("Update category failed.", updateResult.Error));
+            }
 
             return Ok();
         }
@@ -121,10 +154,12 @@ namespace SortMyStuffAPI.Controllers
             string categoryId,
             CancellationToken ct)
         {
+            var userId = await GetUserId();
+
             // TODO: delete the base details first
             try
             {
-                await _categoryDataService.DeleteCategoryAsync(categoryId, ct);
+                await _categoryDataService.DeleteCategoryAsync(userId, categoryId, ct);
             }
             catch (KeyNotFoundException)
             {
@@ -140,9 +175,12 @@ namespace SortMyStuffAPI.Controllers
 
         #region PRIVATE METHODS
 
-        private async Task<ApiError> CheckNameConflict(string newName, CancellationToken ct)
+        private async Task<ApiError> CheckNameConflict(
+            string userId, 
+            string newName, 
+            CancellationToken ct)
         {
-            var conflict = await _categoryDataService.GetCategoryByNameAsync(newName, ct);
+            var conflict = await _categoryDataService.GetCategoryByNameAsync(userId, newName, ct);
             if (conflict != null)
             {
                 var msg = "Name conflict with existing category";

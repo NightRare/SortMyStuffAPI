@@ -10,6 +10,9 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 using SortMyStuffAPI.Infrastructure;
 using System.Security.Claims;
+using System.Data.Entity;
+using System.Data.Entity.Infrastructure;
+using SortMyStuffAPI.Utils;
 
 namespace SortMyStuffAPI.Services
 {
@@ -39,11 +42,15 @@ namespace SortMyStuffAPI.Services
 
         #region IAssetDataService METHODS
 
-        public async Task<AssetTree> GetAssetTreeAsync(string id, CancellationToken ct)
+        public async Task<AssetTree> GetAssetTreeAsync(
+            string userId,
+            string id,
+            CancellationToken ct)
         {
+            var repo = GetUserRepository(userId, _context.Assets);
             var tree = await Task.Run(() =>
             {
-                var entity = _context.Assets.SingleOrDefault(a => a.Id == id);
+                var entity = repo.SingleOrDefault(a => a.Id == id);
                 return entity == null ? null : ConvertToAssetTree(entity);
             }, ct);
 
@@ -51,22 +58,27 @@ namespace SortMyStuffAPI.Services
         }
 
         async Task<Asset> IDataService<Asset, AssetEntity>.GetResourceAsync(
+            string userId,
             string id,
-            CancellationToken ct,
-            string userId = null)
+            CancellationToken ct)
         {
-            return await GetResourceAsync<Asset, AssetEntity>(_context.Assets, id, ct);
+            return await GetResourceAsync<Asset, AssetEntity>(
+                _context.Assets,
+                userId,
+                id,
+                ct);
         }
 
         public async Task<PagedResults<Asset>> GetResouceCollectionAsync(
+            string userId,
             CancellationToken ct,
             PagingOptions pagingOptions = null,
             SortOptions<Asset, AssetEntity> sortOptions = null,
-            SearchOptions<Asset, AssetEntity> searchOptions = null,
-            string userId = null)
+            SearchOptions<Asset, AssetEntity> searchOptions = null)
         {
             return await GetOneTypeResourcesAsync(
                 _context.Assets,
+                userId,
                 ct,
                 pagingOptions,
                 sortOptions,
@@ -74,50 +86,102 @@ namespace SortMyStuffAPI.Services
         }
 
         public async Task<IEnumerable<PathUnit>> GetAssetPathAsync(
+            string userId,
             string id,
             CancellationToken ct)
         {
-            var allParents = await Task.Run(() => GetAllParents(id), ct);
+            var allParents = await Task.Run(() => GetAllParents(userId, id), ct);
             var pathUnits = new List<PathUnit>();
             foreach (var entity in allParents)
             {
                 pathUnits.Add(new PathUnit
                 {
                     Name = entity.Name,
-                    Asset = Link.To(nameof(Controllers.AssetsController.GetAssetByIdAsync), new { assetId = entity.Id })
+                    Asset = Link.To(nameof(
+                        Controllers.AssetsController.GetAssetByIdAsync),
+                        new { assetId = entity.Id })
                 });
             }
 
             return pathUnits;
         }
 
-        public async Task AddOrUpdateAssetAsync(Asset asset, CancellationToken ct)
+        public async Task<(bool Succeeded, string Error)> AddAssetAsync(
+            string userId,
+            Asset asset,
+            CancellationToken ct)
         {
-            var entity = await Task.Run(() => _context.Assets.SingleOrDefault(a => a.Id == asset.Id), ct);
-            if (entity == null)
+            if (userId == null)
+                return (false, "The userId cannot be null.");
+
+            var repo = GetUserRepository(userId, _context.Assets);
+
+            if (repo.Any(a => a.Id == asset.Id))
+                return (false, "Asset already exists");
+
+            var entity = Mapper.Map<Asset, AssetEntity>(asset);
+            entity.UserId = userId;
+
+            return await Task.Run(() =>
             {
-                _context.Assets.Add(Mapper.Map<Asset, AssetEntity>(asset));
-            }
-            else
+                _context.Assets.Add(entity);
+
+                try
+                {
+                    _context.SaveChanges();
+                }
+                catch (DbUpdateException ex)
+                {
+                    return (false, ex.Message);
+                }
+
+                return (true, null);
+            }, ct);
+        }
+
+        public async Task<(bool Succeeded, string Error)> UpdateAssetAsync(
+            string userId,
+            Asset asset,
+            CancellationToken ct)
+        {
+            var repo = GetUserRepository(userId, _context.Assets);
+            return await Task.Run(() =>
             {
+                var entity = repo.SingleOrDefault(a => a.Id == asset.Id);
+                if (entity == null)
+                    return (false, "Asset not found");
+
                 entity.Name = asset.Name;
                 entity.CategoryId = asset.CategoryId;
                 entity.ContainerId = asset.ContainerId;
                 entity.CreateTimestamp = asset.CreateTimestamp;
                 entity.ModifyTimestamp = asset.ModifyTimestamp;
-            }
 
-            _context.SaveChanges();
+                try
+                {
+                    _context.SaveChanges();
+                }
+                catch (DbUpdateException ex)
+                {
+                    return (false, ex.Message);
+                }
+                return (true, null);
+            }, ct);
         }
 
-        public async Task DeleteAssetAsync(string id, bool delOnlySelf, CancellationToken ct)
+        public async Task DeleteAssetAsync(
+            string userId,
+            string id,
+            bool delOnlySelf,
+            CancellationToken ct)
         {
-            var delAsset = await Task.Run(() => _context.Assets.SingleOrDefault(a => a.Id == id), ct);
+            var repo = GetUserRepository(userId, _context.Assets);
+            var delAsset = await Task.Run(() => repo.SingleOrDefault(a => a.Id == id), ct);
             if (delAsset == null) throw new KeyNotFoundException();
 
             if (delOnlySelf)
             {
-                var contents = await Task.Run(() => _context.Assets.Where(a => a.ContainerId == id), ct);
+                var contents = await Task.Run(() => repo.Where(a => a.ContainerId == id), ct);
                 foreach (var asset in contents)
                 {
                     asset.ContainerId = delAsset.ContainerId;
@@ -138,19 +202,19 @@ namespace SortMyStuffAPI.Services
         #region IDetailDataService METHODS
 
         async Task<Detail> IDataService<Detail, DetailEntity>.GetResourceAsync(
+            string userId,
             string id,
-            CancellationToken ct,
-            string userId = null)
+            CancellationToken ct)
         {
             throw new System.NotImplementedException();
         }
 
         public Task<PagedResults<Detail>> GetResouceCollectionAsync(
+            string userId,
             CancellationToken ct,
             PagingOptions pagingOptions = null,
             SortOptions<Detail, DetailEntity> sortOptions = null,
-            SearchOptions<Detail, DetailEntity> searchOptions = null,
-            string userId = null)
+            SearchOptions<Detail, DetailEntity> searchOptions = null)
         {
             throw new System.NotImplementedException();
         }
@@ -161,54 +225,112 @@ namespace SortMyStuffAPI.Services
         #region ICategoryDataService METHODS
 
         async Task<Category> IDataService<Category, CategoryEntity>.GetResourceAsync(
+            string userId,
             string id,
-            CancellationToken ct,
-            string userId = null)
+            CancellationToken ct)
         {
-            return await GetResourceAsync<Category, CategoryEntity>(_context.Categories, id, ct);
+            return await GetResourceAsync<Category, CategoryEntity>(
+                _context.Categories,
+                userId,
+                id,
+                ct);
         }
 
         public async Task<PagedResults<Category>> GetResouceCollectionAsync(
+            string userId,
             CancellationToken ct,
             PagingOptions pagingOptions = null,
             SortOptions<Category, CategoryEntity> sortOptions = null,
-            SearchOptions<Category, CategoryEntity> searchOptions = null,
-            string userId = null)
+            SearchOptions<Category, CategoryEntity> searchOptions = null)
         {
             return await GetOneTypeResourcesAsync(
                 _context.Categories,
+                userId,
                 ct,
                 pagingOptions,
                 sortOptions,
                 searchOptions);
         }
 
-        public async Task<Category> GetCategoryByNameAsync(string name, CancellationToken ct)
+        public async Task<Category> GetCategoryByNameAsync(
+            string userId,
+            string name,
+            CancellationToken ct)
         {
+            var repo = GetUserRepository(userId, _context.Categories);
+
             var entity = await Task.Run(() =>
-                _context.Categories.SingleOrDefault(c =>
+                repo.SingleOrDefault(c =>
                     c.Name.Equals(name, StringComparison.OrdinalIgnoreCase)));
             return entity == null ? null : Mapper.Map<CategoryEntity, Category>(entity);
         }
 
-        public async Task AddOrUpdateAssetAsync(Category category, CancellationToken ct)
+        public async Task<(bool Succeeded, string Error)> AddCategoryAsync(
+            string userId,
+            Category catgeory,
+            CancellationToken ct)
         {
-            var entity = await Task.Run(() => _context.Categories.SingleOrDefault(c => c.Id == category.Id), ct);
-            if (entity == null)
-            {
-                _context.Categories.Add(Mapper.Map<Category, CategoryEntity>(category));
-            }
-            else
-            {
-                entity.Name = category.Name;
-            }
+            if (userId == null)
+                return (false, "The userId cannot be null.");
 
-            _context.SaveChanges();
+            var repo = GetUserRepository(userId, _context.Categories);
+
+            if (repo.Any(c => c.Id == catgeory.Id))
+                return (false, "Asset already exists");
+
+            var entity = Mapper.Map<Category, CategoryEntity>(catgeory);
+            entity.UserId = userId;
+
+            return await Task.Run(() =>
+            {
+                _context.Categories.Add(entity);
+
+                try
+                {
+                    _context.SaveChanges();
+                }
+                catch (DbUpdateException ex)
+                {
+                    return (false, ex.Message);
+                }
+
+                return (true, null);
+            }, ct);
         }
 
-        public async Task DeleteCategoryAsync(string id, CancellationToken ct)
+        public async Task<(bool Succeeded, string Error)> UpdateCategoryAsync(
+            string userId,
+            Category catgeory,
+            CancellationToken ct)
         {
-            var delCategory = await Task.Run(() => _context.Categories.SingleOrDefault(c => c.Id == id), ct);
+            var repo = GetUserRepository(userId, _context.Categories);
+            return await Task.Run(() =>
+            {
+                var entity = repo.SingleOrDefault(c => c.Id == catgeory.Id);
+                if (entity == null)
+                    return (false, "Category not found");
+
+                entity.Name = catgeory.Name;
+
+                try
+                {
+                    _context.SaveChanges();
+                }
+                catch (DbUpdateException ex)
+                {
+                    return (false, ex.Message);
+                }
+                return (true, null);
+            }, ct);
+        }
+
+        public async Task DeleteCategoryAsync(
+            string userId,
+            string id,
+            CancellationToken ct)
+        {
+            var repo = GetUserRepository(userId, _context.Categories);
+            var delCategory = await Task.Run(() => repo.SingleOrDefault(c => c.Id == id), ct);
             if (delCategory == null) throw new KeyNotFoundException();
 
             // reference key integrity
@@ -226,22 +348,29 @@ namespace SortMyStuffAPI.Services
         #region IUserDataService METHODS
 
         async Task<User> IDataService<User, UserEntity>.GetResourceAsync(
+            string userId,
             string id,
-            CancellationToken ct,
-            string userId = null)
+            CancellationToken ct)
         {
-            return await GetResourceAsync<User, UserEntity>(_context.Users, id, ct);
+            // always pass in developer id
+            return await GetResourceAsync<User, UserEntity>(
+                _context.Users, 
+                ServicesAuthHelper.DeveloperUid, 
+                id, 
+                ct);
         }
 
         public async Task<PagedResults<User>> GetResouceCollectionAsync(
+            string userId,
             CancellationToken ct,
             PagingOptions pagingOptions = null,
             SortOptions<User, UserEntity> sortOptions = null,
-            SearchOptions<User, UserEntity> searchOptions = null,
-            string userId = null)
+            SearchOptions<User, UserEntity> searchOptions = null)
         {
+            // ignore userId
             return await GetOneTypeResourcesAsync(
                 _context.Users,
+                ServicesAuthHelper.DeveloperUid,
                 ct,
                 pagingOptions,
                 sortOptions,
@@ -272,13 +401,37 @@ namespace SortMyStuffAPI.Services
 
         public async Task<User> GetUserAsync(ClaimsPrincipal user)
         {
-            var entity = await _userManager.GetUserAsync(user);
-            return Mapper.Map<UserEntity, User>(entity);
+            return Mapper.Map<UserEntity, User>(await GetUserEntityAsync(user));
+        }
+
+        public async Task<User> GetUserByIdAsync(string id)
+        {
+            return Mapper.Map<UserEntity, User>(await GetUserEntityByIdAsync(id));
+        }
+
+        public async Task<User> GetUserByEmailAsync(string email)
+        {
+            return Mapper.Map<UserEntity, User>(await GetUserEntityByEmailAsync(email));
         }
 
         public async Task<UserEntity> GetUserEntityAsync(ClaimsPrincipal user)
         {
             return await _userManager.GetUserAsync(user);
+        }
+
+        public async Task<UserEntity> GetUserEntityByIdAsync(string id)
+        {
+            return await _userManager.FindByIdAsync(id);
+        }
+
+        public async Task<UserEntity> GetUserEntityByEmailAsync(string email)
+        {
+            return await _userManager.FindByEmailAsync(email);
+        }
+
+        public async Task<string> GetUserIdAsync(ClaimsPrincipal user)
+        {
+            return await Task.Run(() => _userManager.GetUserId(user));
         }
 
         #endregion
@@ -288,13 +441,14 @@ namespace SortMyStuffAPI.Services
 
         private async Task<PagedResults<T>> GetOneTypeResourcesAsync<T, TEntity>(
             IQueryable<TEntity> dbSet,
+            string userId,
             CancellationToken ct,
             PagingOptions pagingOptions = null,
             SortOptions<T, TEntity> sortOptions = null,
-            SearchOptions<T, TEntity> searchOptions = null,
-            string userId = null) where TEntity : IEntity
+            SearchOptions<T, TEntity> searchOptions = null)
+            where TEntity : IEntity
         {
-            IQueryable<TEntity> query = dbSet;
+            IQueryable<TEntity> query = GetUserRepository(userId, dbSet);
 
             if (searchOptions != null)
             {
@@ -331,23 +485,54 @@ namespace SortMyStuffAPI.Services
 
         private async Task<T> GetResourceAsync<T, TEntity>(
             IQueryable<TEntity> dbSet,
+            string userId,
             string id,
-            CancellationToken ct,
-            string userId = null) where TEntity : IEntity
+            CancellationToken ct)
+            where TEntity : IEntity
         {
-            var entity = await Task.Run(() => dbSet.SingleOrDefault(a => a.Id == id), ct);
+            var repo = GetUserRepository(userId, dbSet);
+
+            var entity = await Task.Run(() => repo.SingleOrDefault(a => a.Id == id), ct);
             return entity == null ? default(T) : Mapper.Map<TEntity, T>(entity);
         }
 
-        private IEnumerable<AssetEntity> GetAllParents(string id)
+        private IEnumerable<AssetEntity> GetAllParents(
+            string userId,
+            string id)
         {
-            var entity = _context.Assets.SingleOrDefault(a => a.Id == id);
+            // Unsafe, for admin query
+            // [Start of unsafe code]
+            if (userId == null)
+            {
+                var ent = _context.Assets.SingleOrDefault(a => a.Id == id);
+                if (ent == null) throw new KeyNotFoundException();
+                yield return ent;
+
+                // the containerId and the categoryId of the root asset should be null
+                while (ent.ContainerId != null && ent.CategoryId != null)
+                {
+                    ent = _context.Assets.SingleOrDefault(a => a.Id == id);
+                    if (ent == null) yield break;
+                    yield return ent;
+                }
+
+                yield break;
+            }
+            // [End of unsafe code]
+
+            var user = GetUserEntityByIdAsync(userId).GetAwaiter().GetResult();
+            if (user == null)
+                throw new KeyNotFoundException();
+
+            var repo = GetUserRepository(userId, _context.Assets);
+            var entity = repo.SingleOrDefault(a => a.Id == id);
+
             if (entity == null) throw new KeyNotFoundException();
             yield return entity;
 
-            while (!entity.Id.Equals(_apiConfigs.RootAssetId))
+            while (!user.RootAssetId.Equals(id))
             {
-                entity = _context.Assets.SingleOrDefault(a => a.Id == entity.ContainerId);
+                entity = repo.SingleOrDefault(a => a.Id == entity.ContainerId);
                 if (entity == null) yield break;
                 yield return entity;
             }
@@ -385,6 +570,17 @@ namespace SortMyStuffAPI.Services
                 DeleteAsset(asset);
             }
             _context.Assets.Remove(entity);
+        }
+
+        private IQueryable<TEntity> GetUserRepository<TEntity>(
+            string userId,
+            IQueryable<TEntity> dbSet)
+            where TEntity : IEntity
+        {
+            if (ServicesAuthHelper.IsDeveloper(userId))
+                return dbSet;
+
+            return dbSet.Where(e => e.UserId == userId);
         }
 
         #endregion

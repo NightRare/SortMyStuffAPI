@@ -8,26 +8,28 @@ using SortMyStuffAPI.Models;
 using SortMyStuffAPI.Services;
 using Microsoft.AspNetCore.Authorization;
 using SortMyStuffAPI.Utils;
+using Microsoft.AspNetCore.Hosting;
 
 namespace SortMyStuffAPI.Controllers
 {
     [Route("/[controller]")]
     [ApiVersion("0.1")]
     public class UsersController :
-        JsonResourcesController<User, UserEntity>
+        EntityResourceBaseController<User, UserEntity>
     {
-        private readonly IUserDataService _userDataService;
-        private readonly IAuthorizationService _authorizationService;
-
         public UsersController(
-            IUserDataService dataService,
-            IOptions<PagingOptions> defaultPagingOptions,
-            IOptions<ApiConfigs> apiConfigs,
-            IAuthorizationService authorizationService)
-            : base(dataService, defaultPagingOptions, apiConfigs)
+            IOptions<PagingOptions> defaultPagingOptions, 
+            IOptions<ApiConfigs> apiConfigs, 
+            IUserDataService userDataService, 
+            IHostingEnvironment env, 
+            IAuthorizationService authService) : 
+            base(userDataService,
+                defaultPagingOptions, 
+                apiConfigs, 
+                userDataService, 
+                env, 
+                authService)
         {
-            _userDataService = dataService;
-            _authorizationService = authorizationService;
         }
 
         // GET /users/me
@@ -38,11 +40,11 @@ namespace SortMyStuffAPI.Controllers
         {
             if (User == null) return BadRequest();
 
-            var user = await _userDataService.GetUserAsync(User);
+            var user = await UserService.GetUserAsync(User);
             if (user == null) return NotFound();
 
-            var adminPolicy = await _authorizationService
-                .AuthorizeAsync(User, ApiStrings.PolicyAdmin);
+            var adminPolicy = await AuthService
+                .AuthorizeAsync(User, ApiStrings.PolicyDeveloper);
 
             // if it voliates the admin policy, then erase user id information
             if (!adminPolicy.Succeeded)
@@ -55,7 +57,7 @@ namespace SortMyStuffAPI.Controllers
         }
 
         // GET /users
-        [Authorize(Policy = ApiStrings.PolicyAdmin)]
+        [Authorize(Policy = ApiStrings.PolicyDeveloper)]
         [HttpGet(Name = nameof(GetUsersAsync))]
         public async Task<IActionResult> GetUsersAsync(
             CancellationToken ct,
@@ -72,7 +74,7 @@ namespace SortMyStuffAPI.Controllers
         }
 
         // GET /users/{userId}
-        [Authorize(Policy = ApiStrings.PolicyAdmin)]
+        [Authorize(Policy = ApiStrings.PolicyDeveloper)]
         [HttpGet("{userId}", Name = nameof(GetUserByIdAsync))]
         public async Task<IActionResult> GetUserByIdAsync(
             string userId,
@@ -90,6 +92,9 @@ namespace SortMyStuffAPI.Controllers
         {
             if (!ModelState.IsValid) return BadRequest(new ApiError(ModelState));
 
+            var adminPolicy = await AuthService
+                .AuthorizeAsync(User, ApiStrings.PolicyDeveloper);
+
             var currentTime = DateTimeOffset.UtcNow;
 
             var user = Mapper.Map<RegisterForm, User>(body);
@@ -97,17 +102,23 @@ namespace SortMyStuffAPI.Controllers
             user.Provider = AuthProvider.Native.ToString();
             user.CreateTimestamp = currentTime;
 
-            var result = await _userDataService.CreateUserAsync(user, ct);
+            var result = await UserService.CreateUserAsync(user, ct);
             if (!result.Succeeded)
             {
                 return BadRequest(new ApiError("Registration failed.", result.Error));
             }
 
-            var userCreated = await _userDataService.GetResourceAsync(user.Id, ct);
+            var userCreated = await UserService.GetResourceAsync(null, user.Id, ct);
+
+            // if it voliates the admin policy, then erase user id information
+            if (!adminPolicy.Succeeded)
+            {
+                userCreated.Self = Link.To(nameof(GetMeAsync));
+                userCreated.Id = null;
+            }
 
             return Created(
-                Url.Link(nameof(GetUserByIdAsync),
-                    new { userId = user.Id }),
+                Url.Link(nameof(GetMeAsync), null),
                 userCreated);
         }
     }

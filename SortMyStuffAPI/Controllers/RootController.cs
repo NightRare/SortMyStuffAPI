@@ -1,13 +1,28 @@
 ﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using SortMyStuffAPI.Models;
+using SortMyStuffAPI.Services;
 
 namespace SortMyStuffAPI.Controllers
 {
     [Route("/")]
     [ApiVersion("0.1")]
-    public class RootController : Controller
+    public class RootController : ApiBaseController
     {
+        public RootController(
+            IUserDataService userDataService, 
+            IOptions<ApiConfigs> apiConfigs, 
+            IHostingEnvironment env, 
+            IAuthorizationService authService)
+            : base(userDataService, 
+                  apiConfigs, 
+                  env, 
+                  authService)
+        {
+        }
+
         [AllowAnonymous]
         [HttpGet(Name = nameof(GetRoot))]
         public IActionResult GetRoot()
@@ -19,7 +34,6 @@ namespace SortMyStuffAPI.Controllers
                 Me = Link.To(nameof(UsersController.GetMeAsync)),
                 Documentations = Link.ToCollection(nameof(DocsController.GetDocs)),
                 Categories = Link.ToCollection(nameof(CategoriesController.GetCategoriesAsync)),
-                AssetTrees = Link.ToCollection(nameof(AssetTreesController.GetAssetTreesAsync)),
                 Assets = Link.ToCollection(nameof(AssetsController.GetAssetsAsync)),
                 NewGuid = Link.To(nameof(NewGuidController.GetNewGuid)),
                 Users = Link.ToCollection(nameof(UsersController.GetUsersAsync))

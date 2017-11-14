@@ -10,8 +10,6 @@
 
         public Link Categories { get; set; }
 
-        public Link AssetTrees { get; set; }
-
         public Link Assets { get; set; }
 
         public Link NewGuid { get; set; }

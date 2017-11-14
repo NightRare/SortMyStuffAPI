@@ -9,6 +9,9 @@ namespace SortMyStuffAPI.Services
 {
     public interface IThumbnailFileService : IFileService
     {
-        Task<Stream> DownloadThumbnail(string id, CancellationToken ct);
+        Task<Stream> DownloadThumbnail(
+            string userId,
+            string id, 
+            CancellationToken ct);
     }
 }

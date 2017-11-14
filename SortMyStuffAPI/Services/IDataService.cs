@@ -8,20 +8,20 @@ using System.Security.Claims;
 
 namespace SortMyStuffAPI.Services
 {
-    public interface IDataService<T, TEntity> 
-        where T : Resource 
+    public interface IDataService<T, TEntity>
+        where T : Resource
         where TEntity : IEntity
     {
         Task<T> GetResourceAsync(
-            string id, 
-            CancellationToken ct, 
-            string userId = null);
+            string userId,
+            string id,
+            CancellationToken ct);
 
         Task<PagedResults<T>> GetResouceCollectionAsync(
+            string userId,
             CancellationToken ct,
             PagingOptions pagingOptions = null,
             SortOptions<T, TEntity> sortOptions = null,
-            SearchOptions<T, TEntity> searchOptions = null,
-            string userId = null);
+            SearchOptions<T, TEntity> searchOptions = null);
     }
 }

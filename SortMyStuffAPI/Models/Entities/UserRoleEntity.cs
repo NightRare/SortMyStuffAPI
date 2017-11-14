@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Identity;
 
 namespace SortMyStuffAPI.Models
 {
-    public class UserRoleEntity : IdentityRole<string>, IEntity
+    public class UserRoleEntity : IdentityRole<string>
     {
         public UserRoleEntity() 
             : base()
