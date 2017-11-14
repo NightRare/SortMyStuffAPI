@@ -10,9 +10,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 using SortMyStuffAPI.Infrastructure;
 using System.Security.Claims;
-using System.Data.Entity;
-using System.Data.Entity.Infrastructure;
 using SortMyStuffAPI.Utils;
+using Microsoft.EntityFrameworkCore;
 
 namespace SortMyStuffAPI.Services
 {
@@ -62,7 +61,7 @@ namespace SortMyStuffAPI.Services
             string id,
             CancellationToken ct)
         {
-            return await GetResourceAsync<Asset, AssetEntity>(
+            return await GetOneResourceAsync<Asset, AssetEntity>(
                 _context.Assets,
                 userId,
                 id,
@@ -106,37 +105,16 @@ namespace SortMyStuffAPI.Services
             return pathUnits;
         }
 
-        public async Task<(bool Succeeded, string Error)> AddAssetAsync(
-            string userId,
-            Asset asset,
+        public async Task<(bool Succeeded, string Error)> AddResourceAsync(
+            string userId, 
+            Asset resource, 
             CancellationToken ct)
         {
-            if (userId == null)
-                return (false, "The userId cannot be null.");
-
-            var repo = GetUserRepository(userId, _context.Assets);
-
-            if (repo.Any(a => a.Id == asset.Id))
-                return (false, "Asset already exists");
-
-            var entity = Mapper.Map<Asset, AssetEntity>(asset);
-            entity.UserId = userId;
-
-            return await Task.Run(() =>
-            {
-                _context.Assets.Add(entity);
-
-                try
-                {
-                    _context.SaveChanges();
-                }
-                catch (DbUpdateException ex)
-                {
-                    return (false, ex.Message);
-                }
-
-                return (true, null);
-            }, ct);
+            return await AddOneResourceAsync(
+                userId, 
+                resource, 
+                _context.Assets, 
+                ct);
         }
 
         public async Task<(bool Succeeded, string Error)> UpdateAssetAsync(
@@ -219,6 +197,14 @@ namespace SortMyStuffAPI.Services
             throw new System.NotImplementedException();
         }
 
+        public Task<(bool Succeeded, string Error)> AddResourceAsync(
+            string userId,
+            Detail resource,
+            CancellationToken ct)
+        {
+            throw new NotImplementedException();
+        }
+
         #endregion
 
 
@@ -229,7 +215,7 @@ namespace SortMyStuffAPI.Services
             string id,
             CancellationToken ct)
         {
-            return await GetResourceAsync<Category, CategoryEntity>(
+            return await GetOneResourceAsync<Category, CategoryEntity>(
                 _context.Categories,
                 userId,
                 id,
@@ -265,37 +251,16 @@ namespace SortMyStuffAPI.Services
             return entity == null ? null : Mapper.Map<CategoryEntity, Category>(entity);
         }
 
-        public async Task<(bool Succeeded, string Error)> AddCategoryAsync(
-            string userId,
-            Category catgeory,
+        public async Task<(bool Succeeded, string Error)> AddResourceAsync(
+            string userId, 
+            Category resource, 
             CancellationToken ct)
         {
-            if (userId == null)
-                return (false, "The userId cannot be null.");
-
-            var repo = GetUserRepository(userId, _context.Categories);
-
-            if (repo.Any(c => c.Id == catgeory.Id))
-                return (false, "Asset already exists");
-
-            var entity = Mapper.Map<Category, CategoryEntity>(catgeory);
-            entity.UserId = userId;
-
-            return await Task.Run(() =>
-            {
-                _context.Categories.Add(entity);
-
-                try
-                {
-                    _context.SaveChanges();
-                }
-                catch (DbUpdateException ex)
-                {
-                    return (false, ex.Message);
-                }
-
-                return (true, null);
-            }, ct);
+            return await AddOneResourceAsync(
+                userId,
+                resource,
+                _context.Categories,
+                ct);
         }
 
         public async Task<(bool Succeeded, string Error)> UpdateCategoryAsync(
@@ -353,10 +318,10 @@ namespace SortMyStuffAPI.Services
             CancellationToken ct)
         {
             // always pass in developer id
-            return await GetResourceAsync<User, UserEntity>(
-                _context.Users, 
-                ServicesAuthHelper.DeveloperUid, 
-                id, 
+            return await GetOneResourceAsync<User, UserEntity>(
+                _context.Users,
+                ServicesAuthHelper.DeveloperUid,
+                id,
                 ct);
         }
 
@@ -377,20 +342,21 @@ namespace SortMyStuffAPI.Services
                 searchOptions);
         }
 
-        public async Task<(bool Succeeded, string Error)> CreateUserAsync(
-            User user,
+        public async Task<(bool Succeeded, string Error)> AddResourceAsync(
+            string userId, 
+            User resource, 
             CancellationToken ct)
         {
-            var record = await _userManager.FindByNameAsync(user.UserName);
+            var record = await _userManager.FindByNameAsync(resource.UserName);
             if (record != null)
                 return (false, "Existing UserName.");
 
-            record = await _userManager.FindByEmailAsync(user.Email);
+            record = await _userManager.FindByEmailAsync(resource.Email);
             if (record != null)
                 return (false, "Existing Email.");
 
-            var entity = Mapper.Map<User, UserEntity>(user);
-            var result = await _userManager.CreateAsync(entity, user.Password);
+            var entity = Mapper.Map<User, UserEntity>(resource);
+            var result = await _userManager.CreateAsync(entity, resource.Password);
             if (!result.Succeeded)
             {
                 var defaultError = result.Errors.FirstOrDefault()?.Description;
@@ -483,7 +449,7 @@ namespace SortMyStuffAPI.Services
             };
         }
 
-        private async Task<T> GetResourceAsync<T, TEntity>(
+        private async Task<T> GetOneResourceAsync<T, TEntity>(
             IQueryable<TEntity> dbSet,
             string userId,
             string id,
@@ -494,6 +460,41 @@ namespace SortMyStuffAPI.Services
 
             var entity = await Task.Run(() => repo.SingleOrDefault(a => a.Id == id), ct);
             return entity == null ? default(T) : Mapper.Map<TEntity, T>(entity);
+        }
+
+        private async Task<(bool Succeeded, string Error)> AddOneResourceAsync<T, TEntity>(
+            string userId,
+            T resource,
+            DbSet<TEntity> dbSet,
+            CancellationToken ct)
+            where T : Resource
+            where TEntity : class, IEntity
+        {
+            if (userId == null)
+                return (false, "The userId cannot be null.");
+
+            var repo = GetUserRepository(userId, dbSet);
+
+            var entity = Mapper.Map<T, TEntity>(resource);
+            entity.UserId = userId;
+
+            if (repo.Any(e => e.Id == entity.Id))
+                return (false, $"{resource.GetType().Name} already exists");
+
+            return await Task.Run(() =>
+            {
+                dbSet.Add(entity);
+                try
+                {
+                    _context.SaveChanges();
+                }
+                catch (DbUpdateException ex)
+                {
+                    return (false, ex.Message);
+                }
+
+                return (true, null);
+            }, ct);
         }
 
         private IEnumerable<AssetEntity> GetAllParents(
@@ -577,6 +578,9 @@ namespace SortMyStuffAPI.Services
             IQueryable<TEntity> dbSet)
             where TEntity : IEntity
         {
+            if (userId == null)
+                throw new ArgumentException("The userId cannot be null.");
+
             if (ServicesAuthHelper.IsDeveloper(userId))
                 return dbSet;
 

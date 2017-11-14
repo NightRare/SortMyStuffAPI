@@ -18,11 +18,6 @@ namespace SortMyStuffAPI.Services
             string id,
             CancellationToken ct);
 
-        Task<(bool Succeeded, string Error)> AddAssetAsync(
-            string userId,
-            Asset asset,
-            CancellationToken ct);
-
         Task<(bool Succeeded, string Error)> UpdateAssetAsync(
             string userId,
             Asset asset,

@@ -7,9 +7,6 @@ namespace SortMyStuffAPI.Services
 {
     public interface IUserDataService : IDataService<User, UserEntity>
     {
-        Task<(bool Succeeded, string Error)> CreateUserAsync(
-            User user, CancellationToken ct);
-
         Task<User> GetUserAsync(ClaimsPrincipal user);
 
         Task<User> GetUserByIdAsync(string id);

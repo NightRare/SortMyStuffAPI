@@ -78,24 +78,10 @@ namespace SortMyStuffAPI.Controllers
             if ((error = await CheckNameConflict(userId, body.Name, ct)) != null)
                 return BadRequest(error);
 
-            var category = new Category
-            {
-                Id = Guid.NewGuid().ToString(),
-                Name = body.Name
-            };
-
-            var result = await _categoryDataService.AddCategoryAsync(userId, category, ct);
-            if (!result.Succeeded)
-            {
-                return BadRequest(new ApiError("Create category failed.", result.Error));
-            }
-
-            var categoryCreated = await _categoryDataService.GetResourceAsync(userId, category.Id, ct);
-
-            return Created(
-                Url.Link(nameof(GetCategoryByIdAsync),
-                    new { categoryId = category.Id }),
-                categoryCreated);
+            return await CreateResourceAsync(
+                nameof(GetCategoryByIdAsync),
+                body,
+                ct);
         }
 
         // PUT /categories/{categoryId}
@@ -126,7 +112,7 @@ namespace SortMyStuffAPI.Controllers
 
                 var category = Mapper.Map<CategoryForm, Category>(body);
                 category.Id = categoryId;
-                var createResult = await _categoryDataService.AddCategoryAsync(userId, category, ct);
+                var createResult = await _categoryDataService.AddResourceAsync(userId, category, ct);
                 if (!createResult.Succeeded)
                 {
                     return BadRequest(new ApiError("Create category failed.", createResult.Error));

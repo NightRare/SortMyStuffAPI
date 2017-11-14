@@ -102,13 +102,15 @@ namespace SortMyStuffAPI.Controllers
             user.Provider = AuthProvider.Native.ToString();
             user.CreateTimestamp = currentTime;
 
-            var result = await UserService.CreateUserAsync(user, ct);
+            var result = await UserService.AddResourceAsync(await GetUserId(), user, ct);
             if (!result.Succeeded)
             {
                 return BadRequest(new ApiError("Registration failed.", result.Error));
             }
 
-            var userCreated = await UserService.GetResourceAsync(null, user.Id, ct);
+            // TODO: add root asset to the newly registered user
+
+            var userCreated = await UserService.GetResourceAsync(await GetUserId(), user.Id, ct);
 
             // if it voliates the admin policy, then erase user id information
             if (!adminPolicy.Succeeded)

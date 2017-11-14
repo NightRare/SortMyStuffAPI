@@ -105,28 +105,21 @@ namespace SortMyStuffAPI.Controllers
             string userId = await GetUserId();
 
             ApiError error;
-            if((error = await CheckBaseForm(userId, body, ct)) != null)
+            if ((error = await CheckBaseForm(userId, body, ct)) != null)
                 return BadRequest(error);
 
             var currentTime = DateTimeOffset.UtcNow;
-
-            var asset = Mapper.Map<CreateAssetForm, Asset>(body);
-            asset.Id = Guid.NewGuid().ToString();
-            asset.CreateTimestamp = currentTime;
-            asset.ModifyTimestamp = currentTime;
-
-            var result = await _assetDataService.AddAssetAsync(userId, asset, ct);
-            if (!result.Succeeded)
+            Action<Asset> operation = asset =>
             {
-                return BadRequest(new ApiError("Create asset failed.", result.Error));
-            }
+                asset.CreateTimestamp = currentTime;
+                asset.ModifyTimestamp = currentTime;
+            };
 
-            var assetCreated = await _assetDataService.GetResourceAsync(userId, asset.Id, ct);
-
-            return Created(
-                Url.Link(nameof(GetAssetByIdAsync), 
-                new { assetId = asset.Id }), 
-                assetCreated);
+            return await CreateResourceAsync(
+                nameof(GetAssetByIdAsync),
+                body,
+                ct, 
+                operation);
         }
 
         // PUT /assets/{assetId}
@@ -165,7 +158,7 @@ namespace SortMyStuffAPI.Controllers
                 var asset = Mapper.Map<AddOrUpdateAssetForm, Asset>(body);
                 asset.Id = assetId;
 
-                var createResult = await _assetDataService.AddAssetAsync(user.Id, asset, ct);
+                var createResult = await _assetDataService.AddResourceAsync(user.Id, asset, ct);
                 if (!createResult.Succeeded)
                 {
                     return BadRequest(new ApiError("Create asset failed.", createResult.Error));

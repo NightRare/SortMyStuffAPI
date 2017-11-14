@@ -10,12 +10,15 @@ using SortMyStuffAPI.Services;
 using SortMyStuffAPI.Infrastructure;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Authorization;
+using AutoMapper;
+using System.Reflection;
+using System.Collections.Generic;
 
 namespace SortMyStuffAPI.Controllers
 {
     public abstract class EntityResourceBaseController<T, TEntity> : ApiBaseController
         where T : Resource
-        where TEntity : IEntity
+        where TEntity : class, IEntity
     {
         protected readonly IDataService<T, TEntity> DataService;
         protected readonly PagingOptions DefaultPagingOptions;
@@ -95,6 +98,62 @@ namespace SortMyStuffAPI.Controllers
             operation?.Invoke(result);
 
             return Ok(result);
+        }
+
+        protected virtual async Task<IActionResult> CreateResourceAsync(
+            string httpMethodName,
+            [FromBody] FormModel createForm,
+            CancellationToken ct,
+            Action<T> operation = null)
+        {
+            var guid = Guid.NewGuid().ToString();
+            string userId = await GetUserId();
+
+            var resource = Mapper.Map<T>(createForm);
+
+            // Set the Id value of the resource, if applicable
+            var IdProperty = resource
+                .GetType().GetProperties()
+                .SingleOrDefault(p => p.Name.Equals("Id"));
+
+            IdProperty?.SetValue(resource, guid);
+
+            operation?.Invoke(resource);
+
+            var result = await DataService.AddResourceAsync(userId, resource, ct);
+            if (!result.Succeeded)
+            {
+                return BadRequest(new ApiError(
+                    $"Create {resource.GetType().Name.ToCamelCase()} failed.", 
+                    result.Error));
+            }
+
+            var assetCreated = await DataService.GetResourceAsync(userId, guid, ct);
+
+            return Created(
+                Url.Link(httpMethodName,
+                GetLinkValue(resource.GetType(), guid)),
+                assetCreated);
+        }
+
+        private static object GetLinkValue(Type typeOfT, string guid)
+        {
+            if(typeOfT == typeof(Asset))
+            {
+                return new { assetId = guid };
+            }
+
+            if (typeOfT == typeof(Category))
+            {
+                return new { categoryId = guid };
+            }
+
+            if (typeOfT == typeof(Detail))
+            {
+                return new { detailId = guid };
+            }
+
+            return null;
         }
     }
 }

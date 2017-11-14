@@ -11,11 +11,6 @@ namespace SortMyStuffAPI.Services
             string name, 
             CancellationToken ct);
 
-        Task<(bool Succeeded, string Error)> AddCategoryAsync(
-            string userId,
-            Category catgeory,
-            CancellationToken ct);
-
         Task<(bool Succeeded, string Error)> UpdateCategoryAsync(
             string userId,
             Category catgeory,
