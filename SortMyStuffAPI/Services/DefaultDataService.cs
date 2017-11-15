@@ -12,6 +12,9 @@ using SortMyStuffAPI.Infrastructure;
 using System.Security.Claims;
 using SortMyStuffAPI.Utils;
 using Microsoft.EntityFrameworkCore;
+using System.Reflection;
+using System.Linq.Expressions;
+using SortMyStuffAPI.Exceptions;
 
 namespace SortMyStuffAPI.Services
 {
@@ -76,8 +79,8 @@ namespace SortMyStuffAPI.Services
             SearchOptions<Asset, AssetEntity> searchOptions = null)
         {
             return await GetOneTypeResourcesAsync(
-                _context.Assets,
                 userId,
+                _context.Assets,
                 ct,
                 pagingOptions,
                 sortOptions,
@@ -106,45 +109,27 @@ namespace SortMyStuffAPI.Services
         }
 
         public async Task<(bool Succeeded, string Error)> AddResourceAsync(
-            string userId, 
-            Asset resource, 
+            string userId,
+            Asset resource,
             CancellationToken ct)
         {
             return await AddOneResourceAsync(
-                userId, 
-                resource, 
-                _context.Assets, 
+                userId,
+                resource,
+                _context.Assets,
                 ct);
         }
 
-        public async Task<(bool Succeeded, string Error)> UpdateAssetAsync(
+        public async Task<(bool Succeeded, string Error)> UpdateResourceAsync(
             string userId,
-            Asset asset,
+            Asset resource,
             CancellationToken ct)
         {
-            var repo = GetUserRepository(userId, _context.Assets);
-            return await Task.Run(() =>
-            {
-                var entity = repo.SingleOrDefault(a => a.Id == asset.Id);
-                if (entity == null)
-                    return (false, "Asset not found");
-
-                entity.Name = asset.Name;
-                entity.CategoryId = asset.CategoryId;
-                entity.ContainerId = asset.ContainerId;
-                entity.CreateTimestamp = asset.CreateTimestamp;
-                entity.ModifyTimestamp = asset.ModifyTimestamp;
-
-                try
-                {
-                    _context.SaveChanges();
-                }
-                catch (DbUpdateException ex)
-                {
-                    return (false, ex.Message);
-                }
-                return (true, null);
-            }, ct);
+            return await UpdateOneResourceAsync(
+                userId,
+                resource,
+                _context.Assets,
+                ct);
         }
 
         public async Task DeleteAssetAsync(
@@ -172,6 +157,23 @@ namespace SortMyStuffAPI.Services
 
             DeleteAsset(delAsset);
             _context.SaveChanges();
+        }
+
+
+        public async Task<bool> CheckScopedUniquenessAsync(
+            string userId,
+            PropertyInfo property,
+            Asset resource,
+            Scope scope,
+            CancellationToken ct)
+        {
+            return await Task.Run(() =>
+                CheckResourceScopedUniqueness(
+                    userId,
+                    property,
+                    resource,
+                    scope,
+                    _context.Assets), ct);
         }
 
         #endregion
@@ -205,6 +207,29 @@ namespace SortMyStuffAPI.Services
             throw new NotImplementedException();
         }
 
+
+        public Task<(bool Succeeded, string Error)> UpdateResourceAsync(string userId, Detail resource, CancellationToken ct)
+        {
+            throw new NotImplementedException();
+        }
+
+
+        public async Task<bool> CheckScopedUniquenessAsync(
+            string userId,
+            PropertyInfo property,
+            Detail resource,
+            Scope scope,
+            CancellationToken ct)
+        {
+            return await Task.Run(() =>
+                CheckResourceScopedUniqueness(
+                    userId,
+                    property,
+                    resource,
+                    scope,
+                    _context.Details), ct);
+        }
+
         #endregion
 
 
@@ -230,8 +255,8 @@ namespace SortMyStuffAPI.Services
             SearchOptions<Category, CategoryEntity> searchOptions = null)
         {
             return await GetOneTypeResourcesAsync(
-                _context.Categories,
                 userId,
+                _context.Categories,
                 ct,
                 pagingOptions,
                 sortOptions,
@@ -252,8 +277,8 @@ namespace SortMyStuffAPI.Services
         }
 
         public async Task<(bool Succeeded, string Error)> AddResourceAsync(
-            string userId, 
-            Category resource, 
+            string userId,
+            Category resource,
             CancellationToken ct)
         {
             return await AddOneResourceAsync(
@@ -263,30 +288,13 @@ namespace SortMyStuffAPI.Services
                 ct);
         }
 
-        public async Task<(bool Succeeded, string Error)> UpdateCategoryAsync(
-            string userId,
-            Category catgeory,
-            CancellationToken ct)
+        public async Task<(bool Succeeded, string Error)> UpdateResourceAsync(string userId, Category resource, CancellationToken ct)
         {
-            var repo = GetUserRepository(userId, _context.Categories);
-            return await Task.Run(() =>
-            {
-                var entity = repo.SingleOrDefault(c => c.Id == catgeory.Id);
-                if (entity == null)
-                    return (false, "Category not found");
-
-                entity.Name = catgeory.Name;
-
-                try
-                {
-                    _context.SaveChanges();
-                }
-                catch (DbUpdateException ex)
-                {
-                    return (false, ex.Message);
-                }
-                return (true, null);
-            }, ct);
+            return await UpdateOneResourceAsync(
+                userId,
+                resource,
+                _context.Categories,
+                ct);
         }
 
         public async Task DeleteCategoryAsync(
@@ -305,6 +313,23 @@ namespace SortMyStuffAPI.Services
 
             _context.Categories.Remove(delCategory);
             _context.SaveChanges();
+        }
+
+
+        public async Task<bool> CheckScopedUniquenessAsync(
+            string userId,
+            PropertyInfo property,
+            Category resource,
+            Scope scope,
+            CancellationToken ct)
+        {
+            return await Task.Run(() =>
+                CheckResourceScopedUniqueness(
+                    userId,
+                    property,
+                    resource,
+                    scope,
+                    _context.Categories), ct);
         }
 
         #endregion
@@ -334,8 +359,8 @@ namespace SortMyStuffAPI.Services
         {
             // ignore userId
             return await GetOneTypeResourcesAsync(
-                _context.Users,
                 ServicesAuthHelper.DeveloperUid,
+                _context.Users,
                 ct,
                 pagingOptions,
                 sortOptions,
@@ -343,8 +368,8 @@ namespace SortMyStuffAPI.Services
         }
 
         public async Task<(bool Succeeded, string Error)> AddResourceAsync(
-            string userId, 
-            User resource, 
+            string userId,
+            User resource,
             CancellationToken ct)
         {
             var record = await _userManager.FindByNameAsync(resource.UserName);
@@ -363,6 +388,27 @@ namespace SortMyStuffAPI.Services
                 return (false, defaultError);
             }
             return (true, null);
+        }
+
+        public Task<(bool Succeeded, string Error)> UpdateResourceAsync(string userId, User resource, CancellationToken ct)
+        {
+            throw new NotImplementedException();
+        }
+
+        public async Task<bool> CheckScopedUniquenessAsync(
+            string userId,
+            PropertyInfo property,
+            User resource,
+            Scope scope,
+            CancellationToken ct)
+        {
+            return await Task.Run(() =>
+                CheckResourceScopedUniqueness(
+                    userId,
+                    property,
+                    resource,
+                    scope,
+                    _context.Users), ct);
         }
 
         public async Task<User> GetUserAsync(ClaimsPrincipal user)
@@ -400,19 +446,21 @@ namespace SortMyStuffAPI.Services
             return await Task.Run(() => _userManager.GetUserId(user));
         }
 
+
         #endregion
 
 
         #region PRIVATE METHODS
 
         private async Task<PagedResults<T>> GetOneTypeResourcesAsync<T, TEntity>(
-            IQueryable<TEntity> dbSet,
             string userId,
+            DbSet<TEntity> dbSet,
             CancellationToken ct,
             PagingOptions pagingOptions = null,
             SortOptions<T, TEntity> sortOptions = null,
             SearchOptions<T, TEntity> searchOptions = null)
-            where TEntity : IEntity
+            where T : EntityResource
+            where TEntity : class, IEntity
         {
             IQueryable<TEntity> query = GetUserRepository(userId, dbSet);
 
@@ -454,6 +502,7 @@ namespace SortMyStuffAPI.Services
             string userId,
             string id,
             CancellationToken ct)
+            where T : EntityResource
             where TEntity : IEntity
         {
             var repo = GetUserRepository(userId, dbSet);
@@ -467,7 +516,7 @@ namespace SortMyStuffAPI.Services
             T resource,
             DbSet<TEntity> dbSet,
             CancellationToken ct)
-            where T : Resource
+            where T : EntityResource
             where TEntity : class, IEntity
         {
             if (userId == null)
@@ -495,6 +544,148 @@ namespace SortMyStuffAPI.Services
 
                 return (true, null);
             }, ct);
+        }
+
+        private async Task<(bool Succeeded, string Error)> UpdateOneResourceAsync<T, TEntity>(
+            string userId,
+            T resource,
+            DbSet<TEntity> dbSet,
+            CancellationToken ct)
+            where T : EntityResource
+            where TEntity : class, IEntity
+        {
+            var repo = GetUserRepository(userId, dbSet);
+            return await Task.Run(() =>
+            {
+                var entity = repo.SingleOrDefault(a => a.Id == resource.Id);
+                if (entity == null)
+                    return (false, $"{resource.GetType().Name} not found");
+
+                var allMutableProperties = entity
+                    .GetType()
+                    .GetProperties()
+                    .Where(p => p.GetCustomAttributes<MutableAttribute>().Any());
+
+                foreach (var prop in allMutableProperties)
+                {
+                    var updatingValue = resource.GetType()
+                        .GetProperty(prop.Name)?
+                        .GetValue(resource);
+
+                    if (updatingValue != null)
+                        prop.SetValue(entity, updatingValue);
+                }
+
+                try
+                {
+                    _context.SaveChanges();
+                }
+                catch (DbUpdateException ex)
+                {
+                    return (false, ex.Message);
+                }
+                return (true, null);
+            }, ct);
+        }
+
+        private bool CheckResourceScopedUniqueness<T, TEntity>(
+            string userId,
+            PropertyInfo property,
+            T resource,
+            Scope scope,
+            DbSet<TEntity> dbSet)
+            where T : EntityResource
+            where TEntity : class, IEntity
+        {
+            IQueryable<TEntity> query = dbSet;
+
+            // Trying to build expressions:
+            // query = query.Where(e => e.ScopeProperty == ScopeId)
+            // query.Any(e => e.Property == resource.Property)
+
+            Expression scopeIdExp;
+            PropertyInfo scopeProperty;
+            switch (scope)
+            {
+                case Scope.User:
+                    {
+                        // Get the value of resource.UserId (i.e. ScopeId)
+                        scopeIdExp = Expression.Constant(resource.UserId ?? userId) ??
+                            throw new ApiException(
+                                "Unable to get the value of userId");
+
+                        // ?.UserId (i.e. ?.ScopeProperty)
+                        scopeProperty = ExpressionHelper.GetPropertyInfo<TEntity>("UserId") ??
+                            throw new ApiException(
+                                "Unable to locate the scope. 'UserId' property not found.");
+                        break;
+                    }
+                case Scope.Category:
+                    {
+                        // ?.CategoryId (i.e. ?.ScopeProperty)
+                        scopeProperty = resource.GetType().GetProperty("CategoryId") ?? 
+                            throw new ApiException(
+                                "Unable to locate the scope. 'CategoryId' property not found.");
+
+                        // Get the value of resource.CategoryId (i.e. ScopeId)
+                        scopeIdExp = Expression.Constant(scopeProperty.GetValue(resource)) ?? 
+                            throw new ApiException(
+                                "Unable to get the value of categoryId");
+
+                        break;
+                    }
+                default:
+                    {
+                        throw new ApiException("Unexpected scope");
+                    }
+            }
+
+
+            // stage 1: query = dbSet.Where(e => e.UserId == resource.UserId)
+
+            // e
+            var entityObj = Expression.Parameter(typeof(TEntity), "e");
+
+            // e.ScopeProperty
+            var entityScopeProperty = ExpressionHelper.GetPropertyExpression(
+                entityObj, scopeProperty);
+
+            // e.ScopeProperty == ScopeId
+            var comparisonScopeId = Expression.Equal(
+                entityScopeProperty, scopeIdExp);
+
+            // e => e.UserId == resource.UserId
+            var lambdaComparisonScopeId = ExpressionHelper
+                .GetLambda<TEntity, bool>(entityObj, comparisonScopeId);
+
+            // query = query.Where...
+            query = ExpressionHelper.CallWhere(query, lambdaComparisonScopeId);
+
+            // then check uniqueness
+            // stage 2: query.Any(e => e.Property == resource.Property)
+
+            // e.Property
+            var entityProperty = ExpressionHelper.GetPropertyExpression(
+                entityObj, typeof(TEntity).GetProperty(property.Name));
+
+            // the value of resource.Property
+            var resourcePropertyValue = resource.GetType()
+                .GetProperty(property.Name)?.GetValue(resource) ??
+                throw new ApiException(
+                    $"Check scoped uniqueness failed. " +
+                    $"The value of {property.Name} should not be null.");
+            var resourceProperty = Expression.Constant(resourcePropertyValue);
+
+            // e.Property == resource.Property
+            var comparisonProperty = Expression.Equal(
+                entityProperty, resourceProperty);
+
+            // e => e.Property == resource.Property
+            var lambdaComparisonProperty = ExpressionHelper.GetLambda<TEntity, bool>(
+                entityObj, comparisonProperty);
+
+            // query.Any(...)
+            return !ExpressionHelper.CallAny(query, lambdaComparisonProperty);
         }
 
         private IEnumerable<AssetEntity> GetAllParents(

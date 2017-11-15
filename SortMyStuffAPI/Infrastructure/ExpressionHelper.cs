@@ -40,6 +40,18 @@ namespace SortMyStuffAPI.Infrastructure
             return (LambdaExpression)lambdaBuilder.Invoke(null, new object[] { arg, new[] { obj } });
         }
 
+        public static bool CallAny<T>(IQueryable<T> query, LambdaExpression predicate)
+        {
+            var anyMethodBuilder = QueryableMethods
+                .First(x => x.Name == "Any" && x.GetParameters().Length == 2)
+                .MakeGenericMethod(new[] { typeof(T) });
+
+            var result = anyMethodBuilder
+                .Invoke(null, new object[] { query, predicate });
+
+            return (bool) result;
+        }
+
         public static IQueryable<T> CallWhere<T>(IQueryable<T> query, LambdaExpression predicate)
         {
             var whereMethodBuilder = QueryableMethods

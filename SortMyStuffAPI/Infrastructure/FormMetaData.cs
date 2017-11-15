@@ -9,7 +9,7 @@ namespace SortMyStuffAPI.Infrastructure
 {
     public static class FormMetadata
     {
-        public static FormSpecification FromModel(FormModel model, Link self)
+        public static FormSpecification FromModel(RequestForm model, Link self)
         {
             var formFields = new List<FormField>();
 
@@ -29,6 +29,16 @@ namespace SortMyStuffAPI.Infrastructure
 
                 var secret = attributes.OfType<SecretAttribute>().Any();
                 var required = attributes.OfType<RequiredAttribute>().Any();
+                var immutable = attributes.OfType<ImmutableAttribute>().Any();
+
+                string scopedUnique = null;
+                var requireUnique = attributes.OfType<ScopedUniqueAttribute>().Any();
+                if (requireUnique)
+                {
+                    scopedUnique = $"Require uniqueness for every " +
+                        $"{prop.GetCustomAttribute<ScopedUniqueAttribute>().Scope.ToString()}";
+                }
+
                 var type = GetFriendlyType(prop, attributes);
 
                 var stringLength = attributes.OfType<StringLengthAttribute>()
@@ -44,6 +54,8 @@ namespace SortMyStuffAPI.Infrastructure
                     Name = name,
                     Required = required,
                     Secret = secret,
+                    Immutable = immutable,
+                    ScopedUnique = scopedUnique,
                     Type = type,
                     StringLength = stringLength,
                     Value = value,
@@ -68,7 +80,7 @@ namespace SortMyStuffAPI.Infrastructure
                 yield return prop;
             }
 
-            if (type != typeof(FormModel))
+            if (type != typeof(RequestForm))
             {
                 foreach (var prop in GetAllPropertyInfo(type.BaseType))
                 {

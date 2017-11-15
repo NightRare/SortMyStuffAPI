@@ -4,7 +4,7 @@ using SortMyStuffAPI.Utils;
 
 namespace SortMyStuffAPI.Models
 {
-    public class RegisterForm : FormModel
+    public class RegisterForm : RequestForm
     {
         [Required]
         [EmailAddress]

@@ -43,7 +43,7 @@ namespace SortMyStuffAPI.Infrastructure
 
             CreateMap<Asset, AssetEntity>();
 
-            CreateMap<AddOrUpdateAssetForm, Asset>();
+            CreateMap<FormMode, Asset>();
 
             CreateMap<CreateAssetForm, Asset>();
 

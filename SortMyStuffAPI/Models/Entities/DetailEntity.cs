@@ -1,4 +1,5 @@
-﻿using SortMyStuffAPI.Utils;
+﻿using SortMyStuffAPI.Infrastructure;
+using SortMyStuffAPI.Utils;
 using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -16,8 +17,10 @@ namespace SortMyStuffAPI.Models
         [Required]
         public string BaseDetailId { get; set; }
 
+        [Mutable]
         public DateTimeOffset ModifyTimestamp { get; set; }
 
+        [Mutable]
         public string Field { get; set; }
 
         [Index(ApiStrings.IndexDetailUserId, IsClustered = true)]

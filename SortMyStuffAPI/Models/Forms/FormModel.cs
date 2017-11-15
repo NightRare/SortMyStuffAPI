@@ -1,6 +1,6 @@
 ﻿namespace SortMyStuffAPI.Models
 {
-    public abstract class FormModel
+    public abstract class RequestForm
     {
     }
 }

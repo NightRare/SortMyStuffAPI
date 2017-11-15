@@ -4,7 +4,7 @@ using SortMyStuffAPI.Infrastructure;
 
 namespace SortMyStuffAPI.Models
 {
-    public class Asset : Resource
+    public class Asset : EntityResource
     {
         [Sortable]
         [Searchable]
@@ -35,18 +35,12 @@ namespace SortMyStuffAPI.Models
 
 
         [JsonIgnore]
-        public string Id { get; set; }
-
-        [JsonIgnore]
         [Searchable]
         public string ContainerId { get; set; }
+
 
         [JsonIgnore]
         [Searchable]
         public string CategoryId { get; set; }
-
-        [JsonIgnore]
-        [Searchable]
-        public string UserId { get; set; }
     }
 }

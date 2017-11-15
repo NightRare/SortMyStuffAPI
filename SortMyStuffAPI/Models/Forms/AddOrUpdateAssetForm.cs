@@ -1,11 +1,13 @@
-﻿using System;
+﻿using SortMyStuffAPI.Infrastructure;
+using System;
 using System.ComponentModel.DataAnnotations;
 
 namespace SortMyStuffAPI.Models
 {
-    public class AddOrUpdateAssetForm : BaseAssetForm
+    public class FormMode : BaseAssetForm
     {
         [Required]
+        [Immutable]
         [Display(Name = "createTimestamp", Description = "The timestamp of the creation of this asset.")]
         public DateTimeOffset? CreateTimestamp { get; set; }
 

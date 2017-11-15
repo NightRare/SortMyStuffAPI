@@ -50,7 +50,6 @@ namespace SortMyStuffAPI.Controllers
             if (!adminPolicy.Succeeded)
             {
                 user.Self = Link.To(nameof(GetMeAsync));
-                user.Id = null;
             }
 
             return Ok(user);
@@ -116,7 +115,6 @@ namespace SortMyStuffAPI.Controllers
             if (!adminPolicy.Succeeded)
             {
                 userCreated.Self = Link.To(nameof(GetMeAsync));
-                userCreated.Id = null;
             }
 
             return Created(

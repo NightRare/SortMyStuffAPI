@@ -2,9 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Reflection;
-using System.Threading.Tasks;
 
 namespace SortMyStuffAPI.Infrastructure
 {
@@ -70,11 +68,11 @@ namespace SortMyStuffAPI.Infrastructure
             var allTerms = GetAllTerms().Where(t => t.ValidSyntax).ToArray();
             if (!allTerms.Any()) yield break;
 
-            var sortableTerms = GetSearchableTermsFromModel();
+            var searchableTerms = GetSearchableTermsFromModel(typeof(T));
 
             foreach (var term in allTerms)
             {
-                var searchableTerm = sortableTerms
+                var searchableTerm = searchableTerms
                     .SingleOrDefault(x => x.Name.Equals(term.Name, StringComparison.OrdinalIgnoreCase));
                 if (searchableTerm == null) continue;
 
@@ -125,15 +123,22 @@ namespace SortMyStuffAPI.Infrastructure
             return modifiedQuery;
         }
 
-        private static IEnumerable<SearchTerm> GetSearchableTermsFromModel()
-            => typeof(T)
-            .GetTypeInfo()
-            .DeclaredProperties
-            .Where(p => p.GetCustomAttributes<SearchableAttribute>().Any())
-            .Select(p => new SearchTerm
+        private static IEnumerable<SearchTerm> GetSearchableTermsFromModel(Type type)
+        {
+            // return if type is not a Resource
+            if (!typeof(Resource).IsAssignableFrom(type)) yield break;
+
+            var terms = type.GetProperties()
+                .Where(p => p.GetCustomAttributes<SearchableAttribute>().Any())
+                .Select(p => new SearchTerm
+                {
+                    Name = p.Name,
+                    ExpressionProvider = p.GetCustomAttribute<SearchableAttribute>().ExpressionProvider
+                });
+            foreach (var s in terms)
             {
-                Name = p.Name,
-                ExpressionProvider = p.GetCustomAttribute<SearchableAttribute>().ExpressionProvider
-            });
+                yield return s;
+            }
+        }
     }
 }

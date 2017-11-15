@@ -1,4 +1,5 @@
-﻿using SortMyStuffAPI.Utils;
+﻿using SortMyStuffAPI.Infrastructure;
+using SortMyStuffAPI.Utils;
 using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -11,15 +12,19 @@ namespace SortMyStuffAPI.Models
         public string Id { get; set; }
 
         [Required]
+        [Mutable]
         public string Name { get; set; }
 
+        // TODO: make CategoryId changeable
         public string CategoryId { get; set; }
 
         [Index(ApiStrings.IndexAssetContainerId)]
+        [Mutable]
         public string ContainerId { get; set; }
 
         public DateTimeOffset CreateTimestamp { get; set; }
 
+        [Mutable]
         public DateTimeOffset ModifyTimestamp { get; set; }
 
         [Index(ApiStrings.IndexAssetUserId, IsClustered = true)]

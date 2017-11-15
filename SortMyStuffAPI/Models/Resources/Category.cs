@@ -3,7 +3,7 @@ using SortMyStuffAPI.Infrastructure;
 
 namespace SortMyStuffAPI.Models
 {
-    public class Category : Resource
+    public class Category : EntityResource
     {
         [Sortable]
         [Searchable]
@@ -15,12 +15,5 @@ namespace SortMyStuffAPI.Models
 
         public Link FormSpecs { get; set; }
 
-
-        [JsonIgnore]
-        public string Id { get; set; }
-
-        [JsonIgnore]
-        [Searchable]
-        public string UserId { get; set; }
     }
 }

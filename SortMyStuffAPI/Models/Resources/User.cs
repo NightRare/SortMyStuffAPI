@@ -4,7 +4,7 @@ using SortMyStuffAPI.Infrastructure;
 
 namespace SortMyStuffAPI.Models
 {
-    public class User : Resource
+    public class User : EntityResource
     {
         [Sortable]
         [Searchable]
@@ -20,11 +20,12 @@ namespace SortMyStuffAPI.Models
 
         public string RootAssetId { get; set; }
 
-        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-        public string Id { get; set; }
-        
+
         [JsonIgnore]
         [Secret]
         public string Password { get; set; }
+
+        [JsonIgnore]
+        public override string UserId { get => Id; set => Id = value; }
     }
 }

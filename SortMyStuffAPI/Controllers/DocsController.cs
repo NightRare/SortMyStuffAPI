@@ -157,7 +157,7 @@ namespace SortMyStuffAPI.Controllers
             var list = new List<FormSpecification>();
 
             var addOrUpdateAsset = FormMetadata.FromModel(
-                new AddOrUpdateAssetForm(),
+                new FormMode(),
                 Link.ToForm(
                     nameof(AssetsController.AddOrUpdateAssetAsync),
                     new { assetId = assetId ?? "assetId" },

@@ -1,4 +1,5 @@
-﻿using SortMyStuffAPI.Utils;
+﻿using SortMyStuffAPI.Infrastructure;
+using SortMyStuffAPI.Utils;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -12,6 +13,7 @@ namespace SortMyStuffAPI.Models
 
         [Required]
         [Index]
+        [Mutable]
         public string Name { get; set; }
 
         [Index(ApiStrings.IndexCategoryUserId, IsClustered = true)]
