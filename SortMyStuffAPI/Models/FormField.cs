@@ -10,6 +10,11 @@ namespace SortMyStuffAPI.Models
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public string Description { get; set; }
 
+        [JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore, NullValueHandling = NullValueHandling.Ignore)]
+        [DefaultValue(DefaultType)]
+        public string Type { get; set; } = DefaultType;
+        public const string DefaultType = "string";
+
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public FormFieldOption[] Options { get; set; }
 
@@ -27,11 +32,6 @@ namespace SortMyStuffAPI.Models
 
         [JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
         public string ScopedUnique { get; set; }
-
-        [JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore, NullValueHandling = NullValueHandling.Ignore)]
-        [DefaultValue(DefaultType)]
-        public string Type { get; set; } = DefaultType;
-        public const string DefaultType = "string";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public int? StringLength { get; set; }

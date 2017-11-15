@@ -27,6 +27,20 @@ namespace SortMyStuffAPI.Infrastructure
                 var description = attributes.OfType<DisplayAttribute>()
                     .SingleOrDefault()?.Description;
 
+                var enumValues = attributes.OfType<OptionAttribute>().SingleOrDefault()?.Options;
+                var options = new List<FormFieldOption>();
+                if (enumValues != null)
+                {
+                    foreach(var v in enumValues)
+                    {
+                        options.Add(new FormFieldOption
+                        {
+                            // display the name of the enum values rather than the number
+                            Value = v.ToString()
+                        });
+                    }
+                }
+
                 var secret = attributes.OfType<SecretAttribute>().Any();
                 var required = attributes.OfType<RequiredAttribute>().Any();
                 var immutable = attributes.OfType<ImmutableAttribute>().Any();
@@ -56,6 +70,7 @@ namespace SortMyStuffAPI.Infrastructure
                     Secret = secret,
                     Immutable = immutable,
                     ScopedUnique = scopedUnique,
+                    Options = options.Any() ? options.ToArray() : null,
                     Type = type,
                     StringLength = stringLength,
                     Value = value,

@@ -635,11 +635,8 @@ namespace SortMyStuffAPI.Services
                         break;
                     }
                 default:
-                    {
-                        throw new ApiException("Unexpected scope");
-                    }
+                    throw new ApiException("Unexpected scope");
             }
-
 
             // stage 1: query = dbSet.Where(e => e.UserId == resource.UserId)
 
