@@ -132,33 +132,27 @@ namespace SortMyStuffAPI.Services
                 ct);
         }
 
-        public async Task DeleteAssetAsync(
+
+        async Task<(bool Succeeded, string Error)>
+            IDataService<Asset, AssetEntity>.DeleteResourceAsync(
             string userId,
-            string id,
-            bool delOnlySelf,
+            string resourceId,
+            bool delDependents,
             CancellationToken ct)
         {
             var repo = GetUserRepository(userId, _context.Assets);
-            var delAsset = await Task.Run(() => repo.SingleOrDefault(a => a.Id == id), ct);
-            if (delAsset == null) throw new KeyNotFoundException();
 
-            if (delOnlySelf)
+            if (!delDependents)
             {
-                var contents = await Task.Run(() => repo.Where(a => a.ContainerId == id), ct);
-                foreach (var asset in contents)
+                if (repo.Any(a => a.ContainerId == resourceId))
                 {
-                    asset.ContainerId = delAsset.ContainerId;
+                    return (false, "Content assets found. Cannot delete asset with dependents.");
                 }
-
-                _context.Assets.Remove(delAsset);
-                _context.SaveChanges();
-                return;
+                return await DeleteOneResourceAsync(resourceId, repo, ct);
             }
 
-            DeleteAsset(delAsset);
-            _context.SaveChanges();
+            return await DeleteAssetWithDependentsAsync(resourceId, repo, ct);
         }
-
 
         public async Task<bool> CheckScopedUniquenessAsync(
             string userId,
@@ -214,6 +208,17 @@ namespace SortMyStuffAPI.Services
         }
 
 
+        async Task<(bool Succeeded, string Error)>
+            IDataService<Detail, DetailEntity>.DeleteResourceAsync(
+            string userId,
+            string resourceId,
+            bool delDependents,
+            CancellationToken ct)
+        {
+            throw new NotImplementedException();
+        }
+
+
         public async Task<bool> CheckScopedUniquenessAsync(
             string userId,
             PropertyInfo property,
@@ -263,19 +268,6 @@ namespace SortMyStuffAPI.Services
                 searchOptions);
         }
 
-        public async Task<Category> GetCategoryByNameAsync(
-            string userId,
-            string name,
-            CancellationToken ct)
-        {
-            var repo = GetUserRepository(userId, _context.Categories);
-
-            var entity = await Task.Run(() =>
-                repo.SingleOrDefault(c =>
-                    c.Name.Equals(name, StringComparison.OrdinalIgnoreCase)));
-            return entity == null ? null : Mapper.Map<CategoryEntity, Category>(entity);
-        }
-
         public async Task<(bool Succeeded, string Error)> AddResourceAsync(
             string userId,
             Category resource,
@@ -297,24 +289,29 @@ namespace SortMyStuffAPI.Services
                 ct);
         }
 
-        public async Task DeleteCategoryAsync(
+        async Task<(bool Succeeded, string Error)>
+            IDataService<Category, CategoryEntity>.DeleteResourceAsync(
             string userId,
-            string id,
+            string resourceId,
+            bool delDependents,
             CancellationToken ct)
         {
             var repo = GetUserRepository(userId, _context.Categories);
-            var delCategory = await Task.Run(() => repo.SingleOrDefault(c => c.Id == id), ct);
-            if (delCategory == null) throw new KeyNotFoundException();
 
-            // reference key integrity
-            if (delCategory.BaseDetails.Any() || delCategory.CategorisedAssets.Any())
-                throw new InvalidOperationException(
-                    "Cannot delete category when it is referred by BaseDetails or Assets");
+            var category = repo.SingleOrDefault(c => c.Id == resourceId) ??
+                throw new KeyNotFoundException();
 
-            _context.Categories.Remove(delCategory);
-            _context.SaveChanges();
+            if (!delDependents)
+            {
+                if (category.CategorisedAssets.Any() || category.BaseDetails.Any())
+                {
+                    return (false, "Categorised assets or base details found. Cannot delete category with dependents.");
+                }
+                return await DeleteOneResourceAsync(resourceId, repo, ct);
+            }
+
+            return await DeleteCategoryWithDependentsAsync(category, repo, ct);
         }
-
 
         public async Task<bool> CheckScopedUniquenessAsync(
             string userId,
@@ -391,6 +388,17 @@ namespace SortMyStuffAPI.Services
         }
 
         public Task<(bool Succeeded, string Error)> UpdateResourceAsync(string userId, User resource, CancellationToken ct)
+        {
+            throw new NotImplementedException();
+        }
+
+
+        async Task<(bool Succeeded, string Error)>
+            IDataService<User, UserEntity>.DeleteResourceAsync(
+            string userId,
+            string resourceId,
+            bool delDependents,
+            CancellationToken ct)
         {
             throw new NotImplementedException();
         }
@@ -588,6 +596,32 @@ namespace SortMyStuffAPI.Services
             }, ct);
         }
 
+        private async Task<(bool Succeeded, string Error)> DeleteOneResourceAsync<TEntity>(
+            string resourceId,
+            IQueryable<TEntity> repo,
+            CancellationToken ct)
+            where TEntity : class, IEntity
+        {
+            return await Task.Run(() =>
+            {
+                var delEntity = repo.SingleOrDefault(a => a.Id == resourceId) ??
+                    throw new KeyNotFoundException();
+
+                _context.Remove<TEntity>(delEntity);
+
+                try
+                {
+                    _context.SaveChanges();
+                }
+                catch (DbUpdateException ex)
+                {
+                    return (false, ex.Message);
+                }
+
+                return (true, null);
+            }, ct);
+        }
+
         private bool CheckResourceScopedUniqueness<T, TEntity>(
             string userId,
             PropertyInfo property,
@@ -623,12 +657,12 @@ namespace SortMyStuffAPI.Services
                 case Scope.Category:
                     {
                         // ?.CategoryId (i.e. ?.ScopeProperty)
-                        scopeProperty = resource.GetType().GetProperty("CategoryId") ?? 
+                        scopeProperty = resource.GetType().GetProperty("CategoryId") ??
                             throw new ApiException(
                                 "Unable to locate the scope. 'CategoryId' property not found.");
 
                         // Get the value of resource.CategoryId (i.e. ScopeId)
-                        scopeIdExp = Expression.Constant(scopeProperty.GetValue(resource)) ?? 
+                        scopeIdExp = Expression.Constant(scopeProperty.GetValue(resource)) ??
                             throw new ApiException(
                                 "Unable to get the value of categoryId");
 
@@ -773,6 +807,53 @@ namespace SortMyStuffAPI.Services
                 return dbSet;
 
             return dbSet.Where(e => e.UserId == userId);
+        }
+
+        private async Task<(bool Succeeded, string Error)> DeleteAssetWithDependentsAsync(
+            string resourceId,
+            IQueryable<AssetEntity> repo,
+            CancellationToken ct)
+        {
+            var contents = repo.Where(a => a.ContainerId == (resourceId));
+            if (contents.Any())
+            {
+                foreach (var asset in contents)
+                {
+                    var result = await DeleteAssetWithDependentsAsync(asset.Id, repo, ct);
+                    if (!result.Succeeded)
+                    {
+                        return result;
+                    }
+                }
+            }
+
+            return await DeleteOneResourceAsync(resourceId, repo, ct);
+        }
+
+        private async Task<(bool Succeeded, string Error)> DeleteCategoryWithDependentsAsync(
+            CategoryEntity category,
+            IQueryable<CategoryEntity> repo,
+            CancellationToken ct)
+        {
+            // note that when deleting the navigation property (categorised asset)
+            // category.CategorisedAssets will be modifed as well
+            // therefore have to iterate through another clone collection
+            var categorisedAssets = category.CategorisedAssets.ToArray();
+
+            foreach (var asset in categorisedAssets)
+            {
+                var delAsset = await (this as IDataService<Asset, AssetEntity>)
+                    .DeleteResourceAsync(category.UserId, asset.Id, true, ct);
+
+                if (!delAsset.Succeeded)
+                {
+                    return (false, delAsset.Error);
+                }
+            }
+
+            // TODO: delete base details and their dependents
+
+            return await DeleteOneResourceAsync(category.Id, repo, ct);
         }
 
         #endregion

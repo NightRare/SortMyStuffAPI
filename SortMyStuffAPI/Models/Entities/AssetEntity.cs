@@ -27,6 +27,7 @@ namespace SortMyStuffAPI.Models
         [Mutable]
         public DateTimeOffset ModifyTimestamp { get; set; }
 
+        [Required]
         [Index(ApiStrings.IndexAssetUserId, IsClustered = true)]
         public string UserId { get; set; }
 

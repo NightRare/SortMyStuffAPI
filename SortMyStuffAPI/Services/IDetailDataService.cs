@@ -2,7 +2,8 @@
 
 namespace SortMyStuffAPI.Services
 {
-    interface IDetailDataService : IDataService<Detail, DetailEntity>
+    interface IDetailDataService 
+        : IDataService<Detail, DetailEntity>
     {
 
     }

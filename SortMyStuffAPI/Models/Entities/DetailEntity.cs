@@ -24,6 +24,7 @@ namespace SortMyStuffAPI.Models
         public string Field { get; set; }
 
         [Index(ApiStrings.IndexDetailUserId, IsClustered = true)]
+        [Required]
         public string UserId { get; set; }
 
         [ForeignKey(nameof(UserId))]

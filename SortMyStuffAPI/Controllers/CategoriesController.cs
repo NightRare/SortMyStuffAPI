@@ -95,25 +95,33 @@ namespace SortMyStuffAPI.Controllers
         [HttpDelete("{categoryId}", Name = nameof(DeleteCategoryByIdAsync))]
         public async Task<IActionResult> DeleteCategoryByIdAsync(
             string categoryId,
+            [FromQuery] DeletingOptions deletingOptions,
             CancellationToken ct)
         {
+            if (!ModelState.IsValid) return BadRequest(new ApiError(ModelState));
+
+            var errorMsg = "Delete category failed.";
+
             var userId = await GetUserId();
 
             // TODO: delete the base details first
             try
             {
-                await _categoryDataService.DeleteCategoryAsync(userId, categoryId, ct);
+                var result = await _categoryDataService.DeleteResourceAsync(
+                    userId, categoryId, deletingOptions.DelDependents, ct);
+
+                if (!result.Succeeded)
+                {
+                    return BadRequest(new ApiError(
+                        errorMsg,
+                        result.Error));
+                }
+                return NoContent();
             }
             catch (KeyNotFoundException)
             {
                 return NotFound();
             }
-            catch (InvalidOperationException)
-            {
-                return BadRequest(
-                    new ApiError("Please make sure no asset is assigned to this category before deleting."));
-            }
-            return NoContent();
         }
 
         #region PRIVATE METHODS

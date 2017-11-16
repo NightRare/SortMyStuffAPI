@@ -6,7 +6,8 @@ using SortMyStuffAPI.Models;
 
 namespace SortMyStuffAPI.Services
 {
-    public interface IAssetDataService : IDataService<Asset, AssetEntity>
+    public interface IAssetDataService 
+        : IDataService<Asset, AssetEntity>
     {
         Task<AssetTree> GetAssetTreeAsync(
             string userId,
@@ -16,12 +17,6 @@ namespace SortMyStuffAPI.Services
         Task<IEnumerable<PathUnit>> GetAssetPathAsync(
             string userId,
             string id,
-            CancellationToken ct);
-
-        Task DeleteAssetAsync(
-            string userId,
-            string id,
-            bool delOnlySelf,
             CancellationToken ct);
     }
 }

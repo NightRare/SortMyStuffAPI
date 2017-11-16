@@ -11,6 +11,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using SortMyStuffAPI.Utils;
+using SortMyStuffAPI.Exceptions;
 
 namespace SortMyStuffAPI.Controllers
 {
@@ -178,30 +179,44 @@ namespace SortMyStuffAPI.Controllers
         [HttpDelete("{assetId}", Name = nameof(DeleteAssetByIdAsync))]
         public async Task<IActionResult> DeleteAssetByIdAsync(
             string assetId,
-            [FromQuery] DeletingAssetOptions deletingOptions,
+            [FromQuery] DeletingOptions deletingOptions,
             CancellationToken ct)
         {
             if (!ModelState.IsValid) return BadRequest(new ApiError(ModelState));
 
-            var user = await UserService.GetUserByIdAsync(await GetUserId());
+            var errorMsg = "Delete asset failed.";
+
+            var userId = await GetUserId();
+            var user = await UserService.GetUserByIdAsync(userId) ??
+                throw new ApiException($"User not exists:[{userId}]");
 
             if (assetId.Equals(user?.RootAssetId))
-                return BadRequest(new ApiError("Cannot delete the root asset"));
+            {
+                return BadRequest(new ApiError(
+                    errorMsg,
+                    "Cannot delete the root asset"));
+            }
 
             try
             {
-                await _assetDataService.DeleteAssetAsync(
+                var result = await _assetDataService.DeleteResourceAsync(
                     user.Id,
                     assetId,
-                    deletingOptions.OnlySelf,
+                    deletingOptions.DelDependents,
                     ct);
+
+                if(!result.Succeeded)
+                {
+                    return BadRequest(new ApiError(
+                        errorMsg,
+                        result.Error));
+                }
+                return NoContent();
             }
             catch (KeyNotFoundException)
             {
                 return NotFound();
             }
-
-            return NoContent();
         }
 
         #region PRIVATE METHODS

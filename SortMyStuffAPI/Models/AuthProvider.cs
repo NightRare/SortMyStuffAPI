@@ -4,7 +4,7 @@
     {
         Native = 0,
         Google = 1,
-        MicroSoft = 2,
+        Microsoft = 2,
         Facebook = 3
     }
 }

@@ -33,6 +33,12 @@ namespace SortMyStuffAPI.Services
             T resource,
             CancellationToken ct);
 
+        Task<(bool Succeeded, string Error)> DeleteResourceAsync(
+            string userId,
+            string resourceId,
+            bool delDependents,
+            CancellationToken ct);
+
         /// <summary>
         /// Checks if the value of the resource's specified property is unique 
         /// in a certain scope.
