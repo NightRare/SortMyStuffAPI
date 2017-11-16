@@ -10,6 +10,7 @@ using SortMyStuffAPI.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using SortMyStuffAPI.Infrastructure;
+using SortMyStuffAPI.Utils;
 
 namespace SortMyStuffAPI.Controllers
 {
@@ -41,15 +42,17 @@ namespace SortMyStuffAPI.Controllers
         [HttpGet("{assetId}.jpg", Name = nameof(GetPhotoByIdAsync))]
         public async Task<IActionResult> GetPhotoByIdAsync(string assetId, CancellationToken ct)
         {
+            var errorMsg = "Download photo failed.";
+
             var userId = await GetUserId();
 
             if (await _assetDataService.GetResourceAsync(userId, assetId, ct) == null)
-                return NotFound(new ApiError("Asset id not found."));
+                return NotFound(new ApiError(errorMsg, "Asset id not found."));
 
             var stream = await _photoService.DownloadPhoto(userId, assetId, ct);
 
             if (stream == null)
-                return BadRequest(new ApiError("Downloading image file failed."));
+                return BadRequest(new ApiError(errorMsg, "Downloading image file failed."));
 
             var response = File(stream, "application/octet-stream");
             return response;
@@ -63,28 +66,39 @@ namespace SortMyStuffAPI.Controllers
             IFormFile photo,
             CancellationToken ct)
         {
+            var errorMsg = "Upload photo failed.";
+
             var userId = await GetUserId();
 
             if (await _assetDataService.GetResourceAsync(userId, assetId, ct) == null)
-                return NotFound(new ApiError("Asset id not found."));
+            {
+                return NotFound(new ApiError(errorMsg, "Asset id not found."));
+            }
 
             if (photo == null)
-                return BadRequest(new ApiError("No file uploaded."));
+            {
+                return BadRequest(new ApiError(errorMsg, "No file uploaded."));
+            }
 
             if (photo.Length > ApiConfigs.ImageMaxBytes)
+            {
                 return BadRequest(
-                    new ApiError($"File over size.(limit: {ApiConfigs.ImageMaxBytes / 1024 / 1024} mb)"));
+                    new ApiError(errorMsg,
+                    $"File over size.(limit: {ApiConfigs.ImageMaxBytes / 1024 / 1024} mb)"));
+            }
 
             var fileName = Path.GetTempFileName();
             using (var photoFile = new FileStream(fileName, FileMode.Create))
             {
                 await photo.CopyToAsync(photoFile, ct);
-                bool uploaded = await _photoService.UploadPhoto(userId, assetId, photoFile, ct);
+                var uploadTask = await _photoService.UploadPhoto(userId, assetId, photoFile, ct);
 
-                if (uploaded) return Ok();
+                if (!uploadTask.Succeeded)
+                {
+                    return BadRequest(new ApiError(errorMsg, uploadTask.Error));
+                }
+                return Ok();
             }
-
-            return BadRequest(new ApiError("Uploading image file failed."));
         }
 
         // DELETE /photos/{assetId}.jpg
@@ -93,7 +107,27 @@ namespace SortMyStuffAPI.Controllers
             string assetId,
             CancellationToken ct)
         {
-            throw new NotImplementedException();
+            var errorMsg = "Delete photo failed.";
+
+            var userId = await GetUserId();
+
+            var asset = await _assetDataService.GetResourceAsync(userId, assetId, ct);
+            if(asset == null)
+            {
+                return NotFound(new ApiError(errorMsg, "Asset id not found."));
+            }
+
+            var deleteTask = await _photoService.DeletePhoto(asset.UserId, assetId, ct);
+            if(!deleteTask.Succeeded)
+            {
+                if (deleteTask.Error.Contains("404"))
+                {
+                    return NotFound(new ApiError(errorMsg, "Photo file not found"));
+                }
+                return BadRequest(new ApiError(errorMsg, deleteTask.Error));
+            }
+
+            return NoContent();
         }
     }
 }

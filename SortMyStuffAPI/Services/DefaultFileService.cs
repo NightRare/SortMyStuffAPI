@@ -90,7 +90,7 @@ namespace SortMyStuffAPI.Services
             }
         }
 
-        public async Task<bool> UploadPhoto(
+        public async Task<(bool Succeeded, string Error)> UploadPhoto(
             string userId,
             string id, 
             Stream photo, 
@@ -119,19 +119,43 @@ namespace SortMyStuffAPI.Services
 
                 //TODO: In order to keep the sync between photo and thumbnail, should retry upload thumbnail if failed, or delete the photo
             }
-            catch (FirebaseStorageException)
+            catch (FirebaseStorageException ex)
             {
-                return false;
+                return (false, ex.Message);
             }
-            return true;
+            return (true, null);
         }
 
-        public Task<bool> DeletePhoto(
+        public async Task<(bool Succeeded, string Error)> DeletePhoto(
             string userId,
             string id, 
             CancellationToken ct)
         {
-            throw new NotImplementedException();
+            await InitialiseFirebaseStorage();
+
+            //TODO: check the format of photo
+
+            try
+            {
+                await _storage
+                    .Child(_apiConfigs.StorageUserData)
+                    .Child(userId)
+                    .Child(_apiConfigs.StoragePhotos)
+                    .Child(id + _apiConfigs.ImageFormat)
+                    .DeleteAsync();
+
+                await _storage
+                    .Child(_apiConfigs.StorageUserData)
+                    .Child(userId)
+                    .Child(_apiConfigs.StorageThumbnails)
+                    .Child(id + _apiConfigs.ImageFormat)
+                    .DeleteAsync();
+            }
+            catch (FirebaseStorageException ex)
+            {
+                return (false, ex.Message);
+            }
+            return (true, null);
         }
 
         #endregion

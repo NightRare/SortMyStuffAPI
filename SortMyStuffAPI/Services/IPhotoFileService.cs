@@ -14,13 +14,13 @@ namespace SortMyStuffAPI.Services
             string id, 
             CancellationToken ct);
 
-        Task<bool> UploadPhoto(
+        Task<(bool Succeeded, string Error)> UploadPhoto(
             string userId,
             string id,
             Stream photo,
             CancellationToken ct);
 
-        Task<bool> DeletePhoto(
+        Task<(bool Succeeded, string Error)> DeletePhoto(
             string userId,
             string id, 
             CancellationToken ct);
