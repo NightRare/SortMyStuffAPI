@@ -10,6 +10,7 @@ using SortMyStuffAPI.Services;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading;
 using SortMyStuffAPI.Exceptions;
+using System.Net;
 
 namespace SortMyStuffAPI.Controllers
 {
@@ -20,6 +21,7 @@ namespace SortMyStuffAPI.Controllers
     {
         private readonly ICategoryDataService _categoryDataService;
         private readonly IDetailDataService _detailDataService;
+        private readonly IAssetDataService _assetDataService;
 
         public BaseDetailsController(
             IBaseDetailDataService baseDetailDataService,
@@ -29,7 +31,8 @@ namespace SortMyStuffAPI.Controllers
             IHostingEnvironment env,
             IAuthorizationService authService,
             ICategoryDataService categoryDataService,
-            IDetailDataService detailDataService)
+            IDetailDataService detailDataService,
+            IAssetDataService assetDataService)
             : base(baseDetailDataService,
                   defaultPagingOptions,
                   apiConfigs,
@@ -39,6 +42,7 @@ namespace SortMyStuffAPI.Controllers
         {
             _categoryDataService = categoryDataService;
             _detailDataService = detailDataService;
+            _assetDataService = assetDataService;
         }
 
         // GET /basedetails
@@ -93,12 +97,27 @@ namespace SortMyStuffAPI.Controllers
                     "The associated category does not exist."));
             }
 
-            // TODO: add details to the categorised assets
+            BaseDetail baseDetail = null;
+            Action<BaseDetail> operation = bd => baseDetail = bd;
 
-            return await CreateResourceAsync(
+            var response = await CreateResourceAsync(
                 nameof(GetBaseDetailByIdAsync),
+                Guid.NewGuid().ToString(),
                 body,
-                ct);
+                ct,
+                operation: operation);
+
+            if ((response as ObjectResult).StatusCode
+                .Equals(HttpStatusCode.Created))
+            {
+                var addDetails = await AddDetailsToAssets(userId, baseDetail, ct);
+                if (!addDetails.Succeeded)
+                {
+                    return BadRequest(new ApiError(errorMsg, addDetails.Error));
+                }
+            }
+
+            return response;
         }
 
         // PUT /basedetails/{baseDetailId}
@@ -128,10 +147,42 @@ namespace SortMyStuffAPI.Controllers
                     "The associated category does not exist."));
             }
 
-            // TODO: add details to the categorised assets
+            var record = await DataService.GetResourceAsync(
+                userId, baseDetailId, ct);
 
-            return await AddOrUpdateResourceAsync(baseDetailId, body, ct, errorMessage: errorMsg);
+            if (record == null)
+            {
+                BaseDetail baseDetail = null;
+                Action<BaseDetail> operation = bd => baseDetail = bd;
 
+                var response = await CreateResourceAsync(
+                    nameof(GetBaseDetailByIdAsync),
+                    baseDetailId,
+                    body,
+                    ct,
+                    operation: operation,
+                    errorMessage: errorMsg);
+
+                if ((response as ObjectResult).StatusCode
+                    .Equals(HttpStatusCode.Created))
+                {
+                    // add derivative details to the categorised assets
+                    // TODO: handle follow-up operation failure, should reverse
+                    // the entire operation
+                    var addDetails = await AddDetailsToAssets(userId, baseDetail, ct);
+                    if (!addDetails.Succeeded)
+                    {
+                        return BadRequest(new ApiError(errorMsg, addDetails.Error));
+                    }
+                    return Ok();
+                }
+
+                // if the base detail not added successfully
+                return response;
+            }
+
+            return await UpdateResourceAsync(
+                record, body, ct, errorMessage: errorMsg);
         }
 
         // DELETE /basedetails/{baseDetailId}
@@ -166,5 +217,41 @@ namespace SortMyStuffAPI.Controllers
                 return NotFound();
             }
         }
+
+        #region PRIVATE METHODS
+
+        private async Task<(bool Succeeded, string Error)> AddDetailsToAssets(
+            string userId,
+            BaseDetail baseDetail,
+            CancellationToken ct)
+        {
+            var currentTime = DateTimeOffset.UtcNow;
+
+            var assets = await _assetDataService.GetAssetsByCategoryId(
+                userId, baseDetail.CategoryId, ct);
+
+            var details = assets.Select(asset =>
+                new Detail
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    UserId = userId,
+                    BaseId = baseDetail.Id,
+                    AssetId = asset.Id,
+                    ModifyTimestamp = currentTime,
+                    Field = null
+                });
+
+            var addDetail = await _detailDataService.AddResourceCollectionAsync(
+                userId, details.ToArray(), ct);
+
+            if (!addDetail.Succeeded)
+            {
+                return (false,
+                    $"Add derivative detail to assets failed.");
+            }
+            return (true, null);
+        }
+
+        #endregion
     }
 }

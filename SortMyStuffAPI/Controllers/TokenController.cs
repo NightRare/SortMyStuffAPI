@@ -111,7 +111,7 @@ namespace SortMyStuffAPI.Controllers
                 // Never include the security stamp (it's a secret value)
                 if (claim.Type == _identityOptions.ClaimsIdentity.SecurityStampClaimType) continue;
 
-                // TODO: If there are any other private/secret claims on the user that should
+                // If there are any other private/secret claims on the user that should
                 // not be exposed publicly, handle them here!
                 // The token is encoded but not encrypted, so it is effectively plaintext.
 

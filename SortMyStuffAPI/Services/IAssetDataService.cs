@@ -11,12 +11,21 @@ namespace SortMyStuffAPI.Services
     {
         Task<AssetTree> GetAssetTreeAsync(
             string userId,
-            string id,
+            string assetId,
             CancellationToken ct);
 
         Task<IEnumerable<PathUnit>> GetAssetPathAsync(
             string userId,
-            string id,
+            string assetId,
+            CancellationToken ct);
+
+        Task<IEnumerable<Asset>> GetAssetsByCategoryId(
+            string userId,
+            string categoryId,
+            CancellationToken ct);
+
+        Task<(bool Succeeded, string Error)> CreateRootAssetForUserAsync(
+            string userId,
             CancellationToken ct);
     }
 }

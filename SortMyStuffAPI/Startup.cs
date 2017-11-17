@@ -127,9 +127,9 @@ namespace SortMyStuffAPI
             });
 
             // Dependency injeciton
-            services.AddScoped<IAssetDataService, DefaultDataService>();
-            services.AddScoped<ICategoryDataService, DefaultDataService>();
-            services.AddScoped<IUserDataService, DefaultDataService>();
+            services.AddScoped<IAssetDataService, DefaultAssetDataService>();
+            services.AddScoped<ICategoryDataService, DefaultCategoryDataService>();
+            services.AddScoped<IUserDataService, DefaultUserDataService>();
             services.AddScoped<IBaseDetailDataService, DefaultBaseDetailDataService>();
             services.AddScoped<IDetailDataService, DefaultDetailDataService>();
 

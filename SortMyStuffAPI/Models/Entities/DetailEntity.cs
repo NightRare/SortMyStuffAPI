@@ -15,17 +15,22 @@ namespace SortMyStuffAPI.Models
         public string AssetId { get; set; }
 
         [Required]
+        [Index(ApiStrings.IndexDetailBaseDetailId, IsClustered = true)]
         public string BaseDetailId { get; set; }
-
-        [Mutable]
-        public DateTimeOffset ModifyTimestamp { get; set; }
 
         [Mutable]
         public string Field { get; set; }
 
-        [Index(ApiStrings.IndexDetailUserId, IsClustered = true)]
         [Required]
+        [Mutable]
+        public DateTimeOffset ModifyTimestamp { get; set; }
+
+        [Required]
+        [Index(ApiStrings.IndexDetailUserId)]
         public string UserId { get; set; }
+
+        [ForeignKey(nameof(AssetId))]
+        public virtual AssetEntity Asset { get; set; }
 
         [ForeignKey(nameof(UserId))]
         public virtual UserEntity User { get; set; }

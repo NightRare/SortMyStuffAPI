@@ -20,6 +20,7 @@ namespace SortMyStuffAPI.Controllers
         public const string Assets = "assets";
         public const string Categories = "categories";
         public const string BaseDetails = "basedetails";
+        public const string Details = "details";
 
         private readonly IAssetDataService _assetDataService;
         private readonly ICategoryDataService _categoryDataService;

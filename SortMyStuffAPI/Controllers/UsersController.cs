@@ -17,12 +17,15 @@ namespace SortMyStuffAPI.Controllers
     public class UsersController :
         EntityResourceBaseController<User, UserEntity>
     {
+        private readonly IAssetDataService _assetDataService;
+
         public UsersController(
             IOptions<PagingOptions> defaultPagingOptions, 
             IOptions<ApiConfigs> apiConfigs, 
             IUserDataService userDataService, 
             IHostingEnvironment env, 
-            IAuthorizationService authService) : 
+            IAuthorizationService authService,
+            IAssetDataService assetDataService) : 
             base(userDataService,
                 defaultPagingOptions, 
                 apiConfigs, 
@@ -30,6 +33,7 @@ namespace SortMyStuffAPI.Controllers
                 env, 
                 authService)
         {
+            _assetDataService = assetDataService;
         }
 
         // GET /users/me
@@ -89,7 +93,9 @@ namespace SortMyStuffAPI.Controllers
             [FromBody] RegisterForm body,
             CancellationToken ct)
         {
-            if (!ModelState.IsValid) return BadRequest(new ApiError(ModelState));
+            var errorMsg = "Registration failed.";
+            if (!ModelState.IsValid) return BadRequest(
+                new ApiError(errorMsg, ModelState));
 
             var adminPolicy = await AuthService
                 .AuthorizeAsync(User, ApiStrings.PolicyDeveloper);
@@ -104,10 +110,15 @@ namespace SortMyStuffAPI.Controllers
             var result = await UserService.AddResourceAsync(await GetUserId(), user, ct);
             if (!result.Succeeded)
             {
-                return BadRequest(new ApiError("Registration failed.", result.Error));
+                return BadRequest(new ApiError(errorMsg, result.Error));
             }
 
-            // TODO: add root asset to the newly registered user
+            var createRoot = await _assetDataService.CreateRootAssetForUserAsync(
+                user.Id, ct);
+            if (!createRoot.Succeeded)
+            {
+                return BadRequest(new ApiError(errorMsg, createRoot.Error));
+            }
 
             var userCreated = await UserService.GetResourceAsync(await GetUserId(), user.Id, ct);
 

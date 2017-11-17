@@ -112,14 +112,25 @@ namespace SortMyStuffAPI.Controllers
 
         protected virtual async Task<IActionResult> CreateResourceAsync(
             string responseMethodName,
+            string resourceId,
             [FromBody] RequestForm createForm,
             CancellationToken ct,
-            Action<T> operation = null)
+            Action<T> operation = null,
+            string errorMessage = "Create resource failed")
         {
             string userId = await GetUserId();
 
+            // newly added asset via api must have a correctly formatted guid
+            if (!Guid.TryParse(resourceId, out var guid))
+            {
+                return BadRequest(new ApiError(
+                    errorMessage,
+                    $"The {typeof(T).Name.ToCamelCase()}Id must be a correctly formatted Guid."));
+            }
+
             var resource = Mapper.Map<T>(createForm);
-            resource.Id = Guid.NewGuid().ToString();
+            resource.Id = resourceId;
+            resource.UserId = userId;
 
             var uniqueCheck = await CheckResourceUniqueProperties(
                 userId, resource, createForm, ct);
@@ -132,8 +143,7 @@ namespace SortMyStuffAPI.Controllers
             if (!result.Succeeded)
             {
                 return BadRequest(new ApiError(
-                    $"Create {resource.GetType().Name.ToCamelCase()} failed.",
-                    result.Error));
+                    errorMessage, result.Error));
             }
 
             var assetCreated = await DataService.GetResourceAsync(
@@ -147,78 +157,33 @@ namespace SortMyStuffAPI.Controllers
                 assetCreated);
         }
 
-        protected async Task<IActionResult> AddOrUpdateResourceAsync(
-            string resourceId,
-            [FromBody] RequestForm fullUpdateForm,
+        protected async Task<IActionResult> UpdateResourceAsync(
+            T record,
+            [FromBody] RequestForm updateForm,
             CancellationToken ct,
             Action<T> operation = null,
-            string errorMessage = "PUT operation failed")
+            string errorMessage = "PATCH operation failed")
         {
             var userId = await GetUserId();
 
-            var record = await DataService.GetResourceAsync(userId, resourceId, ct);
             (bool IsUnique, IActionResult ErrorResult) uniqueCheck;
 
-            // [Start Create Resource]
-            if (record == null)
+            var immutableCheck = CheckImmutableProperties(updateForm, record);
+            if (!immutableCheck.Pass)
             {
-                // newly added asset via api must have a correctly formatted guid
-                if (!Guid.TryParse(resourceId, out var guid))
-                    return BadRequest(new ApiError(
-                        errorMessage,
-                        $"The {typeof(T).Name.ToCamelCase()}Id must be a correctly formatted Guid."));
-
-                var resource = Mapper.Map<T>(fullUpdateForm);
-                resource.Id = resourceId;
-
-                uniqueCheck = await CheckResourceUniqueProperties(
-                    userId, resource, fullUpdateForm, ct);
-                if (!uniqueCheck.IsUnique)
-                    return uniqueCheck.ErrorResult;
-
-                var createResult = await DataService.AddResourceAsync(resourceId, resource, ct);
-                if (!createResult.Succeeded)
-                {
-                    return BadRequest(
-                        new ApiError(errorMessage, createResult.Error));
-                }
-
-                return Ok();
+                return BadRequest(new ApiError(errorMessage, immutableCheck.Error));
             }
-            // [End Create Resource]
 
-            // [Start Update Resource]
-
-            // Immutable check
-            var allImmutableProperties = fullUpdateForm.GetType()
-                .GetProperties()
-                .Where(p => p.GetCustomAttributes<ImmutableAttribute>().Any());
-
-            foreach (var prop in allImmutableProperties)
-            {
-                var value = prop.GetValue(fullUpdateForm);
-                bool changed = !value.Equals(
-                    record.GetType()
-                        .GetProperty(prop.Name)?
-                        .GetValue(record));
-                if (changed)
-                {
-                    return BadRequest(new ApiError(
-                        $"Update {typeof(T).Name.ToCamelCase()} failed.",
-                        $"{prop.Name} cannot be modified."));
-                }
-            }
-            // Immutable check end
-
-            var update = Mapper.Map<T>(fullUpdateForm);
-            update.Id = resourceId;
+            var update = Mapper.Map<T>(updateForm);
+            update.Id = record.Id;
             update.UserId = record.UserId;
 
-            // unique check
             uniqueCheck = await CheckResourceUniqueProperties(
-                record.UserId, update, fullUpdateForm, ct);
+                record.UserId, update, updateForm, ct);
             if (!uniqueCheck.IsUnique)
+            {
                 return uniqueCheck.ErrorResult;
+            }
 
             operation?.Invoke(update);
 
@@ -229,7 +194,6 @@ namespace SortMyStuffAPI.Controllers
                     $"Update {typeof(T).Name.ToCamelCase()} failed.",
                     updateResult.Error));
             }
-            // [End Update Resource]
 
             return Ok();
         }
@@ -260,7 +224,6 @@ namespace SortMyStuffAPI.Controllers
 
             return null;
         }
-
 
         private async Task<(bool IsUnique, IActionResult ErrorResult)>
             CheckResourceUniqueProperties(
@@ -298,6 +261,27 @@ namespace SortMyStuffAPI.Controllers
             return (true, null);
         }
 
+        private (bool Pass, string Error) CheckImmutableProperties(RequestForm form, T existingResource)
+        {
+            var allImmutableProperties = form.GetType()
+                .GetProperties()
+                .Where(p => p.GetCustomAttributes<ImmutableAttribute>().Any());
+
+            foreach (var prop in allImmutableProperties)
+            {
+                var value = prop.GetValue(form);
+                bool changed = !value.Equals(
+                    existingResource.GetType()
+                        .GetProperty(prop.Name)?
+                        .GetValue(existingResource));
+                if (changed)
+                {
+                    return (false, $"Update {typeof(T).Name.ToCamelCase()} failed." +
+                        $"{prop.Name} cannot be modified.");
+                }
+            }
+            return (true, null);
+        }
 
         #endregion
     }

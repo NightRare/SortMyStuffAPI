@@ -7,14 +7,14 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
 using SortMyStuffAPI.Infrastructure;
 using SortMyStuffAPI.Models;
+using AutoMapper.QueryableExtensions;
 
 namespace SortMyStuffAPI.Services
 {
     public class DefaultBaseDetailDataService
-        : DefaultBaseDataService, 
+        : DefaultDataService<BaseDetail, BaseDetailEntity>,
         IBaseDetailDataService
     {
-
         private readonly IDetailDataService _detailDataService;
 
         public DefaultBaseDetailDataService(
@@ -26,12 +26,14 @@ namespace SortMyStuffAPI.Services
             _detailDataService = detailDataService;
         }
 
+        #region IDataService METHODS
+
         public async Task<BaseDetail> GetResourceAsync(
             string userId,
             string resourceId,
             CancellationToken ct)
         {
-            return await GetOneResourceAsync<BaseDetail, BaseDetailEntity>(
+            return await GetOneResourceAsync(
                 DbContext.BaseDetails,
                 userId,
                 resourceId,
@@ -64,6 +66,14 @@ namespace SortMyStuffAPI.Services
                 resource,
                 DbContext.BaseDetails,
                 ct);
+        }
+
+        public Task<(bool Succeeded, string Error)> AddResourceCollectionAsync(
+            string userId,
+            ICollection<BaseDetail> resources,
+            CancellationToken ct)
+        {
+            throw new NotImplementedException();
         }
 
         public async Task<(bool Succeeded, string Error)> UpdateResourceAsync(
@@ -118,6 +128,34 @@ namespace SortMyStuffAPI.Services
                     scope,
                     DbContext.BaseDetails), ct);
         }
+
+        #endregion
+
+
+        #region IBaseDetailDataService METHODS
+
+        public async Task<IEnumerable<BaseDetail>> GetBaseDetailsByCategoryIdAsync(
+            string userId, 
+            string categoryId, 
+            CancellationToken ct)
+        {
+            return await Task.Run(() =>
+            {
+                var repo = GetUserRepository(userId, DbContext.Categories);
+                var category = repo.SingleOrDefault(c => c.Id == categoryId);
+                if (category.CategorisedAssets.Any())
+                {
+                    return category.BaseDetails
+                        .AsQueryable()
+                        .ProjectTo<BaseDetail>()
+                        .ToArray();
+                }
+                return new BaseDetail[] { };
+            }, ct);
+        }
+
+        #endregion
+
 
         #region PRIVATE METHODS
 

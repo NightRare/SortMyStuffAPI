@@ -2,14 +2,13 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using SortMyStuffAPI.Models;
 using SortMyStuffAPI.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
-using SortMyStuffAPI.Utils;
+using System.Net;
 
 namespace SortMyStuffAPI.Controllers
 {
@@ -69,12 +68,16 @@ namespace SortMyStuffAPI.Controllers
             [FromBody] CategoryForm body,
             CancellationToken ct)
         {
-            if (!ModelState.IsValid) return BadRequest(new ApiError(ModelState));
+            var errorMsg = "POST category failed.";
+            if (!ModelState.IsValid) return BadRequest(
+                new ApiError(errorMsg, ModelState));
 
             return await CreateResourceAsync(
                 nameof(GetCategoryByIdAsync),
+                Guid.NewGuid().ToString(),
                 body,
-                ct);
+                ct,
+                errorMessage: errorMsg);
         }
 
         // PUT /categories/{categoryId}
@@ -85,9 +88,34 @@ namespace SortMyStuffAPI.Controllers
             [FromBody] CategoryForm body,
             CancellationToken ct)
         {
+            var errorMsg = "PUT category failed.";
             if (!ModelState.IsValid) return BadRequest(new ApiError(ModelState));
 
-            return await AddOrUpdateResourceAsync(categoryId, body, ct);
+            var userId = await GetUserId();
+
+            var record = await DataService.GetResourceAsync(userId, categoryId, ct);
+
+            IActionResult response = null;
+            if (record == null)
+            {
+                response = await CreateResourceAsync(
+                    nameof(GetCategoryByIdAsync),
+                    categoryId,
+                    body,
+                    ct,
+                    errorMessage: errorMsg);
+
+                if ((response as ObjectResult).StatusCode
+                    .Equals(HttpStatusCode.Created))
+                {
+                    return Ok();
+                }
+
+                return response;
+            }
+
+            return await UpdateResourceAsync(
+                record, body, ct, errorMessage: errorMsg);
         }
 
         // DELETE /categories/{categoryId}
@@ -98,13 +126,12 @@ namespace SortMyStuffAPI.Controllers
             [FromQuery] DeletingOptions deletingOptions,
             CancellationToken ct)
         {
-            if (!ModelState.IsValid) return BadRequest(new ApiError(ModelState));
-
             var errorMsg = "Delete category failed.";
+            if (!ModelState.IsValid) return BadRequest(
+                new ApiError(errorMsg, ModelState));
 
             var userId = await GetUserId();
 
-            // TODO: delete the base details first
             try
             {
                 var result = await _categoryDataService.DeleteResourceAsync(
@@ -112,9 +139,7 @@ namespace SortMyStuffAPI.Controllers
 
                 if (!result.Succeeded)
                 {
-                    return BadRequest(new ApiError(
-                        errorMsg,
-                        result.Error));
+                    return BadRequest(new ApiError(errorMsg, result.Error));
                 }
                 return NoContent();
             }

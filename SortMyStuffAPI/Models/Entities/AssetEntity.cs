@@ -1,6 +1,7 @@
 ﻿using SortMyStuffAPI.Infrastructure;
 using SortMyStuffAPI.Utils;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -16,10 +17,13 @@ namespace SortMyStuffAPI.Models
         public string Name { get; set; }
 
         // TODO: make CategoryId changeable
+        [Required]
+        [Index(ApiStrings.IndexAssetCategoryId)]
         public string CategoryId { get; set; }
 
         [Index(ApiStrings.IndexAssetContainerId)]
         [Mutable]
+        [Required]
         public string ContainerId { get; set; }
 
         public DateTimeOffset CreateTimestamp { get; set; }
@@ -37,5 +41,6 @@ namespace SortMyStuffAPI.Models
         [ForeignKey(nameof(CategoryId))]
         public virtual CategoryEntity Category { get; set; }
 
+        public virtual ICollection<DetailEntity> Details { get; set; }
     }
 }

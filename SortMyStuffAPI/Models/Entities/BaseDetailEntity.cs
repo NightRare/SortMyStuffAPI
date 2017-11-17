@@ -19,13 +19,13 @@ namespace SortMyStuffAPI.Models
         public DetailStyle Style { get; set; }
 
         [Required]
-        [Index]
+        [Index(ApiStrings.IndexBaseDetailCategoryId, IsClustered = true)]
         public string CategoryId { get; set; }
 
         [Mutable]
         public int Position { get; set; }
 
-        [Index(ApiStrings.IndexBaseDetailUserId, IsClustered = true)]
+        [Index(ApiStrings.IndexBaseDetailUserId)]
         [Required]
         public string UserId { get; set; }
 

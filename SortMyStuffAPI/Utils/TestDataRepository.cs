@@ -125,8 +125,8 @@ namespace SortMyStuffAPI.Utils
             {
                 Id = DeveloperRootAssetId,
                 Name = "Assets",
-                ContainerId = null,
-                CategoryId = null,
+                ContainerId = ApiStrings.RootAssetToken,
+                CategoryId = ApiStrings.RootAssetToken,
                 Category = null
             };
 
@@ -218,8 +218,8 @@ namespace SortMyStuffAPI.Utils
             {
                 Id = TestUserRootAssetId,
                 Name = "Assets",
-                ContainerId = null,
-                CategoryId = null,
+                ContainerId = ApiStrings.RootAssetToken,
+                CategoryId = ApiStrings.RootAssetToken,
                 Category = null
             };
 

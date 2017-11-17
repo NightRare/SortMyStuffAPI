@@ -9,10 +9,11 @@ namespace SortMyStuffAPI.Models
         public string Id { get; set; }
 
         [Required]
-        [Index]
+        [Index(IsUnique = true)]
         public string UserId { get; set; }
 
         [Required]
+        [Index(IsUnique = true)]
         public string RootAssetId { get; set; }
 
         [ForeignKey(nameof(UserId))]

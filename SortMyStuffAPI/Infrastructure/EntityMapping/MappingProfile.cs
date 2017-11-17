@@ -2,6 +2,7 @@
 using AutoMapper;
 using SortMyStuffAPI.Models;
 using SortMyStuffAPI.Utils;
+using Newtonsoft.Json;
 
 namespace SortMyStuffAPI.Infrastructure
 {
@@ -14,6 +15,12 @@ namespace SortMyStuffAPI.Infrastructure
             CreateMap<AssetEntity, Asset>()
                 .ForMember(dest => dest.Self, opt => opt.MapFrom(src =>
                     Link.To(nameof(Controllers.AssetsController.GetAssetByIdAsync), new { assetId = src.Id })))
+
+                .ForMember(dest => dest.ContainerId, opt => opt.MapFrom(src =>
+                    src.ContainerId.Equals(ApiStrings.RootAssetToken) ? null : src.ContainerId))
+
+                .ForMember(dest => dest.CategoryId, opt => opt.MapFrom(src =>
+                    src.CategoryId.Equals(ApiStrings.RootAssetToken) ? null : src.CategoryId))
 
                 .ForMember(dest => dest.Category, opt => opt.MapFrom(src =>
                     Link.To(nameof(Controllers.CategoriesController.GetCategoryByIdAsync), new { categoryId = src.CategoryId })))
@@ -45,7 +52,9 @@ namespace SortMyStuffAPI.Infrastructure
                             nameof(Controllers.DocsController.GetDocsByResourceId),
                             new { resourceType = Controllers.DocsController.Assets, resourceId = src.Id })));
 
-            CreateMap<Asset, AssetEntity>();
+            CreateMap<Asset, AssetEntity>()
+                .ForMember(dest => dest.Category, opt => opt.Ignore())
+                .ForMember(dest => dest.Details, opt => opt.Ignore());
 
             CreateMap<FormMode, Asset>();
 
@@ -106,14 +115,6 @@ namespace SortMyStuffAPI.Infrastructure
 
             #region BaseDetail
 
-            CreateMap<BaseDetail, BaseDetailEntity>()
-                .ForMember(dest => dest.Style, opt => opt.MapFrom(src =>
-                    Enum.Parse<DetailStyle>(src.Style)))
-
-                .ForMember(dest => dest.Category, opt => opt.Ignore())
-
-                .ForMember(dest => dest.Derivatives, opt => opt.Ignore());
-
             CreateMap<BaseDetailEntity, BaseDetail>()
                 .ForMember(dest => dest.Self, opt => opt.MapFrom(src =>
                     Link.To(nameof(Controllers.BaseDetailsController.GetBaseDetailByIdAsync), new { baseDetailId = src.Id })))
@@ -134,7 +135,50 @@ namespace SortMyStuffAPI.Infrastructure
                         nameof(Controllers.DocsController.GetDocsByResourceId),
                         new { resourceType = Controllers.DocsController.BaseDetails, resourceId = src.Id })));
 
+            CreateMap<BaseDetail, BaseDetailEntity>()
+                .ForMember(dest => dest.Style, opt => opt.MapFrom(src =>
+                    Enum.Parse<DetailStyle>(src.Style)))
+
+                .ForMember(dest => dest.Category, opt => opt.Ignore())
+
+                .ForMember(dest => dest.Derivatives, opt => opt.Ignore());
+
+
             CreateMap<BaseDetailForm, BaseDetail>();
+
+            #endregion
+
+
+            #region Detail
+
+            CreateMap<DetailEntity, Detail>()
+                .ForMember(dest => dest.Self, opt => opt.MapFrom(src =>
+                    Link.To(nameof(Controllers.DetailsController.GetDetailByIdAsync), new { detailId = src.Id })))
+
+                .ForMember(dest => dest.Field, opt => opt.MapFrom(src =>
+                    JsonConvert.DeserializeObject(src.Field)))
+
+                .ForMember(dest => dest.Asset, opt => opt.MapFrom(src =>
+                    Link.To(nameof(Controllers.AssetsController.GetAssetByIdAsync),
+                        new { assetId = src.AssetId })))
+
+                .ForMember(dest => dest.BaseDetail, opt => opt.MapFrom(src =>
+                    Link.To(nameof(Controllers.BaseDetailsController.GetBaseDetailByIdAsync),
+                        new { baseDetailId = src.Id })))
+
+                .ForMember(dest => dest.FormSpecs, opt => opt.MapFrom(src =>
+                    Link.ToCollection(
+                        nameof(Controllers.DocsController.GetDocsByResourceId),
+                        new { resourceType = Controllers.DocsController.Details, resourceId = src.Id })));
+
+            CreateMap<Detail, DetailEntity>()
+                .ForMember(dest => dest.Field, opt => opt.MapFrom(src =>
+                    JsonConvert.SerializeObject(src.Field)))
+
+                .ForMember(dest => dest.Asset, opt => opt.Ignore())
+                .ForMember(dest => dest.BaseDetail, opt => opt.Ignore());
+
+            CreateMap<DetailForm, Detail>();
 
             #endregion
         }

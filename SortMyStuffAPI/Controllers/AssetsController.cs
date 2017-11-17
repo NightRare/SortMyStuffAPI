@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using SortMyStuffAPI.Utils;
 using SortMyStuffAPI.Exceptions;
+using System.Net;
 
 namespace SortMyStuffAPI.Controllers
 {
@@ -22,6 +23,8 @@ namespace SortMyStuffAPI.Controllers
     {
         private readonly IAssetDataService _assetDataService;
         private readonly ICategoryDataService _categoryDataService;
+        private readonly IBaseDetailDataService _baseDetailDataService;
+        private readonly IDetailDataService _detailDataService;
 
         public AssetsController(
             IAssetDataService assetDataService,
@@ -30,7 +33,9 @@ namespace SortMyStuffAPI.Controllers
             IOptions<PagingOptions> pagingOptions,
             IOptions<ApiConfigs> apiConfigs,
             IHostingEnvironment env,
-            IAuthorizationService authService) :
+            IAuthorizationService authService,
+            IBaseDetailDataService baseDetailDataService,
+            IDetailDataService detailDataService) :
             base(assetDataService,
                 pagingOptions,
                 apiConfigs,
@@ -40,6 +45,8 @@ namespace SortMyStuffAPI.Controllers
         {
             _assetDataService = assetDataService;
             _categoryDataService = categoryDataService;
+            _baseDetailDataService = baseDetailDataService;
+            _detailDataService = detailDataService;
         }
 
         // GET /assets
@@ -102,7 +109,9 @@ namespace SortMyStuffAPI.Controllers
             [FromBody] CreateAssetForm body,
             CancellationToken ct)
         {
-            if (!ModelState.IsValid) return BadRequest(new ApiError(ModelState));
+            var errorMsg = "POST asset failed.";
+            if (!ModelState.IsValid) return BadRequest(
+                new ApiError(errorMsg, ModelState));
 
             string userId = await GetUserId();
 
@@ -110,22 +119,36 @@ namespace SortMyStuffAPI.Controllers
             if (!checkResult.IsValid)
             {
                 return BadRequest(new ApiError(
-                    "POST asset failed",
-                    checkResult.Error));
+                    errorMsg, checkResult.Error));
             }
 
             var currentTime = DateTimeOffset.UtcNow;
-            Action<Asset> operation = asset =>
+            Asset asset = null;
+            Action<Asset> operation = a =>
             {
-                asset.CreateTimestamp = currentTime;
-                asset.ModifyTimestamp = currentTime;
+                a.CreateTimestamp = currentTime;
+                a.ModifyTimestamp = currentTime;
+                asset = a;
             };
 
-            return await CreateResourceAsync(
+            var response = await CreateResourceAsync(
                 nameof(GetAssetByIdAsync),
+                Guid.NewGuid().ToString(),
                 body,
                 ct,
                 operation);
+
+            if ((response as ObjectResult).StatusCode
+                .Equals(HttpStatusCode.Created))
+            {
+                var addDetails = await GenerateDetailsToAssetAsync(userId, asset, ct);
+                if (!addDetails.Succeeded)
+                {
+                    return BadRequest(new ApiError(errorMsg, addDetails.Error));
+                }
+            }
+
+            return response;
         }
 
         // PUT /assets/{assetId}
@@ -164,10 +187,39 @@ namespace SortMyStuffAPI.Controllers
             {
                 return BadRequest(new ApiError(
                     errorMsg,
-                    "The create timestamp cannot be later than the modify timestamp."));
+                    "The modify timestamp cannot be earlier than the create timestamp."));
             }
 
-            return await AddOrUpdateResourceAsync(assetId, body, ct);
+            var record = await DataService.GetResourceAsync(userId, assetId, ct);
+
+            if (record == null)
+            {
+                Asset asset = null;
+                Action<Asset> operation = a => asset = a;
+                var response = await CreateResourceAsync(
+                    nameof(GetAssetByIdAsync),
+                    assetId,
+                    body,
+                    ct,
+                    operation,
+                    errorMsg);
+
+                if ((response as ObjectResult).StatusCode
+                    .Equals(HttpStatusCode.Created))
+                {
+                    var addDetails = await GenerateDetailsToAssetAsync(userId, asset, ct);
+                    if (!addDetails.Succeeded)
+                    {
+                        return BadRequest(new ApiError(errorMsg, addDetails.Error));
+                    }
+                    return Ok();
+                }
+
+                return response;
+            }
+
+            return await UpdateResourceAsync(
+                record, body, ct, errorMessage: errorMsg);
         }
 
         // DELETE /assets/{assetId}
@@ -217,7 +269,10 @@ namespace SortMyStuffAPI.Controllers
 
         #region PRIVATE METHODS
 
-        private async Task<(bool IsValid, string Error)> CheckBaseForm(string userId, AssetBaseForm form, CancellationToken ct)
+        private async Task<(bool IsValid, string Error)> CheckBaseForm(
+            string userId, 
+            AssetBaseForm form, 
+            CancellationToken ct)
         {
             var category = await _categoryDataService.GetResourceAsync(userId, form.CategoryId, ct);
             if (category == null)
@@ -227,6 +282,40 @@ namespace SortMyStuffAPI.Controllers
             if (container == null)
                 return (false, "Container not found.");
 
+            return (true, null);
+        }
+
+
+        private async Task<(bool Succeeded, string Error)> GenerateDetailsToAssetAsync(
+            string userId,
+            Asset asset,
+            CancellationToken ct)
+        {
+            var currentTime = DateTimeOffset.UtcNow;
+
+            var baseDetails = await _baseDetailDataService
+                .GetBaseDetailsByCategoryIdAsync(
+                    userId, asset.CategoryId, ct);
+
+            var details = baseDetails.Select(baseDetail =>
+                new Detail
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    UserId = userId,
+                    BaseId = baseDetail.Id,
+                    AssetId = asset.Id,
+                    ModifyTimestamp = currentTime,
+                    Field = null
+                });
+
+            var addDetail = await _detailDataService.AddResourceCollectionAsync(
+                userId, details.ToArray(), ct);
+
+            if (!addDetail.Succeeded)
+            {
+                return (false,
+                    $"Add details to assets failed.");
+            }
             return (true, null);
         }
 

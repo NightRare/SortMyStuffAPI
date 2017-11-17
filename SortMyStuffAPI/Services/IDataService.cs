@@ -4,6 +4,7 @@ using SortMyStuffAPI.Models;
 using System.Reflection;
 using SortMyStuffAPI.Infrastructure;
 using SortMyStuffAPI.Exceptions;
+using System.Collections.Generic;
 
 namespace SortMyStuffAPI.Services
 {
@@ -26,6 +27,11 @@ namespace SortMyStuffAPI.Services
         Task<(bool Succeeded, string Error)> AddResourceAsync(
             string userId,
             T resource,
+            CancellationToken ct);
+
+        Task<(bool Succeeded, string Error)> AddResourceCollectionAsync(
+            string userId,
+            ICollection<T> resources,
             CancellationToken ct);
 
         Task<(bool Succeeded, string Error)> UpdateResourceAsync(

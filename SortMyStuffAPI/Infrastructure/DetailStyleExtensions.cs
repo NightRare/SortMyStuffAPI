@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using SortMyStuffAPI.Models;
+using Newtonsoft.Json;
 
 namespace SortMyStuffAPI.Infrastructure
 {

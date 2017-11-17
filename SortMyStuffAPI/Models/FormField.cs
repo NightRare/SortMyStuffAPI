@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using System;
 using System.ComponentModel;
 
 namespace SortMyStuffAPI.Models
@@ -33,8 +34,21 @@ namespace SortMyStuffAPI.Models
         [JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
         public string ScopedUnique { get; set; }
 
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore,
+            DefaultValueHandling = DefaultValueHandling.Ignore)]
+        [DefaultValue(0)]
+        public int? MinimumStringLength { get; set; }
+
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-        public int? StringLength { get; set; }
+        public int? MaximumStringLength { get; set; }
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore,
+            DefaultValueHandling = DefaultValueHandling.Ignore)]
+        [DefaultValue(0)]
+        public Int64? MinimumMemorySize { get; set; }
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public Int64? MaximumMemorySize { get; set; }
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public int? MinLength { get; set; }

@@ -4,11 +4,13 @@ namespace SortMyStuffAPI.Utils
 {
     public static class ApiStrings
     {
-        #region HOT STRINGS
+        #region ERROR MESSAGES
 
         public const string ErrorCommonMsg = "A server error occurred.";
 
         public const string ErrorCommonDetail = "No further detail.";
+
+        public const string ErrorMemorySizeAttributeMessage = "The size of the {0} should between {1} bytes and {2} bytes.";
 
         #endregion
 
@@ -86,14 +88,22 @@ namespace SortMyStuffAPI.Utils
 
         public const string IndexAssetUserId = "AssetUserIdIndex";
 
+        public const string IndexAssetCategoryId = "AssetCategoryIdIndex";
+
         public const string IndexCategoryUserId = "CategoryUserIdIndex";
 
         public const string IndexBaseDetailUserId = "BaseDetailUserIdIndex";
 
+        public const string IndexBaseDetailCategoryId = "BaseDetailCategoryIdIndex";
+
         public const string IndexDetailUserId = "DetailUserIdIndex";
+
+        public const string IndexDetailBaseDetailId = "DetailBaseDetailIdIndex";
 
         #endregion
 
+        public const string RootAssetToken = "[RootAssetToken]";
 
+        public const string RootAssetDefaultName = "Assets";
     }
 }

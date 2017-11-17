@@ -31,7 +31,7 @@ namespace SortMyStuffAPI.Infrastructure
                 var options = new List<FormFieldOption>();
                 if (enumValues != null)
                 {
-                    foreach(var v in enumValues)
+                    foreach (var v in enumValues)
                     {
                         options.Add(new FormFieldOption
                         {
@@ -54,8 +54,15 @@ namespace SortMyStuffAPI.Infrastructure
 
                 var type = GetFriendlyType(prop, attributes);
 
-                var stringLength = attributes.OfType<StringLengthAttribute>()
-                    .SingleOrDefault()?.MaximumLength;
+                var slAttribute = attributes.OfType<StringLengthAttribute>()
+                    .SingleOrDefault();
+                var stringLengthMin = slAttribute?.MinimumLength;
+                var stringLengthMax = slAttribute?.MaximumLength;
+
+                var msAttribute = attributes.OfType<MemorySizeAttribute>()
+                    .SingleOrDefault();
+                var memorySizeMin = msAttribute?.MinimumSize;
+                var memorySizeMax = msAttribute?.MaximumSize;
 
                 var minLength = attributes.OfType<MinLengthAttribute>()
                     .SingleOrDefault()?.Length;
@@ -71,7 +78,10 @@ namespace SortMyStuffAPI.Infrastructure
                     ScopedUnique = scopedUnique,
                     Options = options.Any() ? options.ToArray() : null,
                     Type = type,
-                    StringLength = stringLength,
+                    MinimumStringLength = stringLengthMin,
+                    MaximumStringLength = stringLengthMax,
+                    MinimumMemorySize = memorySizeMin,
+                    MaximumMemorySize = memorySizeMax,
                     Value = value,
                     Description = description,
                     MinLength = minLength,

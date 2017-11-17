@@ -1,4 +1,6 @@
-﻿namespace SortMyStuffAPI.Utils
+﻿using System;
+
+namespace SortMyStuffAPI.Utils
 {
     public static class ModelRules
     {
@@ -23,5 +25,8 @@
         public const int UserNameLengthMax = 100;
         public const int UserPasswordLengthMin = 8;
         public const int UserPasswordLengthMax = 32;
+
+        public const Int64 DetailFieldSizeMin = 0;                  //MB
+        public const Int64 DetailFieldSizeMax = 1 * 1024 * 1024;    //MB
     }
 }
