@@ -110,7 +110,7 @@ namespace SortMyStuffAPI.Controllers
             if (!checkResult.IsValid)
             {
                 return BadRequest(new ApiError(
-                    "POST operation failed",
+                    "POST asset failed",
                     checkResult.Error));
             }
 
@@ -138,17 +138,13 @@ namespace SortMyStuffAPI.Controllers
         {
             if (!ModelState.IsValid) return BadRequest(new ApiError(ModelState));
 
-            var errorMsg = "PUT operation failed.";
+            var errorMsg = "PUT asset failed.";
 
-            var user = await UserService.GetUserByIdAsync(await GetUserId());
-            if(user == null)
-            {
-                return BadRequest(new ApiError(
-                    errorMsg,
-                    "User does not exist."));
-            }
+            var userId = await GetUserId();
+            var user = await UserService.GetUserByIdAsync(userId) ??
+                throw new ApiException($"User not exists:[{userId}]");
 
-            if (assetId.Equals(user?.RootAssetId))
+            if (assetId.Equals(user.RootAssetId))
             {
                 return BadRequest(new ApiError(
                     errorMsg,
@@ -182,9 +178,9 @@ namespace SortMyStuffAPI.Controllers
             [FromQuery] DeletingOptions deletingOptions,
             CancellationToken ct)
         {
-            if (!ModelState.IsValid) return BadRequest(new ApiError(ModelState));
-
             var errorMsg = "Delete asset failed.";
+            if (!ModelState.IsValid) return BadRequest(
+                new ApiError(errorMsg, ModelState));
 
             var userId = await GetUserId();
             var user = await UserService.GetUserByIdAsync(userId) ??
@@ -221,7 +217,7 @@ namespace SortMyStuffAPI.Controllers
 
         #region PRIVATE METHODS
 
-        private async Task<(bool IsValid, string Error)> CheckBaseForm(string userId, BaseAssetForm form, CancellationToken ct)
+        private async Task<(bool IsValid, string Error)> CheckBaseForm(string userId, AssetBaseForm form, CancellationToken ct)
         {
             var category = await _categoryDataService.GetResourceAsync(userId, form.CategoryId, ct);
             if (category == null)

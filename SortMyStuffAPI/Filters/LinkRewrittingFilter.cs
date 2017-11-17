@@ -58,7 +58,8 @@ namespace SortMyStuffAPI.Filters
 
             foreach (var linkProperty in linkProperties)
             {
-                var rewritten = helper.ToAbsolute(linkProperty.GetValue(model) as Link);
+                var link = linkProperty.GetValue(model);
+                var rewritten = helper.ToAbsolute(link as Link);
                 if (rewritten == null) continue;
 
                 linkProperty.SetValue(model, rewritten);

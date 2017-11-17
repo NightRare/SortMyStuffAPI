@@ -19,6 +19,7 @@ namespace SortMyStuffAPI.Models
         public DetailStyle Style { get; set; }
 
         [Required]
+        [Index]
         public string CategoryId { get; set; }
 
         [Mutable]

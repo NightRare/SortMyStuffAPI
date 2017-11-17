@@ -12,6 +12,8 @@
 
         public Link Assets { get; set; }
 
+        public Link BaseDetails { get; set; }
+
         public Link NewGuid { get; set; }
 
         public Link Users { get; set; }

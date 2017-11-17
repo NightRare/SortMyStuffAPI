@@ -4,7 +4,7 @@ using SortMyStuffAPI.Infrastructure;
 
 namespace SortMyStuffAPI.Models
 {
-    public class BaseAssetForm : RequestForm
+    public class AssetBaseForm : RequestForm
     {
         [Required]
         [Display(Name = "name", Description = "The new name of the asset.")]

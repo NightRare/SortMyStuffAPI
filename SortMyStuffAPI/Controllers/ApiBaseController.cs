@@ -5,9 +5,6 @@ using Microsoft.Extensions.Options;
 using SortMyStuffAPI.Models;
 using SortMyStuffAPI.Services;
 using SortMyStuffAPI.Utils;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace SortMyStuffAPI.Controllers
@@ -46,7 +43,7 @@ namespace SortMyStuffAPI.Controllers
             var adminPolicy = await AuthService
                 .AuthorizeAsync(User, ApiStrings.PolicyDeveloper);
 
-            // if the admin policy authorization approved, userId is null
+            // if the admin policy authorization approved, return the developer Id
             return adminPolicy.Succeeded ?
                 _developerUid : await UserService.GetUserIdAsync(User);
         }

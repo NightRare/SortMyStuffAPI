@@ -35,8 +35,7 @@ namespace SortMyStuffAPI.Infrastructure
                     {
                         options.Add(new FormFieldOption
                         {
-                            // display the name of the enum values rather than the number
-                            Value = v.ToString()
+                            Value = v
                         });
                     }
                 }

@@ -13,7 +13,7 @@ namespace SortMyStuffAPI.Services
     {
         Task<T> GetResourceAsync(
             string userId,
-            string id,
+            string resourceId,
             CancellationToken ct);
 
         Task<PagedResults<T>> GetResouceCollectionAsync(

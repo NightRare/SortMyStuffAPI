@@ -1,10 +1,16 @@
-﻿using System;
+﻿using SortMyStuffAPI.Infrastructure.Attributes;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 
 namespace SortMyStuffAPI.Infrastructure
 {
     [AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
     public class OptionAttribute : Attribute
     {
+        public IEnumerable<string> Options { get => GetEnumValues(); }
+
         private readonly Type _enumType;
 
         public OptionAttribute(Type enumType)
@@ -18,6 +24,19 @@ namespace SortMyStuffAPI.Infrastructure
             _enumType = enumType;
         }
 
-        public Array Options { get => Enum.GetValues(_enumType); }
+        private IEnumerable<string> GetEnumValues()
+        {
+            var es = _enumType.GetFields();
+            foreach (var field in _enumType.GetFields())
+            {
+                var ff = field.FieldType;
+                if (!field.FieldType.Equals(_enumType) ||
+                    field.GetCustomAttributes<HideOptionAttribute>().Any())
+                {
+                    continue;
+                }
+                yield return field.Name;
+            }
+        }
     }
 }

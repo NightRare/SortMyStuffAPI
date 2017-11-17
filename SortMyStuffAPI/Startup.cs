@@ -130,6 +130,8 @@ namespace SortMyStuffAPI
             services.AddScoped<IAssetDataService, DefaultDataService>();
             services.AddScoped<ICategoryDataService, DefaultDataService>();
             services.AddScoped<IUserDataService, DefaultDataService>();
+            services.AddScoped<IBaseDetailDataService, DefaultBaseDetailDataService>();
+            services.AddScoped<IDetailDataService, DefaultDetailDataService>();
 
             services.AddScoped<IPhotoFileService, DefaultFileService>();
             services.AddScoped<IThumbnailFileService, DefaultFileService>();

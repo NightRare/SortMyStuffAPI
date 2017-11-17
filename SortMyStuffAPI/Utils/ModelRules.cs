@@ -8,6 +8,9 @@
         public const int CategoryNameLength = 60;
         public const string CategoryNameLengthErrorMessage = "The length of the name must be less than 60.";
 
+        public const int DetailLabelLength = 60;
+        public const string DetailLabelLengthErrorMessage = "The length of the label must be less than 60.";
+
         public const int PagingOffsetMin = 1;
         public const int PagingOffsetMax = 10000;
         public const string PagingOffsetErrorMessage = "Offset parameter must be between 1 to 10000.";

@@ -3,7 +3,6 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using AutoMapper;
-using AutoMapper.QueryableExtensions;
 using SortMyStuffAPI.Models;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Identity;
@@ -11,21 +10,17 @@ using Microsoft.Extensions.Options;
 using SortMyStuffAPI.Infrastructure;
 using System.Security.Claims;
 using SortMyStuffAPI.Utils;
-using Microsoft.EntityFrameworkCore;
 using System.Reflection;
-using System.Linq.Expressions;
-using SortMyStuffAPI.Exceptions;
 
 namespace SortMyStuffAPI.Services
 {
-    public class DefaultDataService :
+    public class DefaultDataService : 
+        DefaultBaseDataService,
         IAssetDataService,
         IDetailDataService,
         ICategoryDataService,
         IUserDataService
     {
-        private readonly SortMyStuffContext _context;
-        private readonly ApiConfigs _apiConfigs;
         private readonly UserManager<UserEntity> _userManager;
         private readonly RoleManager<UserRoleEntity> _roleManager;
 
@@ -34,11 +29,10 @@ namespace SortMyStuffAPI.Services
             IOptions<ApiConfigs> apiConfigs,
             UserManager<UserEntity> userManager,
             RoleManager<UserRoleEntity> roleManager)
+            : base(context, apiConfigs)
         {
-            _context = context;
             _userManager = userManager;
             _roleManager = roleManager;
-            _apiConfigs = apiConfigs.Value;
         }
 
 
@@ -49,7 +43,7 @@ namespace SortMyStuffAPI.Services
             string id,
             CancellationToken ct)
         {
-            var repo = GetUserRepository(userId, _context.Assets);
+            var repo = GetUserRepository(userId, DbContext.Assets);
             var tree = await Task.Run(() =>
             {
                 var entity = repo.SingleOrDefault(a => a.Id == id);
@@ -65,7 +59,7 @@ namespace SortMyStuffAPI.Services
             CancellationToken ct)
         {
             return await GetOneResourceAsync<Asset, AssetEntity>(
-                _context.Assets,
+                DbContext.Assets,
                 userId,
                 id,
                 ct);
@@ -80,7 +74,7 @@ namespace SortMyStuffAPI.Services
         {
             return await GetOneTypeResourcesAsync(
                 userId,
-                _context.Assets,
+                DbContext.Assets,
                 ct,
                 pagingOptions,
                 sortOptions,
@@ -116,7 +110,7 @@ namespace SortMyStuffAPI.Services
             return await AddOneResourceAsync(
                 userId,
                 resource,
-                _context.Assets,
+                DbContext.Assets,
                 ct);
         }
 
@@ -128,7 +122,7 @@ namespace SortMyStuffAPI.Services
             return await UpdateOneResourceAsync(
                 userId,
                 resource,
-                _context.Assets,
+                DbContext.Assets,
                 ct);
         }
 
@@ -140,13 +134,13 @@ namespace SortMyStuffAPI.Services
             bool delDependents,
             CancellationToken ct)
         {
-            var repo = GetUserRepository(userId, _context.Assets);
+            var repo = GetUserRepository(userId, DbContext.Assets);
 
             if (!delDependents)
             {
                 if (repo.Any(a => a.ContainerId == resourceId))
                 {
-                    return (false, "Content assets found. Cannot delete asset with dependents.");
+                    return (false, "Content assets found. Cannot delete an asset with dependents.");
                 }
                 return await DeleteOneResourceAsync(resourceId, repo, ct);
             }
@@ -167,7 +161,7 @@ namespace SortMyStuffAPI.Services
                     property,
                     resource,
                     scope,
-                    _context.Assets), ct);
+                    DbContext.Assets), ct);
         }
 
         #endregion
@@ -232,7 +226,7 @@ namespace SortMyStuffAPI.Services
                     property,
                     resource,
                     scope,
-                    _context.Details), ct);
+                    DbContext.Details), ct);
         }
 
         #endregion
@@ -246,7 +240,7 @@ namespace SortMyStuffAPI.Services
             CancellationToken ct)
         {
             return await GetOneResourceAsync<Category, CategoryEntity>(
-                _context.Categories,
+                DbContext.Categories,
                 userId,
                 id,
                 ct);
@@ -261,7 +255,7 @@ namespace SortMyStuffAPI.Services
         {
             return await GetOneTypeResourcesAsync(
                 userId,
-                _context.Categories,
+                DbContext.Categories,
                 ct,
                 pagingOptions,
                 sortOptions,
@@ -276,7 +270,7 @@ namespace SortMyStuffAPI.Services
             return await AddOneResourceAsync(
                 userId,
                 resource,
-                _context.Categories,
+                DbContext.Categories,
                 ct);
         }
 
@@ -285,7 +279,7 @@ namespace SortMyStuffAPI.Services
             return await UpdateOneResourceAsync(
                 userId,
                 resource,
-                _context.Categories,
+                DbContext.Categories,
                 ct);
         }
 
@@ -296,7 +290,7 @@ namespace SortMyStuffAPI.Services
             bool delDependents,
             CancellationToken ct)
         {
-            var repo = GetUserRepository(userId, _context.Categories);
+            var repo = GetUserRepository(userId, DbContext.Categories);
 
             var category = repo.SingleOrDefault(c => c.Id == resourceId) ??
                 throw new KeyNotFoundException();
@@ -326,7 +320,7 @@ namespace SortMyStuffAPI.Services
                     property,
                     resource,
                     scope,
-                    _context.Categories), ct);
+                    DbContext.Categories), ct);
         }
 
         #endregion
@@ -341,7 +335,7 @@ namespace SortMyStuffAPI.Services
         {
             // always pass in developer id
             return await GetOneResourceAsync<User, UserEntity>(
-                _context.Users,
+                DbContext.Users,
                 ServicesAuthHelper.DeveloperUid,
                 id,
                 ct);
@@ -357,7 +351,7 @@ namespace SortMyStuffAPI.Services
             // ignore userId
             return await GetOneTypeResourcesAsync(
                 ServicesAuthHelper.DeveloperUid,
-                _context.Users,
+                DbContext.Users,
                 ct,
                 pagingOptions,
                 sortOptions,
@@ -416,7 +410,7 @@ namespace SortMyStuffAPI.Services
                     property,
                     resource,
                     scope,
-                    _context.Users), ct);
+                    DbContext.Users), ct);
         }
 
         public async Task<User> GetUserAsync(ClaimsPrincipal user)
@@ -460,265 +454,6 @@ namespace SortMyStuffAPI.Services
 
         #region PRIVATE METHODS
 
-        private async Task<PagedResults<T>> GetOneTypeResourcesAsync<T, TEntity>(
-            string userId,
-            DbSet<TEntity> dbSet,
-            CancellationToken ct,
-            PagingOptions pagingOptions = null,
-            SortOptions<T, TEntity> sortOptions = null,
-            SearchOptions<T, TEntity> searchOptions = null)
-            where T : EntityResource
-            where TEntity : class, IEntity
-        {
-            IQueryable<TEntity> query = GetUserRepository(userId, dbSet);
-
-            if (searchOptions != null)
-            {
-                query = new SearchOptionsProcessor<T, TEntity>(searchOptions)
-                    .Apply(query);
-            }
-
-            if (sortOptions != null)
-            {
-                query = new SortOptionsProcessor<T, TEntity>(sortOptions)
-                    .Apply(query);
-            }
-
-            IEnumerable<T> resources = await Task.Run(
-                () => query.ProjectTo<T>().ToArray(),
-                ct);
-
-            var totalSize = resources.Count();
-
-            if (pagingOptions != null)
-            {
-                var pagedResources = resources
-                    .Skip(pagingOptions.Offset.Value)
-                    .Take(pagingOptions.PageSize.Value);
-                resources = pagedResources;
-            }
-
-            return new PagedResults<T>
-            {
-                PagedItems = resources,
-                TotalSize = totalSize
-            };
-        }
-
-        private async Task<T> GetOneResourceAsync<T, TEntity>(
-            IQueryable<TEntity> dbSet,
-            string userId,
-            string id,
-            CancellationToken ct)
-            where T : EntityResource
-            where TEntity : IEntity
-        {
-            var repo = GetUserRepository(userId, dbSet);
-
-            var entity = await Task.Run(() => repo.SingleOrDefault(a => a.Id == id), ct);
-            return entity == null ? default(T) : Mapper.Map<TEntity, T>(entity);
-        }
-
-        private async Task<(bool Succeeded, string Error)> AddOneResourceAsync<T, TEntity>(
-            string userId,
-            T resource,
-            DbSet<TEntity> dbSet,
-            CancellationToken ct)
-            where T : EntityResource
-            where TEntity : class, IEntity
-        {
-            if (userId == null)
-                return (false, "The userId cannot be null.");
-
-            var repo = GetUserRepository(userId, dbSet);
-
-            var entity = Mapper.Map<T, TEntity>(resource);
-            entity.UserId = userId;
-
-            if (repo.Any(e => e.Id == entity.Id))
-                return (false, $"{resource.GetType().Name} already exists");
-
-            return await Task.Run(() =>
-            {
-                dbSet.Add(entity);
-                try
-                {
-                    _context.SaveChanges();
-                }
-                catch (DbUpdateException ex)
-                {
-                    return (false, ex.Message);
-                }
-
-                return (true, null);
-            }, ct);
-        }
-
-        private async Task<(bool Succeeded, string Error)> UpdateOneResourceAsync<T, TEntity>(
-            string userId,
-            T resource,
-            DbSet<TEntity> dbSet,
-            CancellationToken ct)
-            where T : EntityResource
-            where TEntity : class, IEntity
-        {
-            var repo = GetUserRepository(userId, dbSet);
-            return await Task.Run(() =>
-            {
-                var entity = repo.SingleOrDefault(a => a.Id == resource.Id);
-                if (entity == null)
-                    return (false, $"{resource.GetType().Name} not found");
-
-                var allMutableProperties = entity
-                    .GetType()
-                    .GetProperties()
-                    .Where(p => p.GetCustomAttributes<MutableAttribute>().Any());
-
-                foreach (var prop in allMutableProperties)
-                {
-                    var updatingValue = resource.GetType()
-                        .GetProperty(prop.Name)?
-                        .GetValue(resource);
-
-                    if (updatingValue != null)
-                        prop.SetValue(entity, updatingValue);
-                }
-
-                try
-                {
-                    _context.SaveChanges();
-                }
-                catch (DbUpdateException ex)
-                {
-                    return (false, ex.Message);
-                }
-                return (true, null);
-            }, ct);
-        }
-
-        private async Task<(bool Succeeded, string Error)> DeleteOneResourceAsync<TEntity>(
-            string resourceId,
-            IQueryable<TEntity> repo,
-            CancellationToken ct)
-            where TEntity : class, IEntity
-        {
-            return await Task.Run(() =>
-            {
-                var delEntity = repo.SingleOrDefault(a => a.Id == resourceId) ??
-                    throw new KeyNotFoundException();
-
-                _context.Remove<TEntity>(delEntity);
-
-                try
-                {
-                    _context.SaveChanges();
-                }
-                catch (DbUpdateException ex)
-                {
-                    return (false, ex.Message);
-                }
-
-                return (true, null);
-            }, ct);
-        }
-
-        private bool CheckResourceScopedUniqueness<T, TEntity>(
-            string userId,
-            PropertyInfo property,
-            T resource,
-            Scope scope,
-            DbSet<TEntity> dbSet)
-            where T : EntityResource
-            where TEntity : class, IEntity
-        {
-            IQueryable<TEntity> query = dbSet;
-
-            // Trying to build expressions:
-            // query = query.Where(e => e.ScopeProperty == ScopeId)
-            // query.Any(e => e.Property == resource.Property)
-
-            Expression scopeIdExp;
-            PropertyInfo scopeProperty;
-            switch (scope)
-            {
-                case Scope.User:
-                    {
-                        // Get the value of resource.UserId (i.e. ScopeId)
-                        scopeIdExp = Expression.Constant(resource.UserId ?? userId) ??
-                            throw new ApiException(
-                                "Unable to get the value of userId");
-
-                        // ?.UserId (i.e. ?.ScopeProperty)
-                        scopeProperty = ExpressionHelper.GetPropertyInfo<TEntity>("UserId") ??
-                            throw new ApiException(
-                                "Unable to locate the scope. 'UserId' property not found.");
-                        break;
-                    }
-                case Scope.Category:
-                    {
-                        // ?.CategoryId (i.e. ?.ScopeProperty)
-                        scopeProperty = resource.GetType().GetProperty("CategoryId") ??
-                            throw new ApiException(
-                                "Unable to locate the scope. 'CategoryId' property not found.");
-
-                        // Get the value of resource.CategoryId (i.e. ScopeId)
-                        scopeIdExp = Expression.Constant(scopeProperty.GetValue(resource)) ??
-                            throw new ApiException(
-                                "Unable to get the value of categoryId");
-
-                        break;
-                    }
-                default:
-                    throw new ApiException("Unexpected scope");
-            }
-
-            // stage 1: query = dbSet.Where(e => e.UserId == resource.UserId)
-
-            // e
-            var entityObj = Expression.Parameter(typeof(TEntity), "e");
-
-            // e.ScopeProperty
-            var entityScopeProperty = ExpressionHelper.GetPropertyExpression(
-                entityObj, scopeProperty);
-
-            // e.ScopeProperty == ScopeId
-            var comparisonScopeId = Expression.Equal(
-                entityScopeProperty, scopeIdExp);
-
-            // e => e.UserId == resource.UserId
-            var lambdaComparisonScopeId = ExpressionHelper
-                .GetLambda<TEntity, bool>(entityObj, comparisonScopeId);
-
-            // query = query.Where...
-            query = ExpressionHelper.CallWhere(query, lambdaComparisonScopeId);
-
-            // then check uniqueness
-            // stage 2: query.Any(e => e.Property == resource.Property)
-
-            // e.Property
-            var entityProperty = ExpressionHelper.GetPropertyExpression(
-                entityObj, typeof(TEntity).GetProperty(property.Name));
-
-            // the value of resource.Property
-            var resourcePropertyValue = resource.GetType()
-                .GetProperty(property.Name)?.GetValue(resource) ??
-                throw new ApiException(
-                    $"Check scoped uniqueness failed. " +
-                    $"The value of {property.Name} should not be null.");
-            var resourceProperty = Expression.Constant(resourcePropertyValue);
-
-            // e.Property == resource.Property
-            var comparisonProperty = Expression.Equal(
-                entityProperty, resourceProperty);
-
-            // e => e.Property == resource.Property
-            var lambdaComparisonProperty = ExpressionHelper.GetLambda<TEntity, bool>(
-                entityObj, comparisonProperty);
-
-            // query.Any(...)
-            return !ExpressionHelper.CallAny(query, lambdaComparisonProperty);
-        }
-
         private IEnumerable<AssetEntity> GetAllParents(
             string userId,
             string id)
@@ -727,14 +462,14 @@ namespace SortMyStuffAPI.Services
             // [Start of unsafe code]
             if (userId == null)
             {
-                var ent = _context.Assets.SingleOrDefault(a => a.Id == id);
+                var ent = DbContext.Assets.SingleOrDefault(a => a.Id == id);
                 if (ent == null) throw new KeyNotFoundException();
                 yield return ent;
 
                 // the containerId and the categoryId of the root asset should be null
                 while (ent.ContainerId != null && ent.CategoryId != null)
                 {
-                    ent = _context.Assets.SingleOrDefault(a => a.Id == id);
+                    ent = DbContext.Assets.SingleOrDefault(a => a.Id == id);
                     if (ent == null) yield break;
                     yield return ent;
                 }
@@ -747,7 +482,7 @@ namespace SortMyStuffAPI.Services
             if (user == null)
                 throw new KeyNotFoundException();
 
-            var repo = GetUserRepository(userId, _context.Assets);
+            var repo = GetUserRepository(userId, DbContext.Assets);
             var entity = repo.SingleOrDefault(a => a.Id == id);
 
             if (entity == null) throw new KeyNotFoundException();
@@ -764,7 +499,7 @@ namespace SortMyStuffAPI.Services
         private AssetTree ConvertToAssetTree(AssetEntity assetEntity)
         {
             if (assetEntity == null) return null;
-            var contents = _context.Assets.Where(a => a.ContainerId == assetEntity.Id);
+            var contents = DbContext.Assets.Where(a => a.ContainerId == assetEntity.Id);
 
             var assetTree = new AssetTree
             {
@@ -787,26 +522,12 @@ namespace SortMyStuffAPI.Services
 
         private void DeleteAsset(AssetEntity entity)
         {
-            var contents = _context.Assets.Where(a => a.ContainerId == entity.Id);
+            var contents = DbContext.Assets.Where(a => a.ContainerId == entity.Id);
             foreach (var asset in contents)
             {
                 DeleteAsset(asset);
             }
-            _context.Assets.Remove(entity);
-        }
-
-        private IQueryable<TEntity> GetUserRepository<TEntity>(
-            string userId,
-            IQueryable<TEntity> dbSet)
-            where TEntity : IEntity
-        {
-            if (userId == null)
-                throw new ArgumentException("The userId cannot be null.");
-
-            if (ServicesAuthHelper.IsDeveloper(userId))
-                return dbSet;
-
-            return dbSet.Where(e => e.UserId == userId);
+            DbContext.Assets.Remove(entity);
         }
 
         private async Task<(bool Succeeded, string Error)> DeleteAssetWithDependentsAsync(

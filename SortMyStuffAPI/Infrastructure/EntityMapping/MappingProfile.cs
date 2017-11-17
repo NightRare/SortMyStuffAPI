@@ -35,6 +35,10 @@ namespace SortMyStuffAPI.Infrastructure
                         nameof(Controllers.AssetsController.GetAssetsAsync),
                         new { search = $"{ nameof(Asset.ContainerId).ToCamelCase() } { ApiStrings.ParameterOpEqual } { src.Id }" })))
 
+                .ForMember(dest => dest.Details, opt => opt.MapFrom(src =>
+                    Link.ToCollection(nameof(Controllers.DetailsController.GetDetailsAsync),
+                        new { search = $"{ nameof(Detail.AssetId).ToCamelCase() } { ApiStrings.ParameterOpEqual } { src.Id }" })))
+
                 .ForMember(dest => dest.FormSpecs, opt => opt.MapFrom(src =>
                     src.Id == "rootassetid" ?
                     null : Link.ToCollection(
@@ -54,20 +58,24 @@ namespace SortMyStuffAPI.Infrastructure
 
             CreateMap<CategoryEntity, Category>()
                 .ForMember(dest => dest.Self, opt => opt.MapFrom(src =>
-                    Link.To(nameof(Controllers.CategoriesController.GetCategoryByIdAsync), new { categoryId = src.Id })))
+                    Link.To(nameof(Controllers.CategoriesController.GetCategoryByIdAsync), 
+                        new { categoryId = src.Id })))
 
-                // TODO: change BaseDetails mapping
                 .ForMember(dest => dest.BaseDetails, opt => opt.MapFrom(src =>
-                    Link.ToCollection(nameof(Controllers.CategoriesController.GetCategoryByIdAsync), null)))
+                    Link.ToCollection(nameof(Controllers.BaseDetailsController.GetBaseDetailsAsync),
+                        new { search = $"{ nameof(BaseDetail.CategoryId).ToCamelCase() } " +
+                            $"{ ApiStrings.ParameterOpEqual } { src.Id }" })))
 
                 .ForMember(dest => dest.CategorisedAssets, opt => opt.MapFrom(src =>
                     Link.ToCollection(nameof(Controllers.AssetsController.GetAssetsAsync),
-                        new { search = $"{ nameof(Asset.CategoryId).ToCamelCase() } { ApiStrings.ParameterOpEqual } { src.Id }" })))
+                        new { search = $"{ nameof(Asset.CategoryId).ToCamelCase() } " +
+                            $"{ ApiStrings.ParameterOpEqual } { src.Id }" })))
 
                 .ForMember(dest => dest.FormSpecs, opt => opt.MapFrom(src =>
                     Link.ToCollection(
                             nameof(Controllers.DocsController.GetDocsByResourceId),
-                            new { resourceType = Controllers.DocsController.Categories, resourceId = src.Id })));
+                            new { resourceType = Controllers.DocsController.Categories,
+                                resourceId = src.Id })));
 
             CreateMap<Category, CategoryEntity>()
                 .ForMember(dest => dest.BaseDetails, opt => opt.Ignore())
@@ -92,6 +100,41 @@ namespace SortMyStuffAPI.Infrastructure
                     Enum.Parse<AuthProvider>(src.Provider)));
 
             CreateMap<RegisterForm, User>();
+
+            #endregion
+
+
+            #region BaseDetail
+
+            CreateMap<BaseDetail, BaseDetailEntity>()
+                .ForMember(dest => dest.Style, opt => opt.MapFrom(src =>
+                    Enum.Parse<DetailStyle>(src.Style)))
+
+                .ForMember(dest => dest.Category, opt => opt.Ignore())
+
+                .ForMember(dest => dest.Derivatives, opt => opt.Ignore());
+
+            CreateMap<BaseDetailEntity, BaseDetail>()
+                .ForMember(dest => dest.Self, opt => opt.MapFrom(src =>
+                    Link.To(nameof(Controllers.BaseDetailsController.GetBaseDetailByIdAsync), new { baseDetailId = src.Id })))
+
+                .ForMember(dest => dest.Style, opt => opt.MapFrom(src =>
+                    src.Style.ToString()))
+
+                .ForMember(dest => dest.Category, opt => opt.MapFrom(src =>
+                    Link.To(nameof(Controllers.CategoriesController.GetCategoryByIdAsync),
+                    new { categoryId = src.CategoryId })))
+
+                .ForMember(dest => dest.Derivatives, opt => opt.MapFrom(src =>
+                    Link.ToCollection(nameof(Controllers.DetailsController.GetDetailsAsync),
+                    new { search = $"{ nameof(Detail.BaseId).ToCamelCase() } { ApiStrings.ParameterOpEqual } { src.Id }" })))
+
+                .ForMember(dest => dest.FormSpecs, opt => opt.MapFrom(src =>
+                    Link.ToCollection(
+                        nameof(Controllers.DocsController.GetDocsByResourceId),
+                        new { resourceType = Controllers.DocsController.BaseDetails, resourceId = src.Id })));
+
+            CreateMap<BaseDetailForm, BaseDetail>();
 
             #endregion
         }

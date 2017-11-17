@@ -4,9 +4,15 @@ namespace SortMyStuffAPI.Utils
 {
     public static class ApiStrings
     {
+        #region HOT STRINGS
+
         public const string ErrorCommonMsg = "A server error occurred.";
 
         public const string ErrorCommonDetail = "No further detail.";
+
+        #endregion
+
+        #region HTTP METHOD NAMES
 
         public const string HttpGet = "GET";
 
@@ -17,6 +23,10 @@ namespace SortMyStuffAPI.Utils
         public const string HttpDelete = "DELETE";
 
         public const string HttpPatch = "PATCH";
+
+        #endregion
+
+        #region PARAMETER OPERATORS
 
         public const string ParameterDesc = "desc";
 
@@ -30,6 +40,10 @@ namespace SortMyStuffAPI.Utils
 
         public const string ParameterOpLessThanOrEqual = "lte";
 
+        #endregion
+
+        #region FORM RELATION TYPES
+
         public const string FormRel = "form";
 
         public const string FormEditRel = "edit-form";
@@ -38,6 +52,7 @@ namespace SortMyStuffAPI.Utils
 
         public const string FormQueryRel = "query-form";
 
+        #endregion
 
         #region ENVIRONMENT VIRIABLE KEYS
 
@@ -65,7 +80,7 @@ namespace SortMyStuffAPI.Utils
 
         #endregion
 
-        #region INDEX
+        #region INDEX NAMES
 
         public const string IndexAssetContainerId = "AssetContainerIdIndex";
 
@@ -78,5 +93,7 @@ namespace SortMyStuffAPI.Utils
         public const string IndexDetailUserId = "DetailUserIdIndex";
 
         #endregion
+
+
     }
 }

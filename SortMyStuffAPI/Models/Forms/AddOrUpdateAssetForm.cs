@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace SortMyStuffAPI.Models
 {
-    public class FormMode : BaseAssetForm
+    public class FormMode : AssetBaseForm
     {
         [Required]
         [Immutable]

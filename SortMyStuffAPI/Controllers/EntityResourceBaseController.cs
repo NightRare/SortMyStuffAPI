@@ -253,6 +253,11 @@ namespace SortMyStuffAPI.Controllers
                 return new { detailId = guid };
             }
 
+            if(typeOfT == typeof(BaseDetail))
+            {
+                return new { baseDetailId = guid }; 
+            }
+
             return null;
         }
 
