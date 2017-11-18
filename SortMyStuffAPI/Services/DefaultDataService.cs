@@ -177,12 +177,11 @@ namespace SortMyStuffAPI.Services
                     .GetProperties()
                     .Where(p => p.GetCustomAttributes<MutableAttribute>().Any());
 
+                var updateSource = Mapper.Map<T, TEntity>(resource);
+
                 foreach (var prop in allMutableProperties)
                 {
-                    var updatingValue = resource.GetType()
-                        .GetProperty(prop.Name)?
-                        .GetValue(resource);
-
+                    var updatingValue = prop.GetValue(updateSource);
                     if (updatingValue != null)
                         prop.SetValue(entity, updatingValue);
                 }

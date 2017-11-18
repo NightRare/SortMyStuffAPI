@@ -60,7 +60,7 @@ namespace SortMyStuffAPI.Infrastructure
                 var stringLengthMin = slAttribute?.MinimumLength;
                 var stringLengthMax = slAttribute?.MaximumLength;
 
-                var msAttribute = attributes.OfType<MemorySizeAttribute>()
+                var msAttribute = attributes.OfType<DataSizeAttribute>()
                     .SingleOrDefault();
                 var memorySizeMin = msAttribute?.MinimumSize;
                 var memorySizeMax = msAttribute?.MaximumSize;

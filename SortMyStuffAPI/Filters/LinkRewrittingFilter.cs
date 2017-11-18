@@ -88,9 +88,13 @@ namespace SortMyStuffAPI.Filters
             object obj,
             LinkHelper helper)
         {
+            // if the obj itself is not a Resource than skip it
+            if(!(obj is Resource)) return;
+
             foreach (var objectProperty in objectProperties)
             {
-                if (objectProperty.PropertyType == typeof(string))
+                var propType = objectProperty.PropertyType;
+                if (propType.Equals(typeof(string)))
                 {
                     continue;
                 }
