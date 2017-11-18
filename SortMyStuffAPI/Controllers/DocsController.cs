@@ -25,6 +25,7 @@ namespace SortMyStuffAPI.Controllers
         private readonly IAssetDataService _assetDataService;
         private readonly ICategoryDataService _categoryDataService;
         private readonly IBaseDetailDataService _baseDetailDataService;
+        private readonly IDetailDataService _detailDataService;
 
         public DocsController(
             IOptions<ApiConfigs> apiConfigs,
@@ -33,7 +34,8 @@ namespace SortMyStuffAPI.Controllers
             IAuthorizationService authService,
             IAssetDataService assetDataService,
             ICategoryDataService categoryDataService,
-            IBaseDetailDataService baseDetailDataService)
+            IBaseDetailDataService baseDetailDataService,
+            IDetailDataService detailDataService)
             : base(userDataService,
                   apiConfigs,
                   env,
@@ -42,6 +44,7 @@ namespace SortMyStuffAPI.Controllers
             _assetDataService = assetDataService;
             _categoryDataService = categoryDataService;
             _baseDetailDataService = baseDetailDataService;
+            _detailDataService = detailDataService;
         }
 
         // GET /docs
@@ -100,19 +103,24 @@ namespace SortMyStuffAPI.Controllers
             switch (resourceType.ToLower())
             {
                 case Assets:
-                    return await _assetDataService.GetResourceAsync(userId, resourceId, ct) == null ?
-                        NotFound(new ApiError($"Resource '{resourceType}/{resourceId}' not found.")) :
-                        Ok(GetAssetDocs(resourceId)) as IActionResult;
+                    return await GetResult(
+                        _assetDataService, userId, resourceType, 
+                        resourceId, GetAssetDocs(resourceId), ct);
 
                 case Categories:
-                    return await _categoryDataService.GetResourceAsync(userId, resourceId, ct) == null ?
-                        NotFound(new ApiError($"Resource '{resourceType}/{resourceId}' not found.")) :
-                        Ok(GetCategoryDocs(resourceId)) as IActionResult;
+                    return await GetResult(
+                        _categoryDataService, userId, resourceType,
+                        resourceId, GetCategoryDocs(resourceId), ct);
 
                 case BaseDetails:
-                    return await _baseDetailDataService.GetResourceAsync(userId, resourceId, ct) == null ?
-                        NotFound(new ApiError($"Resource '{resourceType}/{resourceId}' not found.")) :
-                        Ok(GetBaseDetailDocs(resourceId)) as IActionResult;
+                    return await GetResult(
+                        _baseDetailDataService, userId, resourceType,
+                        resourceId, GetBaseDetailDocs(resourceId), ct);
+
+                case Details:
+                    return await GetResult(
+                        _detailDataService, userId, resourceType,
+                        resourceId, GetDetailsDocs(resourceId), ct);
 
                 default:
                     return NotFound(new ApiError($"Resource type '{resourceType}' not found."));
@@ -121,7 +129,22 @@ namespace SortMyStuffAPI.Controllers
 
         #region PRIVATE METHODS
 
-        private Documentation GetDetailsDocs(string detailId = null)
+        private async Task<IActionResult> GetResult<T, TEntity>(
+            IDataService<T, TEntity> dataService,
+            string userId,
+            string resourceType,
+            string resourceId,
+            Documentation doc,
+            CancellationToken ct)
+            where T : EntityResource
+            where TEntity : class, IEntity
+        {
+            return await dataService.GetResourceAsync(userId, resourceId, ct) == null ?
+                NotFound(new ApiError($"Resource '{resourceType}/{resourceId}' not found.")) :
+                Ok(doc) as IActionResult;
+        }
+
+        private static Documentation GetDetailsDocs(string detailId = null)
         {
             var list = new List<FormSpecification>();
 
@@ -144,7 +167,7 @@ namespace SortMyStuffAPI.Controllers
             return response;
         }
 
-        private Documentation GetBaseDetailDocs(string baseDetailId = null)
+        private static Documentation GetBaseDetailDocs(string baseDetailId = null)
         {
             var list = new List<FormSpecification>();
 
@@ -266,6 +289,7 @@ namespace SortMyStuffAPI.Controllers
                         resourceId = id
                     });
         }
+
     }
 
     #endregion

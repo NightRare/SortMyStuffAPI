@@ -8,7 +8,7 @@ namespace SortMyStuffAPI.Models
     public class DetailForm : RequestForm
     {
         [Required]
-        [Display(Name = "label", Description = "The field of the detail.")]
+        [Display(Name = "field", Description = "The field of the detail.")]
         [MemorySize(MinimumSize = ModelRules.DetailFieldSizeMin,
             MaximumSize = ModelRules.DetailFieldSizeMax)]
         public object Field { get; set; }
