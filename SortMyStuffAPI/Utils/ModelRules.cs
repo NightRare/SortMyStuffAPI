@@ -28,5 +28,7 @@ namespace SortMyStuffAPI.Utils
 
         public const Int64 DetailFieldSizeMin = 0;                  //MB
         public const Int64 DetailFieldSizeMax = 1 * 1024 * 1024;    //MB
+
+        public const string ScopedUniqueMessage = "No duplicate values allowed in one {0}";
     }
 }

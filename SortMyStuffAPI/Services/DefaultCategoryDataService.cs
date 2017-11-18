@@ -14,11 +14,18 @@ namespace SortMyStuffAPI.Services
         : DefaultDataService<Category, CategoryEntity>,
         ICategoryDataService
     {
+        private readonly IAssetDataService _assetDataService;
+        private readonly IBaseDetailDataService _baseDetailDataService;
+
         public DefaultCategoryDataService(
             SortMyStuffContext dbContext,
-            IOptions<ApiConfigs> apiConfigs)
+            IOptions<ApiConfigs> apiConfigs,
+            IAssetDataService assetDataService,
+            IBaseDetailDataService baseDetailDataService)
             : base(dbContext, apiConfigs)
         {
+            _assetDataService = assetDataService;
+            _baseDetailDataService = baseDetailDataService;
         }
 
         #region IDataService METHODS
@@ -138,10 +145,9 @@ namespace SortMyStuffAPI.Services
             // category.CategorisedAssets will be modifed as well
             // therefore have to iterate through another clone collection
             var categorisedAssets = category.CategorisedAssets.ToArray();
-
             foreach (var asset in categorisedAssets)
             {
-                var delAsset = await (this as IDataService<Asset, AssetEntity>)
+                var delAsset = await _assetDataService
                     .DeleteResourceAsync(category.UserId, asset.Id, true, ct);
 
                 if (!delAsset.Succeeded)
@@ -150,7 +156,17 @@ namespace SortMyStuffAPI.Services
                 }
             }
 
-            // TODO: delete base details and their dependents
+            var baseDetails = category.BaseDetails.ToArray();
+            foreach (var bd in baseDetails)
+            {
+                var delBd = await _baseDetailDataService
+                    .DeleteResourceAsync(category.UserId, bd.Id, true, ct);
+
+                if(!delBd.Succeeded)
+                {
+                    return (false, delBd.Error);
+                }
+            }
 
             return await DeleteOneResourceAsync(category.Id, repo, ct);
         }

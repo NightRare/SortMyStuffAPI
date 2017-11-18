@@ -4,7 +4,7 @@ namespace SortMyStuffAPI.Utils
 {
     public static class ApiStrings
     {
-        #region ERROR MESSAGES
+        #region MESSAGES
 
         public const string ErrorCommonMsg = "A server error occurred.";
 

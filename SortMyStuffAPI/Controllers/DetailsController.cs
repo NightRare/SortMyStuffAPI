@@ -18,13 +18,13 @@ namespace SortMyStuffAPI.Controllers
         : EntityResourceBaseController<Detail, DetailEntity>
     {
         public DetailsController(
-            IDataService<Detail, DetailEntity> dataService, 
+            IDetailDataService detailDataService, 
             IOptions<PagingOptions> defaultPagingOptions, 
             IOptions<ApiConfigs> apiConfigs, 
             IUserDataService userDataService, 
             IHostingEnvironment env, 
             IAuthorizationService authService) 
-            : base(dataService, 
+            : base(detailDataService, 
                   defaultPagingOptions, 
                   apiConfigs, 
                   userDataService, 

@@ -14,6 +14,8 @@
 
         public Link BaseDetails { get; set; }
 
+        public Link Details { get; set; }
+
         public Link NewGuid { get; set; }
 
         public Link Users { get; set; }

@@ -12,13 +12,14 @@ using SixLabors.ImageSharp.Formats.Jpeg;
 using SixLabors.ImageSharp.Processing;
 using SixLabors.Primitives;
 using SortMyStuffAPI.Models;
+using SixLabors.ImageSharp.Formats;
 
 namespace SortMyStuffAPI.Services
 {
     public class DefaultFileService : IThumbnailFileService, IPhotoFileService
     {
-        // TODO: to be removed
-        private const string TestUser = "test_user";
+        // Make sure this is consistent with ApiConfigs.ImageFormat
+        private readonly static IImageFormat imageFormat = ImageFormats.Jpeg;
 
         private FirebaseStorage _storage;
         private ApiConfigs _apiConfigs;
@@ -98,8 +99,14 @@ namespace SortMyStuffAPI.Services
         {
             await InitialiseFirebaseStorage();
 
-            //TODO: check the format of photo
+            var format = Image.DetectFormat(photo);
+            if (!format.Equals(imageFormat))
+            {
+                return (false, $"Incorrect photo format. Only allow " +
+                    $"[{imageFormat.FileExtensions.ToEnumString()}].");
+            }
 
+            bool photoUploaded = false;
             try
             {
                 photo.Position = 0;
@@ -109,18 +116,30 @@ namespace SortMyStuffAPI.Services
                     .Child(_apiConfigs.StoragePhotos)
                     .Child(id + _apiConfigs.ImageFormat)
                     .PutAsync(photo, ct);
+                photoUploaded = true;
 
+                photo.Position = 0;
                 await _storage
                     .Child(_apiConfigs.StorageUserData)
                     .Child(userId)
                     .Child(_apiConfigs.StorageThumbnails)
                     .Child(id + _apiConfigs.ImageFormat)
                     .PutAsync(ToThumbnail(photo), ct);
-
-                //TODO: In order to keep the sync between photo and thumbnail, should retry upload thumbnail if failed, or delete the photo
             }
             catch (FirebaseStorageException ex)
             {
+                // if uploading thumbnail failed, then delete the photo
+                // to remain consistency
+                if (photoUploaded)
+                {
+                    await _storage
+                        .Child(_apiConfigs.StorageUserData)
+                        .Child(userId)
+                        .Child(_apiConfigs.StoragePhotos)
+                        .Child(id + _apiConfigs.ImageFormat)
+                        .DeleteAsync();
+                }
+
                 return (false, ex.Message);
             }
             return (true, null);
@@ -132,8 +151,6 @@ namespace SortMyStuffAPI.Services
             CancellationToken ct)
         {
             await InitialiseFirebaseStorage();
-
-            //TODO: check the format of photo
 
             try
             {
@@ -186,7 +203,6 @@ namespace SortMyStuffAPI.Services
         private Stream ToThumbnail(Stream photo)
         {
             var thumbnail = new MemoryStream();
-            photo.Position = 0;
 
             var image = Image.Load<Rgba32>(photo, new JpegDecoder());
             image.Mutate(x => x.Resize(new ResizeOptions

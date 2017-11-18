@@ -1,4 +1,5 @@
 ﻿using SortMyStuffAPI.Models;
+using SortMyStuffAPI.Utils;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -48,8 +49,8 @@ namespace SortMyStuffAPI.Infrastructure
                 var requireUnique = attributes.OfType<ScopedUniqueAttribute>().Any();
                 if (requireUnique)
                 {
-                    scopedUnique = $"Require uniqueness for every " +
-                        $"{prop.GetCustomAttribute<ScopedUniqueAttribute>().Scope.ToString()}";
+                    scopedUnique = String.Format(ModelRules.ScopedUniqueMessage,
+                        prop.GetCustomAttribute<ScopedUniqueAttribute>().Scope.ToString());
                 }
 
                 var type = GetFriendlyType(prop, attributes);

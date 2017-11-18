@@ -54,15 +54,10 @@ namespace SortMyStuffAPI.Controllers
                 Self = Link.ToCollection(nameof(GetDocs)),
                 Value = new[]
                 {
-                    Link.ToCollection(
-                        nameof(GetDocsByType),
-                        new { resourceType = Assets }),
-                    Link.ToCollection(
-                        nameof(GetDocsByType),
-                        new { resourceType = Categories }),
-                    Link.ToCollection(
-                        nameof(GetDocsByType),
-                        new { resourceType = BaseDetails })
+                    GenerateDocLink(Assets),
+                    GenerateDocLink(Categories),
+                    GenerateDocLink(BaseDetails),
+                    GenerateDocLink(Details)
                 }
             };
 
@@ -85,6 +80,8 @@ namespace SortMyStuffAPI.Controllers
                     return Ok(GetCategoryDocs());
                 case BaseDetails:
                     return Ok(GetBaseDetailDocs());
+                case Details:
+                    return Ok(GetDetailsDocs());
                 default:
                     return NotFound(new ApiError($"Resource type '{resourceType}' not found."));
             }
@@ -124,6 +121,29 @@ namespace SortMyStuffAPI.Controllers
 
         #region PRIVATE METHODS
 
+        private Documentation GetDetailsDocs(string detailId = null)
+        {
+            var list = new List<FormSpecification>();
+
+            var update = FormMetadata.FromModel(
+                new DetailForm(),
+                Link.ToForm(
+                    nameof(DetailsController.UpdateDetailAsync),
+                    new { detailId = detailId ?? "detailId" },
+                    ApiStrings.HttpPatch,
+                    ApiStrings.FormEditRel));
+            list.Add(update);
+
+            var response = new Documentation
+            {
+                Self = GenerateDocLink(Details, detailId),
+                ResourceType = Details,
+                Value = list.ToArray()
+            };
+
+            return response;
+        }
+
         private Documentation GetBaseDetailDocs(string baseDetailId = null)
         {
             var list = new List<FormSpecification>();
@@ -151,7 +171,7 @@ namespace SortMyStuffAPI.Controllers
 
             var response = new Documentation
             {
-                Self = GenerateSelfLink(Categories, baseDetailId),
+                Self = GenerateDocLink(BaseDetails, baseDetailId),
                 ResourceType = BaseDetails,
                 Value = list.ToArray()
             };
@@ -186,7 +206,7 @@ namespace SortMyStuffAPI.Controllers
 
             var response = new Documentation
             {
-                Self = GenerateSelfLink(Categories, categoryId),
+                Self = GenerateDocLink(Categories, categoryId),
                 ResourceType = Categories,
                 Value = list.ToArray()
             };
@@ -221,7 +241,7 @@ namespace SortMyStuffAPI.Controllers
 
             var response = new Documentation
             {
-                Self = GenerateSelfLink(Assets, assetId),
+                Self = GenerateDocLink(Assets, assetId),
                 ResourceType = Assets,
                 Value = list.ToArray()
             };
@@ -229,7 +249,7 @@ namespace SortMyStuffAPI.Controllers
             return response;
         }
 
-        private static Link GenerateSelfLink(string type, string id)
+        private static Link GenerateDocLink(string type, string id = null)
         {
             return id == null ?
                 Link.ToCollection(

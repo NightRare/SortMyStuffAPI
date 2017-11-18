@@ -7,7 +7,7 @@ namespace SortMyStuffAPI.Models
     public class BaseDetailForm : RequestForm
     {
         [Required]
-        [Display(Name = "label", Description = "The name of the asset.")]
+        [Display(Name = "label", Description = "The label of the base detail.")]
         [StringLength(maximumLength: ModelRules.DetailLabelLength, 
             ErrorMessage = ModelRules.DetailLabelLengthErrorMessage)]
         [ScopedUnique(Scope = Scope.Category)]
