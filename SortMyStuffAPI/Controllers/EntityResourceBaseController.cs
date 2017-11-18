@@ -14,6 +14,7 @@ using AutoMapper;
 using SortMyStuffAPI.Utils;
 using System.Reflection;
 using System.Collections.Generic;
+using System.Net;
 
 namespace SortMyStuffAPI.Controllers
 {
@@ -40,17 +41,13 @@ namespace SortMyStuffAPI.Controllers
             DefaultPagingOptions = defaultPagingOptions.Value;
         }
 
-        protected virtual async Task<IActionResult> GetResourcesAsync(
+        protected virtual async Task<IStatusCodeResult<PagedCollection<T>>> GetResourcesAsync(
             string responseMethodName,
             CancellationToken ct,
-            [FromQuery] PagingOptions pagingOptions,
-            [FromQuery] SortOptions<T, TEntity> sortOptions,
-            [FromQuery] SearchOptions<T, TEntity> searchOptions,
-            Action<PagedResults<T>> operation = null)
+            PagingOptions pagingOptions,
+            SortOptions<T, TEntity> sortOptions,
+            SearchOptions<T, TEntity> searchOptions)
         {
-            // if any Model (in this case PagingOptions) property is not valid according to the Range attributes
-            if (!ModelState.IsValid) return BadRequest(new ApiError(ModelState));
-
             pagingOptions.Offset = pagingOptions.Offset ?? DefaultPagingOptions.Offset;
             pagingOptions.PageSize = pagingOptions.PageSize ?? DefaultPagingOptions.PageSize;
 
@@ -68,18 +65,15 @@ namespace SortMyStuffAPI.Controllers
             }
             catch (InvalidSearchOperationException ex)
             {
-                return BadRequest(new ApiError(ex.Message));
+                return ResultFactory.FailureCode<PagedCollection<T>>(
+                    errorObject: ex,
+                    errorMessage: ex.Message);
             }
 
             if (!ServicesAuthHelper.IsDeveloper(userId))
             {
-                foreach (var res in results.PagedItems)
-                {
-                    res.UserId = null;
-                }
+                HideUserId(results.PagedItems.ToArray());
             }
-
-            operation?.Invoke(results);
 
             var response = PagedCollection<T>.Create(
                 Link.ToCollection(responseMethodName),
@@ -87,63 +81,67 @@ namespace SortMyStuffAPI.Controllers
                 results.TotalSize,
                 pagingOptions);
 
-            return Ok(response);
+            return ResultFactory.SuccessCode(
+                resultObject: response);
         }
 
-        protected virtual async Task<IActionResult> GetResourceByIdAsync(
+        protected virtual async Task<IStatusCodeResult<T>> GetResourceByIdAsync(
             string id,
-            CancellationToken ct,
-            Action<T> operation = null)
+            CancellationToken ct)
         {
             string userId = await GetUserId();
 
             var result = await DataService.GetResourceAsync(userId, id, ct);
-            if (result == null) return NotFound();
+            if (result == null)
+            {
+                return ResultFactory.FailureCode<T>(
+                    statusCode: HttpStatusCode.NotFound,
+                    errorMessage: $"{typeof(T).Name} {id} does not exist.");
+            }
 
             if (!ServicesAuthHelper.IsDeveloper(userId))
             {
-                result.UserId = null;
+                HideUserId(result);
             }
 
-            operation?.Invoke(result);
-
-            return Ok(result);
+            return ResultFactory.SuccessCode(
+                resultObject: result);
         }
 
-        protected virtual async Task<IActionResult> CreateResourceAsync(
-            string responseMethodName,
+        protected virtual async Task<IStatusCodeResult<T>> CreateResourceAsync(
             string resourceId,
-            [FromBody] RequestForm createForm,
+            RequestForm createForm,
             CancellationToken ct,
-            Action<T> operation = null,
-            string errorMessage = "Create resource failed")
+            Action<T> operation = null)
         {
             string userId = await GetUserId();
 
             // newly added asset via api must have a correctly formatted guid
             if (!Guid.TryParse(resourceId, out var guid))
             {
-                return BadRequest(new ApiError(
-                    errorMessage,
-                    $"The {typeof(T).Name.ToCamelCase()}Id must be a correctly formatted Guid."));
+                return ResultFactory.FailureCode<T>(
+                    errorMessage: $"The {typeof(T).Name.ToCamelCase()}Id " +
+                    $"must be a correctly formatted Guid.");
             }
 
             var resource = Mapper.Map<T>(createForm);
             resource.Id = resourceId;
             resource.UserId = userId;
 
-            var uniqueCheck = await CheckResourceUniqueProperties(
+            var checkUnique = await CheckResourceUniqueProperties(
                 userId, resource, createForm, ct);
-            if (!uniqueCheck.IsUnique)
-                return uniqueCheck.ErrorResult;
+            if (!checkUnique.Succeeded)
+            {
+                return checkUnique.AddFailureStatusCode<T>();
+            }
 
             operation?.Invoke(resource);
 
             var result = await DataService.AddResourceAsync(userId, resource, ct);
             if (!result.Succeeded)
             {
-                return BadRequest(new ApiError(
-                    errorMessage, result.Error));
+                return ResultFactory.FailureCode<T>(
+                    errorMessage: result.Error);
             }
 
             var assetCreated = await DataService.GetResourceAsync(
@@ -151,38 +149,40 @@ namespace SortMyStuffAPI.Controllers
                 resource.Id,
                 ct);
 
-            return Created(
-                Url.Link(responseMethodName,
-                GetLinkValue(resource.GetType(), resource.Id)),
-                assetCreated);
+            if (!ServicesAuthHelper.IsDeveloper(userId))
+            {
+                HideUserId(assetCreated);
+            }
+
+            return ResultFactory.SuccessCode(
+                HttpStatusCode.Created, assetCreated);
         }
 
-        protected async Task<IActionResult> UpdateResourceAsync(
+        protected async Task<IStatusCodeResult> UpdateResourceAsync(
             T record,
-            [FromBody] RequestForm updateForm,
+            RequestForm updateForm,
             CancellationToken ct,
-            Action<T> operation = null,
-            string errorMessage = "PATCH operation failed")
+            Action<T> operation = null)
         {
             var userId = await GetUserId();
 
-            (bool IsUnique, IActionResult ErrorResult) uniqueCheck;
-
+            IResult checkUnique;
             var immutableCheck = CheckImmutableProperties(updateForm, record);
             if (!immutableCheck.Pass)
             {
-                return BadRequest(new ApiError(errorMessage, immutableCheck.Error));
+                return ResultFactory.FailureCode(
+                    errorMessage: immutableCheck.Error);
             }
 
             var update = Mapper.Map<T>(updateForm);
             update.Id = record.Id;
             update.UserId = record.UserId;
 
-            uniqueCheck = await CheckResourceUniqueProperties(
+            checkUnique = await CheckResourceUniqueProperties(
                 record.UserId, update, updateForm, ct);
-            if (!uniqueCheck.IsUnique)
+            if (!checkUnique.Succeeded)
             {
-                return uniqueCheck.ErrorResult;
+                return checkUnique.AddFailureStatusCode();
             }
 
             operation?.Invoke(update);
@@ -190,12 +190,20 @@ namespace SortMyStuffAPI.Controllers
             var updateResult = await DataService.UpdateResourceAsync(userId, update, ct);
             if (!updateResult.Succeeded)
             {
-                return BadRequest(new ApiError(
-                    $"Update {typeof(T).Name.ToCamelCase()} failed.",
-                    updateResult.Error));
+                return ResultFactory.FailureCode(
+                    errorMessage: updateResult.Error);
             }
 
-            return Ok();
+            return ResultFactory.SuccessCode();
+        }
+
+        protected void HideUserId(
+            params EntityResource[] resources)
+        {
+            foreach (var r in resources)
+            {
+                r.UserId = null;
+            }
         }
 
         #region PRIVATE METHODS
@@ -217,15 +225,15 @@ namespace SortMyStuffAPI.Controllers
                 return new { detailId = guid };
             }
 
-            if(typeOfT == typeof(BaseDetail))
+            if (typeOfT == typeof(BaseDetail))
             {
-                return new { baseDetailId = guid }; 
+                return new { baseDetailId = guid };
             }
 
             return null;
         }
 
-        private async Task<(bool IsUnique, IActionResult ErrorResult)>
+        private async Task<IResult>
             CheckResourceUniqueProperties(
                 string userId,
                 T resource,
@@ -254,14 +262,14 @@ namespace SortMyStuffAPI.Controllers
 
             if (errorMessages.Any())
             {
-                var errorMessage = String.Concat(errorMessages);
-                return (false, BadRequest(new ApiError(
-                    "Conflict values found.", errorMessage)));
+                return ResultFactory.Failure(
+                    errorMessage: String.Concat(errorMessages));
             }
-            return (true, null);
+            return ResultFactory.Success();
         }
 
-        private (bool Pass, string Error) CheckImmutableProperties(RequestForm form, T existingResource)
+        private (bool Pass, string Error) CheckImmutableProperties(
+            RequestForm form, T existingResource)
         {
             var allImmutableProperties = form.GetType()
                 .GetProperties()

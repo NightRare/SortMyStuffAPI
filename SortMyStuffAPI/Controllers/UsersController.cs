@@ -68,22 +68,28 @@ namespace SortMyStuffAPI.Controllers
             [FromQuery] SortOptions<User, UserEntity> sortOptions,
             [FromQuery] SearchOptions<User, UserEntity> searchOptions)
         {
-            return await GetResourcesAsync(
+            var errorMsg = "GET users failed.";
+            if (!ModelState.IsValid) return BadRequest(
+                new ApiError(errorMsg, ModelState));
+
+            var result = await GetResourcesAsync(
                 nameof(GetUsersAsync),
                 ct,
                 pagingOptions,
                 sortOptions,
                 searchOptions);
+
+            return GetActionResult(result, errorMsg);
         }
 
         // GET /users/{userId}
         [Authorize(Policy = ApiStrings.PolicyDeveloper)]
         [HttpGet("{userId}", Name = nameof(GetUserByIdAsync))]
         public async Task<IActionResult> GetUserByIdAsync(
-            string userId,
-            CancellationToken ct)
+            string userId, CancellationToken ct)
         {
-            return await GetResourceByIdAsync(userId, ct);
+            return GetActionResult(
+                await GetResourceByIdAsync(userId, ct));
         }
 
         // POST /users

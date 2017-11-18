@@ -1,4 +1,4 @@
-﻿using SortMyStuffAPI.Infrastructure.Attributes;
+﻿using SortMyStuffAPI.Infrastructure;
 using System;
 
 namespace SortMyStuffAPI.Models
@@ -6,7 +6,7 @@ namespace SortMyStuffAPI.Models
     [Flags]
     public enum DetailStyle
     {
-        [HideOption]
+        [Hide]
         None = 0,
 
         Text = 1,

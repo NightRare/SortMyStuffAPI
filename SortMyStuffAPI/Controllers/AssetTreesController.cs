@@ -6,9 +6,6 @@ using SortMyStuffAPI.Models;
 using SortMyStuffAPI.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
-using SortMyStuffAPI.Infrastructure;
-using SortMyStuffAPI.Utils;
-using System.Collections.Generic;
 
 namespace SortMyStuffAPI.Controllers
 {

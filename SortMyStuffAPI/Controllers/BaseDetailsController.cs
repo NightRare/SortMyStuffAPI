@@ -54,12 +54,18 @@ namespace SortMyStuffAPI.Controllers
             [FromQuery] SortOptions<BaseDetail, BaseDetailEntity> sortOptions,
             [FromQuery] SearchOptions<BaseDetail, BaseDetailEntity> searchOptions)
         {
-            return await GetResourcesAsync(
+            var errorMsg = "GET base details failed.";
+            if (!ModelState.IsValid) return BadRequest(
+                new ApiError(errorMsg, ModelState));
+
+            var result = await GetResourcesAsync(
                 nameof(GetBaseDetailsAsync),
                 ct,
                 pagingOptions,
                 sortOptions,
                 searchOptions);
+
+            return GetActionResult(result, errorMsg);
         }
 
         // GET /basedetails/{baseDetailId}
@@ -68,7 +74,8 @@ namespace SortMyStuffAPI.Controllers
         public async Task<IActionResult> GetBaseDetailByIdAsync(
             string baseDetailId, CancellationToken ct)
         {
-            return await GetResourceByIdAsync(baseDetailId, ct);
+            return GetActionResult(
+                await GetResourceByIdAsync(baseDetailId, ct));
         }
 
         // POST /basedetails
@@ -99,16 +106,11 @@ namespace SortMyStuffAPI.Controllers
 
             BaseDetail baseDetail = null;
             Action<BaseDetail> operation = bd => baseDetail = bd;
+            
+            var result = await CreateResourceAsync(
+                Guid.NewGuid().ToString(), body, ct, operation);
 
-            var response = await CreateResourceAsync(
-                nameof(GetBaseDetailByIdAsync),
-                Guid.NewGuid().ToString(),
-                body,
-                ct,
-                operation: operation);
-
-            if ((response as ObjectResult).StatusCode
-                .Equals(HttpStatusCode.Created))
+            if (result.Succeeded)
             {
                 var addDetails = await AddDetailsToAssets(userId, baseDetail, ct);
                 if (!addDetails.Succeeded)
@@ -117,7 +119,7 @@ namespace SortMyStuffAPI.Controllers
                 }
             }
 
-            return response;
+            return GetActionResult(result, errorMsg);
         }
 
         // PUT /basedetails/{baseDetailId}
@@ -155,16 +157,12 @@ namespace SortMyStuffAPI.Controllers
                 BaseDetail baseDetail = null;
                 Action<BaseDetail> operation = bd => baseDetail = bd;
 
-                var response = await CreateResourceAsync(
-                    nameof(GetBaseDetailByIdAsync),
-                    baseDetailId,
-                    body,
-                    ct,
-                    operation: operation,
-                    errorMessage: errorMsg);
+                var result = await CreateResourceAsync(
+                    baseDetailId, body, ct, operation);
 
-                if ((response as ObjectResult).StatusCode
-                    .Equals(HttpStatusCode.Created))
+                // TODO: FIX
+
+                if (result.Succeeded)
                 {
                     // add derivative details to the categorised assets
                     // TODO: handle follow-up operation failure, should reverse
@@ -178,11 +176,10 @@ namespace SortMyStuffAPI.Controllers
                 }
 
                 // if the base detail not added successfully
-                return response;
+                return GetActionResult(result);
             }
 
-            return await UpdateResourceAsync(
-                record, body, ct, errorMessage: errorMsg);
+            return GetActionResult(await UpdateResourceAsync(record, body, ct));
         }
 
         // DELETE /basedetails/{baseDetailId}

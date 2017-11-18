@@ -58,20 +58,28 @@ namespace SortMyStuffAPI.Controllers
             [FromQuery] SortOptions<Asset, AssetEntity> sortOptions,
             [FromQuery] SearchOptions<Asset, AssetEntity> searchOptions)
         {
-            return await GetResourcesAsync(
+            var errorMsg = "GET assets failed.";
+            if (!ModelState.IsValid) return BadRequest(
+                new ApiError(errorMsg, ModelState));
+
+            var result = await GetResourcesAsync(
                 nameof(GetAssetsAsync),
                 ct,
                 pagingOptions,
                 sortOptions,
                 searchOptions);
+
+            return GetActionResult(result, errorMsg);
         }
 
         // GET /assets/{assetId}
         [Authorize]
         [HttpGet("{assetId}", Name = nameof(GetAssetByIdAsync))]
-        public async Task<IActionResult> GetAssetByIdAsync(string assetId, CancellationToken ct)
+        public async Task<IActionResult> GetAssetByIdAsync(
+            string assetId, CancellationToken ct)
         {
-            return await GetResourceByIdAsync(assetId, ct);
+            return GetActionResult(
+                await GetResourceByIdAsync(assetId, ct));
         }
 
         // GET /assets/{assetId}/path
@@ -86,7 +94,8 @@ namespace SortMyStuffAPI.Controllers
             IEnumerable<PathUnit> pathUnits;
             try
             {
-                pathUnits = await _assetDataService.GetAssetPathAsync(userId, assetId, ct);
+                pathUnits = await _assetDataService.GetAssetPathAsync(
+                    userId, assetId, ct);
             }
             catch (KeyNotFoundException)
             {
@@ -95,7 +104,8 @@ namespace SortMyStuffAPI.Controllers
 
             var response = new Collection<PathUnit>
             {
-                Self = Link.ToCollection(nameof(GetAssetPathByIdAsync), new { assetId = assetId }),
+                Self = Link.ToCollection(nameof(GetAssetPathByIdAsync), 
+                    new { assetId = assetId }),
                 Value = pathUnits.ToArray()
             };
 
@@ -131,15 +141,10 @@ namespace SortMyStuffAPI.Controllers
                 asset = a;
             };
 
-            var response = await CreateResourceAsync(
-                nameof(GetAssetByIdAsync),
-                Guid.NewGuid().ToString(),
-                body,
-                ct,
-                operation);
+            var result = await CreateResourceAsync(
+                Guid.NewGuid().ToString(), body, ct, operation);
 
-            if ((response as ObjectResult).StatusCode
-                .Equals(HttpStatusCode.Created))
+            if (result.Succeeded)
             {
                 var addDetails = await GenerateDetailsToAssetAsync(userId, asset, ct);
                 if (!addDetails.Succeeded)
@@ -148,7 +153,7 @@ namespace SortMyStuffAPI.Controllers
                 }
             }
 
-            return response;
+            return GetActionResult(result, errorMsg);
         }
 
         // PUT /assets/{assetId}
@@ -196,30 +201,22 @@ namespace SortMyStuffAPI.Controllers
             {
                 Asset asset = null;
                 Action<Asset> operation = a => asset = a;
-                var response = await CreateResourceAsync(
-                    nameof(GetAssetByIdAsync),
-                    assetId,
-                    body,
-                    ct,
-                    operation,
-                    errorMsg);
+                var result = await CreateResourceAsync(
+                    assetId, body, ct, operation);
 
-                if ((response as ObjectResult).StatusCode
-                    .Equals(HttpStatusCode.Created))
+                if (result.Succeeded)
                 {
                     var addDetails = await GenerateDetailsToAssetAsync(userId, asset, ct);
                     if (!addDetails.Succeeded)
                     {
                         return BadRequest(new ApiError(errorMsg, addDetails.Error));
                     }
-                    return Ok();
                 }
 
-                return response;
+                return GetActionResult(result, errorMsg);
             }
 
-            return await UpdateResourceAsync(
-                record, body, ct, errorMessage: errorMsg);
+            return GetActionResult(await UpdateResourceAsync(record, body, ct));
         }
 
         // DELETE /assets/{assetId}

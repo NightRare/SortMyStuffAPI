@@ -1,5 +1,4 @@
-﻿using SortMyStuffAPI.Infrastructure.Attributes;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -31,7 +30,7 @@ namespace SortMyStuffAPI.Infrastructure
             {
                 var ff = field.FieldType;
                 if (!field.FieldType.Equals(_enumType) ||
-                    field.GetCustomAttributes<HideOptionAttribute>().Any())
+                    field.GetCustomAttributes<HideAttribute>().Any())
                 {
                     continue;
                 }

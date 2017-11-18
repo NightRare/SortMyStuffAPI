@@ -45,20 +45,28 @@ namespace SortMyStuffAPI.Controllers
             [FromQuery] SortOptions<Category, CategoryEntity> sortOptions,
             [FromQuery] SearchOptions<Category, CategoryEntity> searchOptions)
         {
-            return await GetResourcesAsync(
+            var errorMsg = "GET categories failed.";
+            if (!ModelState.IsValid) return BadRequest(
+                new ApiError(errorMsg, ModelState));
+
+            var result = await GetResourcesAsync(
                 nameof(GetCategoriesAsync),
                 ct,
                 pagingOptions,
                 sortOptions,
                 searchOptions);
+
+            return GetActionResult(result, errorMsg);
         }
 
         // GET /categories/{categoryId}
         [Authorize]
         [HttpGet("{categoryId}", Name = nameof(GetCategoryByIdAsync))]
-        public async Task<IActionResult> GetCategoryByIdAsync(string categoryId, CancellationToken ct)
+        public async Task<IActionResult> GetCategoryByIdAsync(
+            string categoryId, CancellationToken ct)
         {
-            return await GetResourceByIdAsync(categoryId, ct);
+            return GetActionResult(
+                await GetResourceByIdAsync(categoryId, ct));
         }
 
         // POST /categories/
@@ -72,12 +80,10 @@ namespace SortMyStuffAPI.Controllers
             if (!ModelState.IsValid) return BadRequest(
                 new ApiError(errorMsg, ModelState));
 
-            return await CreateResourceAsync(
-                nameof(GetCategoryByIdAsync),
-                Guid.NewGuid().ToString(),
-                body,
-                ct,
-                errorMessage: errorMsg);
+            var result = await CreateResourceAsync(
+                Guid.NewGuid().ToString(), body, ct);
+
+            return GetActionResult(result, errorMsg);
         }
 
         // PUT /categories/{categoryId}
@@ -95,27 +101,22 @@ namespace SortMyStuffAPI.Controllers
 
             var record = await DataService.GetResourceAsync(userId, categoryId, ct);
 
-            IActionResult response = null;
             if (record == null)
             {
-                response = await CreateResourceAsync(
-                    nameof(GetCategoryByIdAsync),
-                    categoryId,
-                    body,
-                    ct,
-                    errorMessage: errorMsg);
+                var result = await CreateResourceAsync(
+                    categoryId, body, ct);
 
-                if ((response as ObjectResult).StatusCode
-                    .Equals(HttpStatusCode.Created))
+                // if created successfully, return Ok rather tha Created
+                if (result.Succeeded && 
+                    result.StatusCode.Equals(HttpStatusCode.Created))
                 {
                     return Ok();
                 }
 
-                return response;
+                return GetActionResult(result);
             }
 
-            return await UpdateResourceAsync(
-                record, body, ct, errorMessage: errorMsg);
+            return GetActionResult(await UpdateResourceAsync(record, body, ct));
         }
 
         // DELETE /categories/{categoryId}

@@ -42,12 +42,18 @@ namespace SortMyStuffAPI.Controllers
             [FromQuery] SortOptions<Detail, DetailEntity> sortOptions,
             [FromQuery] SearchOptions<Detail, DetailEntity> searchOptions)
         {
-            return await GetResourcesAsync(
+            var errorMsg = "GET details failed.";
+            if (!ModelState.IsValid) return BadRequest(
+                new ApiError(errorMsg, ModelState));
+
+            var result = await GetResourcesAsync(
                 nameof(GetDetailsAsync),
                 ct,
                 pagingOptions,
                 sortOptions,
                 searchOptions);
+
+            return GetActionResult(result, errorMsg);
         }
 
         // GET /details/{detailId}
@@ -56,7 +62,8 @@ namespace SortMyStuffAPI.Controllers
         public async Task<IActionResult> GetDetailByIdAsync(
             string detailId, CancellationToken ct)
         {
-            return await GetResourceByIdAsync(detailId, ct);
+            return GetActionResult(
+                await GetResourceByIdAsync(detailId, ct));
         }
 
         // CREATE resource is not supported by this method.
@@ -82,8 +89,7 @@ namespace SortMyStuffAPI.Controllers
                     errorMsg, "The detail does not exist."));
             }
 
-            return await UpdateResourceAsync(
-                record, updateForm, ct, errorMessage: errorMsg);
+            return GetActionResult(await UpdateResourceAsync(record, updateForm, ct));
         }
     }
 }

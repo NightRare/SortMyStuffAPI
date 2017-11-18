@@ -16,7 +16,7 @@ namespace SortMyStuffAPI.Models
 
         [Required]
         [Index(ApiStrings.IndexDetailBaseDetailId, IsClustered = true)]
-        public string BaseDetailId { get; set; }
+        public string BaseId { get; set; }
 
         [Mutable]
         public string Field { get; set; }
@@ -35,7 +35,7 @@ namespace SortMyStuffAPI.Models
         [ForeignKey(nameof(UserId))]
         public virtual UserEntity User { get; set; }
 
-        [ForeignKey(nameof(BaseDetailId))]
+        [ForeignKey(nameof(BaseId))]
         public virtual BaseDetailEntity BaseDetail { get; set; }
     }
 }
