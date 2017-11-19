@@ -10,7 +10,7 @@ using System.Reflection;
 using SortMyStuffAPI.Infrastructure;
 using AutoMapper.QueryableExtensions;
 using Microsoft.AspNetCore.Identity;
-using System.Data.Entity.Infrastructure;
+using Microsoft.EntityFrameworkCore;
 
 namespace SortMyStuffAPI.Services
 {

@@ -1,12 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore;
+﻿using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.DependencyInjection;
+using SortMyStuffAPI.Services;
+using Microsoft.AspNetCore.Identity;
+using SortMyStuffAPI.Models;
+using SortMyStuffAPI.Utils;
 
 namespace SortMyStuffAPI
 {
@@ -14,7 +13,26 @@ namespace SortMyStuffAPI
     {
         public static void Main(string[] args)
         {
-            BuildWebHost(args).Run();
+            var host = BuildWebHost(args);
+
+            var serviceScopeFactory = (IServiceScopeFactory)host.Services.GetService(typeof(IServiceScopeFactory));
+            //Add test roles and users in development
+            using (var scope = serviceScopeFactory.CreateScope())
+            {
+                var services = scope.ServiceProvider;
+                var dbContext = services.GetRequiredService<SortMyStuffContext>();
+
+                var roleManager = scope.ServiceProvider
+                    .GetRequiredService<RoleManager<UserRoleEntity>>();
+                var userManager = scope.ServiceProvider
+                    .GetRequiredService<UserManager<UserEntity>>();
+                TestDataRepository.LoadRolesAndUsers(roleManager, userManager).Wait();
+
+                // Add test data in development
+                TestDataRepository.LoadData(dbContext, userManager);
+            }
+
+            host.Run();
         }
 
         public static IWebHost BuildWebHost(string[] args) =>

@@ -17,7 +17,6 @@ using SortMyStuffAPI.Services;
 using SortMyStuffAPI.Utils;
 using SortMyStuffAPI.Models;
 using AspNet.Security.OAuth.Validation;
-using Microsoft.AspNetCore.Mvc.Authorization;
 
 namespace SortMyStuffAPI
 {
@@ -49,6 +48,12 @@ namespace SortMyStuffAPI
                     opt.UseOpenIddict();
                 },
                 ServiceLifetime.Singleton, ServiceLifetime.Singleton);
+
+            //services.AddDbContext<SortMyStuffContext>(opt =>
+            //{
+            //    opt.UseSqlServer(Environment.GetEnvironmentVariable(
+            //        ApiStrings.EnvConnectionStrings));
+            //});
 
             // Add ASP.NET Core Identity
             services.AddIdentity<UserEntity, UserRoleEntity>()
@@ -148,20 +153,20 @@ namespace SortMyStuffAPI
             {
                 app.UseDeveloperExceptionPage();
 
-                // Add test roles and users in development
-                using (var scope = app.ApplicationServices.GetRequiredService<IServiceScopeFactory>().CreateScope())
-                {
-                    var dbContext = app.ApplicationServices.GetRequiredService<SortMyStuffContext>();
+                //// Add test roles and users in development
+                //using (var scope = app.ApplicationServices.GetRequiredService<IServiceScopeFactory>().CreateScope())
+                //{
+                //    var dbContext = app.ApplicationServices.GetRequiredService<SortMyStuffContext>();
 
-                    var roleManager = scope.ServiceProvider
-                        .GetRequiredService<RoleManager<UserRoleEntity>>();
-                    var userManager = scope.ServiceProvider
-                        .GetRequiredService<UserManager<UserEntity>>();
-                    TestDataRepository.LoadRolesAndUsers(roleManager, userManager).Wait();
+                //    var roleManager = scope.ServiceProvider
+                //        .GetRequiredService<RoleManager<UserRoleEntity>>();
+                //    var userManager = scope.ServiceProvider
+                //        .GetRequiredService<UserManager<UserEntity>>();
+                //    TestDataRepository.LoadRolesAndUsers(roleManager, userManager).Wait();
 
-                    // Add test data in development
-                    TestDataRepository.LoadData(dbContext, userManager);
-                }
+                //    // Add test data in development
+                //    TestDataRepository.LoadData(dbContext, userManager);
+                //}
             }
 
             // include HSTS header

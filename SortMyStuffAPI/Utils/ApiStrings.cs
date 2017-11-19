@@ -72,6 +72,8 @@ namespace SortMyStuffAPI.Utils
 
         public const string EnvDeveloperUid = "DEVELOPER_UID";
 
+        public const string EnvConnectionStrings = "CONNECTION_STRINGS";
+
         #endregion
 
         #region AUTHORISATION NAMES

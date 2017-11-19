@@ -12,11 +12,9 @@ namespace SortMyStuffAPI.Models
         public string Id { get; set; }
 
         [Required]
-        [Index]
         [Mutable]
         public string Name { get; set; }
 
-        [Index(ApiStrings.IndexCategoryUserId, IsClustered = true)]
         [Required]
         public string UserId { get; set; }
 

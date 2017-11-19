@@ -15,7 +15,6 @@ namespace SortMyStuffAPI.Models
         public string AssetId { get; set; }
 
         [Required]
-        [Index(ApiStrings.IndexDetailBaseDetailId, IsClustered = true)]
         public string BaseId { get; set; }
 
         [Mutable]
@@ -26,7 +25,6 @@ namespace SortMyStuffAPI.Models
         public DateTimeOffset ModifyTimestamp { get; set; }
 
         [Required]
-        [Index(ApiStrings.IndexDetailUserId)]
         public string UserId { get; set; }
 
         [ForeignKey(nameof(AssetId))]

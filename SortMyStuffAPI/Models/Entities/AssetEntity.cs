@@ -18,10 +18,8 @@ namespace SortMyStuffAPI.Models
 
         // TODO: make CategoryId changeable
         [Required]
-        [Index(ApiStrings.IndexAssetCategoryId)]
         public string CategoryId { get; set; }
 
-        [Index(ApiStrings.IndexAssetContainerId)]
         [Mutable]
         [Required]
         public string ContainerId { get; set; }
@@ -32,7 +30,6 @@ namespace SortMyStuffAPI.Models
         public DateTimeOffset ModifyTimestamp { get; set; }
 
         [Required]
-        [Index(ApiStrings.IndexAssetUserId, IsClustered = true)]
         public string UserId { get; set; }
 
         [ForeignKey(nameof(UserId))]
