@@ -153,27 +153,17 @@ namespace SortMyStuffAPI.Services
 
         public async Task<UserEntity> GetUserAsync(ClaimsPrincipal userClaims)
         {
-            var user = await _userManager.GetUserAsync(userClaims);
-            if(user.RootAssetContract == null)
-            {
-                user.RootAssetContract = await DbContext.UserRootAssetContracts
-                    .SingleOrDefaultAsync(e => e.Id == user.RootAssetContractId);
-            }
-            return user;
+            return await _userManager.GetUserAsync(userClaims);
         }
 
         public async Task<UserEntity> GetUserByIdAsync(string id)
         {
-            return await _userManager.Users
-                .Include(u => u.RootAssetContract)
-                .SingleOrDefaultAsync(u => u.Id == id);
+            return await _userManager.FindByIdAsync(id);
         }
 
         public async Task<UserEntity> GetUserByEmailAsync(string email)
         {
-            return await _userManager.Users
-                .Include(u => u.RootAssetContract)
-                .SingleOrDefaultAsync(u => u.Email == email);
+            return await _userManager.FindByEmailAsync(email);
         }
 
         public async Task<string> GetUserIdAsync(ClaimsPrincipal user)

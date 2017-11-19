@@ -41,19 +41,22 @@ namespace SortMyStuffAPI
             services.Configure<ApiConfigs>(Configuration.GetSection("ApiConfigurations"));
 
             // Use in-memroy db for dev, change the scope of the DbContext and the option to Singleton
-            // TODO: Swap out with a real database in production
-            services.AddDbContext<SortMyStuffContext>(opt =>
-                {
-                    opt.UseInMemoryDatabase(Guid.NewGuid().ToString());
-                    opt.UseOpenIddict();
-                },
-                ServiceLifetime.Singleton, ServiceLifetime.Singleton);
-
+            // Swap out with a real database in production
             //services.AddDbContext<SortMyStuffContext>(opt =>
-            //{
-            //    opt.UseSqlServer(Environment.GetEnvironmentVariable(
-            //        ApiStrings.EnvConnectionStrings));
-            //},ServiceLifetime.Singleton, ServiceLifetime.Singleton);
+            //    {
+            //        opt.UseInMemoryDatabase(Guid.NewGuid().ToString());
+            //        opt.UseOpenIddict();
+            //    },
+            //    ServiceLifetime.Singleton, ServiceLifetime.Singleton);
+
+            services.AddDbContext<SortMyStuffContext>(opt =>
+            {
+                var connectionString = Environment.GetEnvironmentVariable(
+                    ApiStrings.EnvConnectionStrings);
+                opt.UseSqlServer(connectionString);
+                opt.UseOpenIddict();
+
+            }, ServiceLifetime.Singleton, ServiceLifetime.Singleton);
 
             // Add ASP.NET Core Identity
             services.AddIdentity<UserEntity, UserRoleEntity>()
@@ -96,7 +99,6 @@ namespace SortMyStuffAPI
             services.AddMvc(opt =>
             {
                 //*********************************************
-                // TODO: DISABLE THIS IN PRODUCTION
                 // toggle authentication in development
                 //*********************************************
                 //opt.Filters.Add(new AllowAnonymousFilter());
@@ -154,19 +156,10 @@ namespace SortMyStuffAPI
             {
                 app.UseDeveloperExceptionPage();
 
-                // Add test roles and users in development
-                using (var scope = app.ApplicationServices.GetRequiredService<IServiceScopeFactory>().CreateScope())
+                using (var scope = app.ApplicationServices
+                    .GetRequiredService<IServiceScopeFactory>().CreateScope())
                 {
-                    var dbContext = app.ApplicationServices.GetRequiredService<SortMyStuffContext>();
-
-                    var roleManager = scope.ServiceProvider
-                        .GetRequiredService<RoleManager<UserRoleEntity>>();
-                    var userManager = scope.ServiceProvider
-                        .GetRequiredService<UserManager<UserEntity>>();
-                    TestDataRepository.LoadRolesAndUsers(roleManager, userManager).Wait();
-
-                    // Add test data in development
-                    TestDataRepository.LoadData(dbContext, userManager);
+                    //HandleTestData(app, scope);
                 }
             }
 
@@ -179,6 +172,24 @@ namespace SortMyStuffAPI
             });
 
             app.UseMvc();
+        }
+
+        private void HandleTestData(IApplicationBuilder app, IServiceScope scope)
+        {
+            var dbContext = app.ApplicationServices
+                .GetRequiredService<SortMyStuffContext>();
+
+            TestDataFactory.DeleteAllData(dbContext)
+                .GetAwaiter().GetResult();
+
+            var roleManager = scope.ServiceProvider
+                .GetRequiredService<RoleManager<UserRoleEntity>>();
+            var userManager = scope.ServiceProvider
+                .GetRequiredService<UserManager<UserEntity>>();
+            TestDataFactory.LoadRolesAndUsers(roleManager, userManager)
+                .GetAwaiter().GetResult();
+            TestDataFactory.LoadData(dbContext, userManager)
+                .GetAwaiter().GetResult();
         }
     }
 }

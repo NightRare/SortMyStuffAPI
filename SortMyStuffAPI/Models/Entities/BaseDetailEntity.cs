@@ -8,7 +8,6 @@ namespace SortMyStuffAPI.Models
 {
     public class BaseDetailEntity : IEntity
     {
-        [Key]
         public string Id { get; set; }
 
         [Required]

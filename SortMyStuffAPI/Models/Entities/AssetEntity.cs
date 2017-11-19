@@ -1,5 +1,4 @@
 ﻿using SortMyStuffAPI.Infrastructure;
-using SortMyStuffAPI.Utils;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -9,7 +8,6 @@ namespace SortMyStuffAPI.Models
 {
     public class AssetEntity : IEntity
     {
-        [Key]
         public string Id { get; set; }
 
         [Required]
@@ -17,7 +15,6 @@ namespace SortMyStuffAPI.Models
         public string Name { get; set; }
 
         // TODO: make CategoryId changeable
-        [Required]
         public string CategoryId { get; set; }
 
         [Mutable]

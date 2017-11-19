@@ -178,7 +178,8 @@ namespace SortMyStuffAPI.Services
             return await Task.Run(() =>
             {
                 return GetUserRepository(userId, DbContext.Assets)
-                    .Where(a => a.CategoryId == categoryId)
+                    // if a.CategoryId == null then it's root asset
+                    .Where(a => a.CategoryId != null && a.CategoryId == categoryId)
                     .ProjectTo<Asset>()
                     .ToArray();
             }, ct);
@@ -196,28 +197,19 @@ namespace SortMyStuffAPI.Services
                 Id = Guid.NewGuid().ToString(),
                 UserId = userId,
                 Name = ApiStrings.RootAssetDefaultName,
-                CategoryId = ApiStrings.RootAssetToken,
+                CategoryId = null,
                 ContainerId = ApiStrings.RootAssetToken,
                 CreateTimestamp = currentTime,
                 ModifyTimestamp = currentTime
             };
 
-            var userRootAssetContract = new UserRootAssetEntity
-            {
-                Id = Guid.NewGuid().ToString(),
-                UserId = userId,
-                RootAssetId = root.Id
-            };
-
-            user.RootAssetContractId = userRootAssetContract.Id;
+            user.RootAssetId = root.Id;
 
             try
             {
                 DbContext.Assets.Add(root);
-                DbContext.UserRootAssetContracts.Add(userRootAssetContract);
 
                 await _userService.UpdateAsync(user);
-
                 DbContext.SaveChanges();
             }
             catch(DbUpdateException ex)

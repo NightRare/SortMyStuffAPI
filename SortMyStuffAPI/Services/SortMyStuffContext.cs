@@ -15,47 +15,56 @@ namespace SortMyStuffAPI.Services
         public DbSet<CategoryEntity> Categories { get; set; }
         public DbSet<BaseDetailEntity> BaseDetails { get; set; }
         public DbSet<DetailEntity> Details { get; set; }
-        public DbSet<UserRootAssetEntity> UserRootAssetContracts { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
 
+
             #region BaseDetail
+
+            // EF Code first will autmatically generate cluster on PK,
+            // so have to set the PK here instead using [Key] attribute
+            builder.Entity<BaseDetailEntity>()
+                .HasKey(e => e.Id)
+                .ForSqlServerIsClustered(false);
 
             builder.Entity<BaseDetailEntity>()
                 .HasIndex(bd => bd.CategoryId)
-                .ForSqlServerIsClustered();
+                .ForSqlServerIsClustered(true);
 
             builder.Entity<BaseDetailEntity>()
                 .HasIndex(bd => bd.UserId);
+
+            // (BaseDetail => User) the foreign key is not required
+            // set to false to exclude the cascade delete path on this relationship
+            builder.Entity<BaseDetailEntity>()
+                .HasOne(bd => bd.User)
+                .WithMany(u => u.BaseDetails)
+                .IsRequired(false);
 
             #endregion
 
             #region Category
 
             builder.Entity<CategoryEntity>()
+                .HasKey(e => e.Id)
+                .ForSqlServerIsClustered(false);
+
+            builder.Entity<CategoryEntity>()
                 .HasIndex(c => c.UserId)
-                .ForSqlServerIsClustered();
+                .ForSqlServerIsClustered(true);
 
             builder.Entity<CategoryEntity>()
                 .HasIndex(c => c.Name);
 
             #endregion
 
-            #region UserRootAsset
-
-            builder.Entity<UserRootAssetEntity>()
-                .HasIndex(c => c.UserId)
-                .IsUnique();
-
-            builder.Entity<UserRootAssetEntity>()
-                .HasIndex(c => c.RootAssetId)
-                .IsUnique();
-
-            #endregion
-
             #region Asset
+
+            builder.Entity<AssetEntity>()
+                .HasKey(e => e.Id)
+                .ForSqlServerIsClustered(false);
 
             builder.Entity<AssetEntity>()
                 .HasIndex(a => a.CategoryId);
@@ -65,21 +74,39 @@ namespace SortMyStuffAPI.Services
 
             builder.Entity<AssetEntity>()
                 .HasIndex(a => a.UserId)
-                .ForSqlServerIsClustered();
+                .ForSqlServerIsClustered(true);
+
+            builder.Entity<AssetEntity>()
+                .HasOne(a => a.Category)
+                .WithMany(c => c.CategorisedAssets)
+                .IsRequired(false);
 
             #endregion
 
             #region Detail
 
             builder.Entity<DetailEntity>()
+                .HasKey(e => e.Id)
+                .ForSqlServerIsClustered(false);
+
+            builder.Entity<DetailEntity>()
                 .HasIndex(e => e.BaseId)
-                .ForSqlServerIsClustered();
+                .ForSqlServerIsClustered(true);
 
             builder.Entity<DetailEntity>()
                 .HasIndex(e => e.UserId);
 
-            #endregion
+            builder.Entity<DetailEntity>()
+                .HasOne(d => d.User)
+                .WithMany(u => u.Details)
+                .IsRequired(false);
 
+            builder.Entity<DetailEntity>()
+               .HasOne(d => d.Asset)
+               .WithMany(a => a.Details)
+               .IsRequired(false);
+
+            #endregion
         }
     }
 }

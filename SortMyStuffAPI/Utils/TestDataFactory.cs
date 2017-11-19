@@ -5,10 +5,12 @@ using Microsoft.AspNetCore.Identity;
 using SortMyStuffAPI.Services;
 using SortMyStuffAPI.Models;
 using SortMyStuffAPI.Infrastructure;
+using Microsoft.EntityFrameworkCore;
+using System.Linq;
 
 namespace SortMyStuffAPI.Utils
 {
-    public static class TestDataRepository
+    public static class TestDataFactory
     {
         public readonly static string DeveloperUid = Environment.GetEnvironmentVariable(ApiStrings.EnvDeveloperUid);
         public const string DeveloperRootAssetId = "rootassetid";
@@ -17,6 +19,41 @@ namespace SortMyStuffAPI.Utils
         public const string TestUserId = "testuserid";
         public const string TestUserEmail = "testuser@test.com";
         public const string TestUserPass = "Test1234.";
+
+        public async static Task DeleteAllData(
+            SortMyStuffContext db)
+        {
+            var prefix = "dbo.";
+
+            var tables = new string[]
+            {
+                "Details",
+                "BaseDetails",
+                "Assets",
+                "Categories",
+
+                "OpenIddictTokens",
+                "OpenIddictAuthorizations",
+                "OpenIddictApplications",
+                "OpenIddictScopes",
+
+                "AspNetUserTokens",
+                "AspNetUserClaims",
+                "AspNetUserLogins",
+                "AspNetUserRoles",
+                "AspNetUsers",
+                "AspNetRoleClaims",
+                "AspNetRoles",
+            };
+
+            foreach (var s in tables)
+            {
+                var sql = $"DELETE FROM {prefix + s}";
+                var result = await db.Database.ExecuteSqlCommandAsync(sql);
+            }
+            await db.SaveChangesAsync();
+        }
+
 
         public static async Task LoadRolesAndUsers(
             RoleManager<UserRoleEntity> roleManager,
@@ -29,6 +66,8 @@ namespace SortMyStuffAPI.Utils
 
             if (userManager != null)
             {
+                // developer user
+
                 var developer = new UserEntity
                 {
                     Id = DeveloperUid,
@@ -42,6 +81,11 @@ namespace SortMyStuffAPI.Utils
                     developer,
                     Environment.GetEnvironmentVariable(ApiStrings.EnvDeveloperPassword));
 
+                await userManager.AddToRoleAsync(developer, ApiStrings.RoleDeveloper);
+                await userManager.UpdateAsync(developer);
+
+                // test user 
+
                 var testuser = new UserEntity
                 {
                     Id = TestUserId,
@@ -53,54 +97,42 @@ namespace SortMyStuffAPI.Utils
 
                 await userManager.CreateAsync(
                     testuser, TestUserPass);
-
-                await userManager.AddToRoleAsync(developer, ApiStrings.RoleDeveloper);
-                await userManager.UpdateAsync(developer);
             }
         }
 
-        public static void LoadData(
+        public async static Task LoadData(
             SortMyStuffContext context,
             UserManager<UserEntity> userManager)
         {
-            var developerUser = userManager
-                .FindByIdAsync(DeveloperUid)
-                .GetAwaiter()
-                .GetResult();
-
-            var testUser = userManager
-                .FindByIdAsync(TestUserId)
-                .GetAwaiter()
-                .GetResult();
 
             #region Load Categories
 
-            var categories = new List<CategoryEntity>();
-
-            categories.Add(new CategoryEntity
+            var categories = new List<CategoryEntity>
             {
-                Id = "c1",
-                Name = "Place",
-            });
+                new CategoryEntity
+                {
+                    Id = "c1",
+                    Name = "Place",
+                },
 
-            categories.Add(new CategoryEntity
-            {
-                Id = "c2",
-                Name = "Book",
-            });
+                new CategoryEntity
+                {
+                    Id = "c2",
+                    Name = "Book",
+                },
 
-            categories.Add(new CategoryEntity
-            {
-                Id = "c3",
-                Name = "Miscellaneous",
-            });
+                new CategoryEntity
+                {
+                    Id = "c3",
+                    Name = "Miscellaneous",
+                }
+            };
 
             foreach (var c in categories)
             {
                 c.BaseDetails = new List<BaseDetailEntity>();
                 c.CategorisedAssets = new List<AssetEntity>();
                 c.UserId = DeveloperUid;
-                c.User = developerUser;
             }
 
             categories.Add(new CategoryEntity
@@ -108,12 +140,10 @@ namespace SortMyStuffAPI.Utils
                 Id = "c1_t",
                 Name = "Place",
                 UserId = TestUserId,
-                User = testUser
             });
 
             context.AddRange(categories);
-
-            context.SaveChanges();
+            await context.SaveChangesAsync();
 
             #endregion
 
@@ -126,8 +156,8 @@ namespace SortMyStuffAPI.Utils
                 Id = DeveloperRootAssetId,
                 Name = "Assets",
                 ContainerId = ApiStrings.RootAssetToken,
-                CategoryId = ApiStrings.RootAssetToken,
-                Category = null
+                CategoryId = null,
+                UserId = DeveloperUid
             };
 
             var asset_1 = new AssetEntity
@@ -197,20 +227,7 @@ namespace SortMyStuffAPI.Utils
             }
 
             context.AddRange(devleoperAssets);
-
-            var contract = new UserRootAssetEntity
-            {
-                Id = DeveloperUid + DeveloperRootAssetId,
-                UserId = DeveloperUid,
-                RootAssetId = DeveloperRootAssetId
-            };
-
-            context.UserRootAssetContracts.Add(contract);
-
-            developerUser.RootAssetContractId = contract.Id;
-            developerUser.RootAssetContract = contract;
-            userManager.UpdateAsync(developerUser);
-
+            await context.SaveChangesAsync();
 
             //***************************************
 
@@ -219,7 +236,7 @@ namespace SortMyStuffAPI.Utils
                 Id = TestUserRootAssetId,
                 Name = "Assets",
                 ContainerId = ApiStrings.RootAssetToken,
-                CategoryId = ApiStrings.RootAssetToken,
+                CategoryId = null,
                 Category = null
             };
 
@@ -254,21 +271,7 @@ namespace SortMyStuffAPI.Utils
             }
 
             context.AddRange(testuserAssets);
-
-            var testcontract = new UserRootAssetEntity
-            {
-                Id = TestUserId + TestUserRootAssetId,
-                UserId = TestUserId,
-                RootAssetId = TestUserRootAssetId
-            };
-
-            context.UserRootAssetContracts.Add(testcontract);
-
-            testUser.RootAssetContractId = testcontract.Id;
-            testUser.RootAssetContract = testcontract;
-
-            context.SaveChanges();
-            userManager.UpdateAsync(testUser);
+            await context.SaveChangesAsync();
 
             #endregion
         }

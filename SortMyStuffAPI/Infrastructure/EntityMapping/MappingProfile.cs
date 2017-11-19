@@ -14,28 +14,31 @@ namespace SortMyStuffAPI.Infrastructure
 
             CreateMap<AssetEntity, Asset>()
                 .ForMember(dest => dest.Self, opt => opt.MapFrom(src =>
-                    Link.To(nameof(Controllers.AssetsController.GetAssetByIdAsync), new { assetId = src.Id })))
+                    Link.To(nameof(Controllers.AssetsController.GetAssetByIdAsync), 
+                    new { assetId = src.Id })))
 
                 .ForMember(dest => dest.ContainerId, opt => opt.MapFrom(src =>
                     src.ContainerId.Equals(ApiStrings.RootAssetToken) ? null : src.ContainerId))
 
-                .ForMember(dest => dest.CategoryId, opt => opt.MapFrom(src =>
-                    src.CategoryId.Equals(ApiStrings.RootAssetToken) ? null : src.CategoryId))
-
                 .ForMember(dest => dest.Category, opt => opt.MapFrom(src =>
-                    Link.To(nameof(Controllers.CategoriesController.GetCategoryByIdAsync), new { categoryId = src.CategoryId })))
+                    Link.To(nameof(Controllers.CategoriesController.GetCategoryByIdAsync), 
+                    new { categoryId = src.CategoryId })))
 
                 .ForMember(dest => dest.Path, opt => opt.MapFrom(src =>
-                    Link.ToCollection(nameof(Controllers.AssetsController.GetAssetPathByIdAsync), new { assetId = src.Id })))
+                    Link.ToCollection(nameof(Controllers.AssetsController.GetAssetPathByIdAsync), 
+                    new { assetId = src.Id })))
 
                 .ForMember(dest => dest.AssetTree, opt => opt.MapFrom(src =>
-                    Link.To(nameof(Controllers.AssetTreesController.GetAssetTreeByIdAsync), new { assetId = src.Id })))
+                    Link.To(nameof(Controllers.AssetTreesController.GetAssetTreeByIdAsync), 
+                    new { assetId = src.Id })))
 
                 .ForMember(dest => dest.Thumbnail, opt => opt.MapFrom(src =>
-                    Link.To(nameof(Controllers.ThumbnailsController.GetThumbnailByIdAsync), new { assetId = src.Id })))
+                    Link.To(nameof(Controllers.ThumbnailsController.GetThumbnailByIdAsync), 
+                    new { assetId = src.Id })))
 
                 .ForMember(dest => dest.Photo, opt => opt.MapFrom(src =>
-                    Link.To(nameof(Controllers.PhotosController.GetPhotoByIdAsync), new { assetId = src.Id })))
+                    Link.To(nameof(Controllers.PhotosController.GetPhotoByIdAsync), 
+                    new { assetId = src.Id })))
 
                 .ForMember(dest => dest.ContentAssets, opt => opt.MapFrom(src =>
                     Link.ToCollection(
