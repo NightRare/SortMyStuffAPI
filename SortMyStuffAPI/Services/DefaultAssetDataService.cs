@@ -18,15 +18,14 @@ namespace SortMyStuffAPI.Services
         : DefaultDataService<Asset, AssetEntity>,
         IAssetDataService
     {
-        private readonly UserManager<UserEntity> _userManager;
-
+        private readonly IUserService _userService;
         public DefaultAssetDataService(
             SortMyStuffContext dbContext,
             IOptions<ApiConfigs> apiConfigs,
-            UserManager<UserEntity> userManager)
+            IUserService userService)
             : base(dbContext, apiConfigs)
         {
-            _userManager = userManager;
+            _userService = userService;
         }
 
         #region IDataService METHODS
@@ -194,7 +193,7 @@ namespace SortMyStuffAPI.Services
         public async Task<(bool Succeeded, string Error)> CreateRootAssetForUserAsync(
             string userId, CancellationToken ct)
         {
-            var user = await _userManager.FindByIdAsync(userId) ??
+            var user = await _userService.GetUserByIdAsync(userId) ??
                 throw new KeyNotFoundException($"The user {userId} does not exist.");
 
             var currentTime = DateTimeOffset.UtcNow;
@@ -223,7 +222,8 @@ namespace SortMyStuffAPI.Services
                 DbContext.Assets.Add(root);
                 DbContext.UserRootAssetContracts.Add(userRootAssetContract);
 
-                await _userManager.UpdateAsync(user);
+                await _userService.UpdateAsync(user);
+
                 DbContext.SaveChanges();
             }
             catch(DbUpdateException ex)

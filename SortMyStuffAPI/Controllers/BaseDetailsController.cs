@@ -27,7 +27,7 @@ namespace SortMyStuffAPI.Controllers
             IBaseDetailDataService baseDetailDataService,
             IOptions<PagingOptions> defaultPagingOptions,
             IOptions<ApiConfigs> apiConfigs,
-            IUserDataService userDataService,
+            IUserService userService,
             IHostingEnvironment env,
             IAuthorizationService authService,
             ICategoryDataService categoryDataService,
@@ -36,7 +36,7 @@ namespace SortMyStuffAPI.Controllers
             : base(baseDetailDataService,
                   defaultPagingOptions,
                   apiConfigs,
-                  userDataService,
+                  userService,
                   env,
                   authService)
         {

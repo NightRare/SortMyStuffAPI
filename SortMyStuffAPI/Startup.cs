@@ -141,6 +141,7 @@ namespace SortMyStuffAPI
             services.AddScoped<IPhotoFileService, DefaultFileService>();
             services.AddScoped<IThumbnailFileService, DefaultFileService>();
 
+            services.AddScoped<IUserService, DefaultUserDataService>();
             services.AddSingleton<ILocalResourceService, DefaultLocalResourceService>();
         }
 

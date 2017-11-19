@@ -29,7 +29,7 @@ namespace SortMyStuffAPI.Controllers
         public AssetsController(
             IAssetDataService assetDataService,
             ICategoryDataService categoryDataService,
-            IUserDataService userDataService,
+            IUserService userService,
             IOptions<PagingOptions> pagingOptions,
             IOptions<ApiConfigs> apiConfigs,
             IHostingEnvironment env,
@@ -39,7 +39,7 @@ namespace SortMyStuffAPI.Controllers
             base(assetDataService,
                 pagingOptions,
                 apiConfigs,
-                userDataService,
+                userService,
                 env,
                 authService)
         {

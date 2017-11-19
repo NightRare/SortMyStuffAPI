@@ -29,10 +29,10 @@ namespace SortMyStuffAPI.Controllers
             IDataService<T, TEntity> dataService,
             IOptions<PagingOptions> defaultPagingOptions,
             IOptions<ApiConfigs> apiConfigs,
-            IUserDataService userDataService,
+            IUserService userService,
             IHostingEnvironment env,
             IAuthorizationService authService)
-            : base(userDataService,
+            : base(userService,
                   apiConfigs,
                   env,
                   authService)

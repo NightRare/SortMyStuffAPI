@@ -16,7 +16,7 @@ namespace SortMyStuffAPI.Models
 
 
         [ForeignKey(nameof(RootAssetContractId))]
-        public UserRootAssetEntity RootAssetContract { get; set; }
+        public virtual UserRootAssetEntity RootAssetContract { get; set; }
 
         public virtual ICollection<AssetEntity> Assets { get; set; }
 

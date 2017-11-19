@@ -12,6 +12,7 @@ using OpenIddict.Core;
 using System.Linq;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Authorization;
+using SortMyStuffAPI.Services;
 
 namespace SortMyStuffAPI.Controllers
 {
@@ -21,18 +22,18 @@ namespace SortMyStuffAPI.Controllers
         private readonly IdentityOptions _identityOptions;
         private readonly ApiConfigs _apiConfigs;
         private readonly SignInManager<UserEntity> _signInManager;
-        private readonly UserManager<UserEntity> _userManager;
+        private readonly IUserService _userService;
 
         public TokenController(
             IOptions<IdentityOptions> identityOptions,
             IOptions<ApiConfigs> apiConfigs,
             SignInManager<UserEntity> signInManager,
-            UserManager<UserEntity> userManager)
+            IUserService userService)
         {
             _identityOptions = identityOptions.Value;
             _apiConfigs = apiConfigs.Value;
             _signInManager = signInManager;
-            _userManager = userManager;
+            _userService = userService;
         }
 
         // POST /token/
@@ -52,10 +53,8 @@ namespace SortMyStuffAPI.Controllers
             }
 
             // Ensure the user exists, sign in with either UserName or Email
-            var user = await _userManager.FindByNameAsync(request.Username);
-
-            if (user == null)
-                user = await _userManager.FindByEmailAsync(request.Username);
+            var user = await _userService.GetUserByNameAsync(request.Username) ??
+                await _userService.GetUserByEmailAsync(request.Username);
 
             if (user == null)
             {
@@ -67,7 +66,7 @@ namespace SortMyStuffAPI.Controllers
             }
 
             // Ensure the password is valid
-            if (!await _userManager.CheckPasswordAsync(user, request.Password))
+            if (!await _userService.CheckPasswordAsync(user, request.Password))
             {
                 return BadRequest(new OpenIdConnectResponse
                 {

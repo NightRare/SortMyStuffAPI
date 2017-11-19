@@ -14,11 +14,11 @@ namespace SortMyStuffAPI.Controllers
     public class NewGuidController : ApiBaseController
     {
         public NewGuidController(
-            IUserDataService userDataService, 
+            IUserService userService, 
             IOptions<ApiConfigs> apiConfigs, 
             IHostingEnvironment env, 
             IAuthorizationService authService) 
-            : base(userDataService, 
+            : base(userService, 
                   apiConfigs, 
                   env, 
                   authService)

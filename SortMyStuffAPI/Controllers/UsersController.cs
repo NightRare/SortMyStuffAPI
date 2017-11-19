@@ -23,13 +23,14 @@ namespace SortMyStuffAPI.Controllers
             IOptions<PagingOptions> defaultPagingOptions, 
             IOptions<ApiConfigs> apiConfigs, 
             IUserDataService userDataService, 
+            IUserService userService,
             IHostingEnvironment env, 
             IAuthorizationService authService,
             IAssetDataService assetDataService) : 
             base(userDataService,
                 defaultPagingOptions, 
-                apiConfigs, 
-                userDataService, 
+                apiConfigs,
+                userService, 
                 env, 
                 authService)
         {
@@ -44,7 +45,7 @@ namespace SortMyStuffAPI.Controllers
         {
             if (User == null) return BadRequest();
 
-            var user = await UserService.GetUserAsync(User);
+            var user = await UserService.GetUserResourceAsync(User);
             if (user == null) return NotFound();
 
             var adminPolicy = await AuthService
@@ -113,7 +114,7 @@ namespace SortMyStuffAPI.Controllers
             user.Provider = AuthProvider.Native.ToString();
             user.CreateTimestamp = currentTime;
 
-            var result = await UserService.AddResourceAsync(await GetUserId(), user, ct);
+            var result = await DataService.AddResourceAsync(await GetUserId(), user, ct);
             if (!result.Succeeded)
             {
                 return BadRequest(new ApiError(errorMsg, result.Error));
@@ -126,7 +127,7 @@ namespace SortMyStuffAPI.Controllers
                 return BadRequest(new ApiError(errorMsg, createRoot.Error));
             }
 
-            var userCreated = await UserService.GetResourceAsync(await GetUserId(), user.Id, ct);
+            var userCreated = await DataService.GetResourceAsync(await GetUserId(), user.Id, ct);
 
             // if it voliates the admin policy, then erase user id information
             if (!adminPolicy.Succeeded)

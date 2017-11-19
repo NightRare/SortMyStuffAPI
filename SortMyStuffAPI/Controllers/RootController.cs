@@ -12,11 +12,11 @@ namespace SortMyStuffAPI.Controllers
     public class RootController : ApiBaseController
     {
         public RootController(
-            IUserDataService userDataService, 
+            IUserService userService, 
             IOptions<ApiConfigs> apiConfigs, 
             IHostingEnvironment env, 
             IAuthorizationService authService)
-            : base(userDataService, 
+            : base(userService, 
                   apiConfigs, 
                   env, 
                   authService)

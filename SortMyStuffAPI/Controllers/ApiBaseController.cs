@@ -17,18 +17,18 @@ namespace SortMyStuffAPI.Controllers
     {
         private readonly static string _developerUid = ServicesAuthHelper.DeveloperUid;
 
-        protected readonly IUserDataService UserService;
+        protected readonly IUserService UserService;
         protected readonly ApiConfigs ApiConfigs;
         protected readonly IHostingEnvironment Env;
         protected readonly IAuthorizationService AuthService;
 
         protected ApiBaseController(
-            IUserDataService userDataService,
+            IUserService userService,
             IOptions<ApiConfigs> apiConfigs,
             IHostingEnvironment env,
             IAuthorizationService authService)
         {
-            UserService = userDataService;
+            UserService = userService;
             ApiConfigs = apiConfigs.Value;
             Env = env;
             AuthService = authService;

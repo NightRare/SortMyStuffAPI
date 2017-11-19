@@ -22,10 +22,10 @@ namespace SortMyStuffAPI.Controllers
             IPhotoFileService photoService,
             IOptions<ApiConfigs> apiConfigs,
             IAssetDataService assetDataService,
-            IUserDataService userDataService,
+            IUserService userService,
             IHostingEnvironment env,
             IAuthorizationService authService)
-            : base(userDataService,
+            : base(userService,
                   apiConfigs,
                   env,
                   authService)
@@ -109,13 +109,13 @@ namespace SortMyStuffAPI.Controllers
             var userId = await GetUserId();
 
             var asset = await _assetDataService.GetResourceAsync(userId, assetId, ct);
-            if(asset == null)
+            if (asset == null)
             {
                 return NotFound(new ApiError(errorMsg, "Asset id not found."));
             }
 
             var deleteTask = await _photoService.DeletePhoto(asset.UserId, assetId, ct);
-            if(!deleteTask.Succeeded)
+            if (!deleteTask.Succeeded)
             {
                 if (deleteTask.Error.Contains("404"))
                 {

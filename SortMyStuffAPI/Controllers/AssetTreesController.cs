@@ -18,10 +18,10 @@ namespace SortMyStuffAPI.Controllers
         public AssetTreesController(
             IAssetDataService assetDataService, 
             IOptions<ApiConfigs> apiConfigs,
-            IUserDataService userDataService,
+            IUserService userService,
             IHostingEnvironment env,
             IAuthorizationService authService)
-            : base(userDataService,
+            : base(userService,
                   apiConfigs,
                   env,
                   authService)

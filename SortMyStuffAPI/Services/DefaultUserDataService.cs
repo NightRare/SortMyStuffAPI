@@ -11,12 +11,14 @@ using SortMyStuffAPI.Infrastructure;
 using System.Security.Claims;
 using SortMyStuffAPI.Utils;
 using System.Reflection;
+using Microsoft.EntityFrameworkCore;
 
 namespace SortMyStuffAPI.Services
 {
     public class DefaultUserDataService :
         DefaultDataService<User, UserEntity>,
-        IUserDataService
+        IUserDataService,
+        IUserService
     {
         private readonly UserManager<UserEntity> _userManager;
         private readonly RoleManager<UserRoleEntity> _roleManager;
@@ -132,41 +134,71 @@ namespace SortMyStuffAPI.Services
         #endregion
 
 
-        #region IUserDataService METHODS
+        #region IUserService METHODS
 
-        public async Task<User> GetUserAsync(ClaimsPrincipal user)
+        public async Task<User> GetUserResourceAsync(ClaimsPrincipal user)
         {
-            return Mapper.Map<UserEntity, User>(await GetUserEntityAsync(user));
+            return Mapper.Map<UserEntity, User>(await GetUserAsync(user));
         }
 
-        public async Task<User> GetUserByIdAsync(string id)
+        public async Task<User> GetUserResourceByIdAsync(string id)
         {
-            return Mapper.Map<UserEntity, User>(await GetUserEntityByIdAsync(id));
+            return Mapper.Map<UserEntity, User>(await GetUserByIdAsync(id));
         }
 
-        public async Task<User> GetUserByEmailAsync(string email)
+        public async Task<User> GetUserResourceByEmailAsync(string email)
         {
-            return Mapper.Map<UserEntity, User>(await GetUserEntityByEmailAsync(email));
+            return Mapper.Map<UserEntity, User>(await GetUserByEmailAsync(email));
         }
 
-        public async Task<UserEntity> GetUserEntityAsync(ClaimsPrincipal user)
+        public async Task<UserEntity> GetUserAsync(ClaimsPrincipal userClaims)
         {
-            return await _userManager.GetUserAsync(user);
+            var user = await _userManager.GetUserAsync(userClaims);
+            if(user.RootAssetContract == null)
+            {
+                user.RootAssetContract = await DbContext.UserRootAssetContracts
+                    .SingleOrDefaultAsync(e => e.Id == user.RootAssetContractId);
+            }
+            return user;
         }
 
-        public async Task<UserEntity> GetUserEntityByIdAsync(string id)
+        public async Task<UserEntity> GetUserByIdAsync(string id)
         {
-            return await _userManager.FindByIdAsync(id);
+            return await _userManager.Users
+                .Include(u => u.RootAssetContract)
+                .SingleOrDefaultAsync(u => u.Id == id);
         }
 
-        public async Task<UserEntity> GetUserEntityByEmailAsync(string email)
+        public async Task<UserEntity> GetUserByEmailAsync(string email)
         {
-            return await _userManager.FindByEmailAsync(email);
+            return await _userManager.Users
+                .Include(u => u.RootAssetContract)
+                .SingleOrDefaultAsync(u => u.Email == email);
         }
 
         public async Task<string> GetUserIdAsync(ClaimsPrincipal user)
         {
             return await Task.Run(() => _userManager.GetUserId(user));
+        }
+
+        public async Task<IResult> UpdateAsync(UserEntity user)
+        {
+            var result = await _userManager.UpdateAsync(user);
+            return result.Succeeded ?
+                ResultFactory.Success() :
+                ResultFactory.Failure(
+                    $"Update user {user.Id} failed.", 
+                    result.Errors);
+        }
+
+        public async Task<bool> CheckPasswordAsync(UserEntity user, string password)
+        {
+            return await _userManager.CheckPasswordAsync(user, password);
+        }
+
+        public async Task<UserEntity> GetUserByNameAsync(string userName)
+        {
+            return await _userManager.FindByNameAsync(userName);
         }
 
         #endregion

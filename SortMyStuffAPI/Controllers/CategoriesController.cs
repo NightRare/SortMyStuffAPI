@@ -23,13 +23,13 @@ namespace SortMyStuffAPI.Controllers
             ICategoryDataService categoryDataService,
             IOptions<PagingOptions> pagingOptions,
             IOptions<ApiConfigs> apiConfigs,
-            IUserDataService userDataService,
+            IUserService userService,
             IHostingEnvironment env,
             IAuthorizationService authService) :
             base(categoryDataService, 
                 pagingOptions, 
-                apiConfigs, 
-                userDataService,
+                apiConfigs,
+                userService,
                 env,
                 authService)
         {

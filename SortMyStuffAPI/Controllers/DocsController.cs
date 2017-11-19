@@ -29,14 +29,14 @@ namespace SortMyStuffAPI.Controllers
 
         public DocsController(
             IOptions<ApiConfigs> apiConfigs,
-            IUserDataService userDataService,
+            IUserService userService,
             IHostingEnvironment env,
             IAuthorizationService authService,
             IAssetDataService assetDataService,
             ICategoryDataService categoryDataService,
             IBaseDetailDataService baseDetailDataService,
             IDetailDataService detailDataService)
-            : base(userDataService,
+            : base(userService,
                   apiConfigs,
                   env,
                   authService)

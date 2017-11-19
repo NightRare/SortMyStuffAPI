@@ -17,13 +17,13 @@ namespace SortMyStuffAPI.Controllers
         private readonly IAssetDataService _assetDataService;
 
         public ThumbnailsController(
-            IUserDataService userDataService, 
+            IUserService userService, 
             IOptions<ApiConfigs> apiConfigs, 
             IHostingEnvironment env, 
             IAuthorizationService authService,
             IThumbnailFileService thumbnailService,
             IAssetDataService assetService) 
-            : base(userDataService, 
+            : base(userService, 
                   apiConfigs, 
                   env, 
                   authService)
