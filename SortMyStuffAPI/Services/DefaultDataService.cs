@@ -82,8 +82,8 @@ namespace SortMyStuffAPI.Services
             CancellationToken ct)
         {
             var repo = GetUserRepository(userId, dbSet);
-
             var entity = await Task.Run(() => repo.SingleOrDefault(a => a.Id == id), ct);
+
             return entity == null ? default(T) : Mapper.Map<TEntity, T>(entity);
         }
 

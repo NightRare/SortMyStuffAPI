@@ -9,7 +9,6 @@ using SortMyStuffAPI.Utils;
 using System.Reflection;
 using SortMyStuffAPI.Infrastructure;
 using AutoMapper.QueryableExtensions;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace SortMyStuffAPI.Services
@@ -19,6 +18,7 @@ namespace SortMyStuffAPI.Services
         IAssetDataService
     {
         private readonly IUserService _userService;
+
         public DefaultAssetDataService(
             SortMyStuffContext dbContext,
             IOptions<ApiConfigs> apiConfigs,
@@ -177,16 +177,10 @@ namespace SortMyStuffAPI.Services
         {
             return await Task.Run(() =>
             {
-                var repo = GetUserRepository(userId, DbContext.Categories);
-                var category = repo.SingleOrDefault(c => c.Id == categoryId);
-                if (category.CategorisedAssets.Any())
-                {
-                    return category.CategorisedAssets
-                        .AsQueryable()
-                        .ProjectTo<Asset>()
-                        .ToArray();
-                }
-                return new Asset[] { };
+                return GetUserRepository(userId, DbContext.Assets)
+                    .Where(a => a.CategoryId == categoryId)
+                    .ProjectTo<Asset>()
+                    .ToArray();
             }, ct);
         }
 

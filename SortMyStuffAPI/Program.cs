@@ -15,22 +15,22 @@ namespace SortMyStuffAPI
         {
             var host = BuildWebHost(args);
 
-            var serviceScopeFactory = (IServiceScopeFactory)host.Services.GetService(typeof(IServiceScopeFactory));
-            //Add test roles and users in development
-            using (var scope = serviceScopeFactory.CreateScope())
-            {
-                var services = scope.ServiceProvider;
-                var dbContext = services.GetRequiredService<SortMyStuffContext>();
+            //var serviceScopeFactory = (IServiceScopeFactory)host.Services.GetService(typeof(IServiceScopeFactory));
+            ////Add test roles and users in development
+            //using (var scope = serviceScopeFactory.CreateScope())
+            //{
+            //    var services = scope.ServiceProvider;
+            //    var dbContext = services.GetRequiredService<SortMyStuffContext>();
 
-                var roleManager = scope.ServiceProvider
-                    .GetRequiredService<RoleManager<UserRoleEntity>>();
-                var userManager = scope.ServiceProvider
-                    .GetRequiredService<UserManager<UserEntity>>();
-                TestDataRepository.LoadRolesAndUsers(roleManager, userManager).Wait();
+            //    var roleManager = scope.ServiceProvider
+            //        .GetRequiredService<RoleManager<UserRoleEntity>>();
+            //    var userManager = scope.ServiceProvider
+            //        .GetRequiredService<UserManager<UserEntity>>();
+            //    TestDataRepository.LoadRolesAndUsers(roleManager, userManager).Wait();
 
-                // Add test data in development
-                TestDataRepository.LoadData(dbContext, userManager);
-            }
+            //    // Add test data in development
+            //    TestDataRepository.LoadData(dbContext, userManager);
+            //}
 
             host.Run();
         }

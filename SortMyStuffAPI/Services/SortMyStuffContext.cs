@@ -8,7 +8,8 @@ namespace SortMyStuffAPI.Services
     public class SortMyStuffContext : IdentityDbContext<UserEntity, UserRoleEntity, string>
     {
         public SortMyStuffContext(DbContextOptions opt) : base(opt)
-        { }
+        {
+        }
 
         public DbSet<AssetEntity> Assets { get; set; }
         public DbSet<CategoryEntity> Categories { get; set; }
@@ -18,6 +19,8 @@ namespace SortMyStuffAPI.Services
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
+            base.OnModelCreating(builder);
+
             #region BaseDetail
 
             builder.Entity<BaseDetailEntity>()
@@ -76,6 +79,7 @@ namespace SortMyStuffAPI.Services
                 .HasIndex(e => e.UserId);
 
             #endregion
+
         }
     }
 }

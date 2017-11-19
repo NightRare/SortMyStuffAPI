@@ -7,6 +7,7 @@ using Microsoft.Extensions.Options;
 using System.Threading;
 using System.Reflection;
 using SortMyStuffAPI.Infrastructure;
+using Microsoft.EntityFrameworkCore;
 
 namespace SortMyStuffAPI.Services
 {
@@ -100,7 +101,11 @@ namespace SortMyStuffAPI.Services
         {
             var repo = GetUserRepository(userId, DbContext.Categories);
 
-            var category = repo.SingleOrDefault(c => c.Id == resourceId) ??
+            // EF core is not supporting lazy loading yet, need to use eager loading
+            var category = repo
+                .Include(c => c.CategorisedAssets)
+                .Include(c => c.BaseDetails)
+                .SingleOrDefault(c => c.Id == resourceId) ??
                 throw new KeyNotFoundException();
 
             if (!delDependents)

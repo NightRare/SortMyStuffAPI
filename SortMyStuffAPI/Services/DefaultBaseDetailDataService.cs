@@ -8,6 +8,7 @@ using Microsoft.Extensions.Options;
 using SortMyStuffAPI.Infrastructure;
 using SortMyStuffAPI.Models;
 using AutoMapper.QueryableExtensions;
+using Microsoft.EntityFrameworkCore;
 
 namespace SortMyStuffAPI.Services
 {
@@ -96,7 +97,9 @@ namespace SortMyStuffAPI.Services
         {
             var repo = GetUserRepository(userId, DbContext.BaseDetails);
 
-            var entity = repo.SingleOrDefault(b => b.Id == resourceId) ??
+            var entity = repo
+                .Include(bd => bd.Derivatives)
+                .SingleOrDefault(b => b.Id == resourceId) ??
                 throw new KeyNotFoundException();
 
             if (!delDependents)
@@ -141,16 +144,10 @@ namespace SortMyStuffAPI.Services
         {
             return await Task.Run(() =>
             {
-                var repo = GetUserRepository(userId, DbContext.Categories);
-                var category = repo.SingleOrDefault(c => c.Id == categoryId);
-                if (category.CategorisedAssets.Any())
-                {
-                    return category.BaseDetails
-                        .AsQueryable()
-                        .ProjectTo<BaseDetail>()
-                        .ToArray();
-                }
-                return new BaseDetail[] { };
+                return GetUserRepository(userId, DbContext.BaseDetails)
+                    .Where(bd => bd.CategoryId == categoryId)
+                    .ProjectTo<BaseDetail>()
+                    .ToArray();
             }, ct);
         }
 
