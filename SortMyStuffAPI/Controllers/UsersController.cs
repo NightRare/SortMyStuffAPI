@@ -94,7 +94,7 @@ namespace SortMyStuffAPI.Controllers
         }
 
         // POST /users
-        [AllowAnonymous]
+        [Authorize]
         [HttpPost(Name = nameof(RegisterUserAsync))]
         public async Task<IActionResult> RegisterUserAsync(
             [FromBody] RegisterForm body,
