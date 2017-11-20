@@ -17,6 +17,7 @@ using SortMyStuffAPI.Services;
 using SortMyStuffAPI.Utils;
 using SortMyStuffAPI.Models;
 using AspNet.Security.OAuth.Validation;
+using System.Threading.Tasks;
 
 namespace SortMyStuffAPI
 {
@@ -152,13 +153,15 @@ namespace SortMyStuffAPI
         {
             app.UseAuthentication();
 
-            if (env.IsDevelopment())
+            using (var scope = app.ApplicationServices
+                .GetRequiredService<IServiceScopeFactory>().CreateScope())
             {
-                app.UseDeveloperExceptionPage();
+                InitialiseDeveloperRoleAndUser(app, scope)
+                    .GetAwaiter().GetResult();
 
-                using (var scope = app.ApplicationServices
-                    .GetRequiredService<IServiceScopeFactory>().CreateScope())
+                if (env.IsDevelopment())
                 {
+                    app.UseDeveloperExceptionPage();
                     //HandleTestData(app, scope);
                 }
             }
@@ -179,17 +182,68 @@ namespace SortMyStuffAPI
             var dbContext = app.ApplicationServices
                 .GetRequiredService<SortMyStuffContext>();
 
-            TestDataFactory.DeleteAllData(dbContext)
-                .GetAwaiter().GetResult();
+            //TestDataFactory.DeleteAllData(dbContext)
+            //    .GetAwaiter().GetResult();
 
-            var roleManager = scope.ServiceProvider
-                .GetRequiredService<RoleManager<UserRoleEntity>>();
             var userManager = scope.ServiceProvider
                 .GetRequiredService<UserManager<UserEntity>>();
-            TestDataFactory.LoadRolesAndUsers(roleManager, userManager)
+            TestDataFactory.LoadUsers(userManager)
                 .GetAwaiter().GetResult();
             TestDataFactory.LoadData(dbContext, userManager)
                 .GetAwaiter().GetResult();
+        }
+
+        private async Task InitialiseDeveloperRoleAndUser(
+            IApplicationBuilder app, IServiceScope scope)
+        {
+            var context = app.ApplicationServices
+                .GetRequiredService<SortMyStuffContext>();
+            var userManager = scope.ServiceProvider
+                .GetRequiredService<UserManager<UserEntity>>();
+            var roleManager = scope.ServiceProvider
+                .GetRequiredService<RoleManager<UserRoleEntity>>();
+
+            var developerRole = await roleManager.FindByNameAsync(ApiStrings.RoleDeveloper);
+            if (developerRole == null)
+            {
+                await roleManager.CreateAsync(new UserRoleEntity(ApiStrings.RoleDeveloper));
+            }
+
+            var developerUid = Environment.GetEnvironmentVariable(ApiStrings.EnvDeveloperUid);
+            var developerRootAssetId = "rootassetid";
+
+            var devUser = await userManager.FindByIdAsync(developerUid);
+            if (devUser != null) return;
+
+            // developer user
+
+            var developer = new UserEntity
+            {
+                Id = developerUid,
+                Email = Environment.GetEnvironmentVariable(ApiStrings.EnvDeveloperEmail),
+                UserName = "Developer",
+                CreateTimestamp = DateTimeOffset.UtcNow,
+                RootAssetId = developerRootAssetId
+            };
+
+            await userManager.CreateAsync(
+                developer,
+                Environment.GetEnvironmentVariable(ApiStrings.EnvDeveloperPassword));
+
+            await userManager.AddToRoleAsync(developer, ApiStrings.RoleDeveloper);
+            await userManager.UpdateAsync(developer);
+
+            var root = new AssetEntity
+            {
+                Id = developerRootAssetId,
+                Name = "Assets",
+                ContainerId = ApiStrings.RootAssetToken,
+                CategoryId = null,
+                UserId = developerUid
+            };
+
+            await context.AddAsync(root);
+            await context.SaveChangesAsync();
         }
     }
 }

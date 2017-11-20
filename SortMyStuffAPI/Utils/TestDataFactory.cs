@@ -12,13 +12,14 @@ namespace SortMyStuffAPI.Utils
 {
     public static class TestDataFactory
     {
-        public readonly static string DeveloperUid = Environment.GetEnvironmentVariable(ApiStrings.EnvDeveloperUid);
-        public const string DeveloperRootAssetId = "rootassetid";
+        private readonly static string DeveloperUid = Environment
+            .GetEnvironmentVariable(ApiStrings.EnvDeveloperUid);
+        private const string DeveloperRootAssetId = "rootassetid";
 
-        public const string TestUserRootAssetId = "testrootassetid";
-        public const string TestUserId = "testuserid";
-        public const string TestUserEmail = "testuser@test.com";
-        public const string TestUserPass = "Test1234.";
+        private const string TestUserRootAssetId = "testrootassetid";
+        private const string TestUserId = "testuserid";
+        private const string TestUserEmail = "testuser@test.com";
+        private const string TestUserPass = "Test1234.";
 
         public async static Task DeleteAllData(
             SortMyStuffContext db)
@@ -55,34 +56,11 @@ namespace SortMyStuffAPI.Utils
         }
 
 
-        public static async Task LoadRolesAndUsers(
-            RoleManager<UserRoleEntity> roleManager,
+        public static async Task LoadUsers(
             UserManager<UserEntity> userManager)
         {
-            if (roleManager != null)
-            {
-                await roleManager.CreateAsync(new UserRoleEntity(ApiStrings.RoleDeveloper));
-            }
-
             if (userManager != null)
             {
-                // developer user
-
-                var developer = new UserEntity
-                {
-                    Id = DeveloperUid,
-                    Email = Environment.GetEnvironmentVariable(ApiStrings.EnvDeveloperEmail),
-                    UserName = "Developer",
-                    CreateTimestamp = DateTimeOffset.UtcNow,
-                    RootAssetId = DeveloperRootAssetId
-                };
-
-                await userManager.CreateAsync(
-                    developer,
-                    Environment.GetEnvironmentVariable(ApiStrings.EnvDeveloperPassword));
-
-                await userManager.AddToRoleAsync(developer, ApiStrings.RoleDeveloper);
-                await userManager.UpdateAsync(developer);
 
                 // test user 
 
@@ -151,20 +129,11 @@ namespace SortMyStuffAPI.Utils
 
             var timestamp = DateTimeOffset.UtcNow;
 
-            var root = new AssetEntity
-            {
-                Id = DeveloperRootAssetId,
-                Name = "Assets",
-                ContainerId = ApiStrings.RootAssetToken,
-                CategoryId = null,
-                UserId = DeveloperUid
-            };
-
             var asset_1 = new AssetEntity
             {
                 Id = "a1",
                 Name = "asset_1",
-                ContainerId = root.Id,
+                ContainerId = DeveloperRootAssetId,
                 CategoryId = categories[0].Id,
                 Category = categories[0]
             };
@@ -173,7 +142,7 @@ namespace SortMyStuffAPI.Utils
             {
                 Id = "a2",
                 Name = "asset_2",
-                ContainerId = root.Id,
+                ContainerId = DeveloperRootAssetId,
                 CategoryId = categories[0].Id,
                 Category = categories[0]
             };
@@ -216,7 +185,7 @@ namespace SortMyStuffAPI.Utils
 
             var devleoperAssets = new List<AssetEntity>()
             {
-                root, asset_1, asset_2, asset_1_1, asset_1_2, asset_2_1, asset_1_1_1
+                asset_1, asset_2, asset_1_1, asset_1_2, asset_2_1, asset_1_1_1
             };
 
             foreach (var a in devleoperAssets)
