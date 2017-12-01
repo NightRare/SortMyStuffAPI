@@ -92,8 +92,7 @@ namespace SortMyStuffAPI.Services
         public async Task<(bool Succeeded, string Error)> DeleteResourceAsync(
             string userId,
             string resourceId,
-            bool delDependents,
-            CancellationToken ct)
+            bool delDependents)
         {
             var repo = GetUserRepository(userId, DbContext.BaseDetails);
 
@@ -109,11 +108,11 @@ namespace SortMyStuffAPI.Services
                     return (false, "Derivative details found. " +
                         "Cannot delete a base detail with dependents.");
                 }
-                return await DeleteOneResourceAsync(resourceId, repo, ct);
+                return await DeleteOneResourceAsync(resourceId, repo);
             }
 
             return await DeleteBaseDetailWithDependentsAsync(
-                entity, repo, ct);
+                entity, repo);
         }
 
         public async Task<bool> CheckScopedUniquenessAsync(
@@ -159,15 +158,14 @@ namespace SortMyStuffAPI.Services
         private async Task<(bool Succeeded, string Error)>
             DeleteBaseDetailWithDependentsAsync(
                 BaseDetailEntity entity,
-                IQueryable<BaseDetailEntity> repo,
-                CancellationToken ct)
+                IQueryable<BaseDetailEntity> repo)
         {
             var derivativeDetails = entity.Derivatives.ToArray();
 
             foreach (var detail in derivativeDetails)
             {
                 var delDetail = await _detailDataService
-                    .DeleteResourceAsync(entity.UserId, detail.Id, true, ct);
+                    .DeleteResourceAsync(entity.UserId, detail.Id, true);
 
                 if (!delDetail.Succeeded)
                 {
@@ -175,7 +173,7 @@ namespace SortMyStuffAPI.Services
                 }
             }
 
-            return await DeleteOneResourceAsync(entity.Id, repo, ct);
+            return await DeleteOneResourceAsync(entity.Id, repo);
         }
 
         #endregion

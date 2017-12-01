@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
 using SortMyStuffAPI.Infrastructure;
 using SortMyStuffAPI.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace SortMyStuffAPI.Services
 {
@@ -27,7 +28,7 @@ namespace SortMyStuffAPI.Services
             CancellationToken ct)
         {
             return await GetOneResourceAsync(
-                DbContext.Details,
+                DbContext.Details.Include(d => d.BaseDetail),
                 userId,
                 resourceId,
                 ct);
@@ -88,13 +89,12 @@ namespace SortMyStuffAPI.Services
         public async Task<(bool Succeeded, string Error)> DeleteResourceAsync(
             string userId,
             string resourceId,
-            bool delDependents,
-            CancellationToken ct)
+            bool delDependents)
         {
             var repo = GetUserRepository(userId, DbContext.Details);
 
             // details have no dependents
-            return await DeleteOneResourceAsync(resourceId, repo, ct);
+            return await DeleteOneResourceAsync(resourceId, repo);
         }
 
         public async Task<bool> CheckScopedUniquenessAsync(

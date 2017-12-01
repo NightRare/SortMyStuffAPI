@@ -199,7 +199,7 @@ namespace SortMyStuffAPI.Controllers
             try
             {
                 var result = await DataService.DeleteResourceAsync(
-                    userId, baseDetailId, deletingOptions.DelDependents, ct);
+                    userId, baseDetailId, deletingOptions.DelDependents);
 
                 if (!result.Succeeded)
                 {

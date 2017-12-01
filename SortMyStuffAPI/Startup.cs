@@ -146,6 +146,8 @@ namespace SortMyStuffAPI
 
             services.AddScoped<IUserService, DefaultUserDataService>();
             services.AddSingleton<ILocalResourceService, DefaultLocalResourceService>();
+            services.AddSingleton<IDataChangeHanlder>(DataChangeTransmitter.GetInstance());
+            services.AddSingleton<IDataChangeSender>(DataChangeTransmitter.GetInstance());
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

@@ -5,6 +5,7 @@ using System.Reflection;
 using SortMyStuffAPI.Infrastructure;
 using SortMyStuffAPI.Exceptions;
 using System.Collections.Generic;
+using System;
 
 namespace SortMyStuffAPI.Services
 {
@@ -42,8 +43,7 @@ namespace SortMyStuffAPI.Services
         Task<(bool Succeeded, string Error)> DeleteResourceAsync(
             string userId,
             string resourceId,
-            bool delDependents,
-            CancellationToken ct);
+            bool delDependents);
 
         /// <summary>
         /// Checks if the value of the resource's specified property is unique 

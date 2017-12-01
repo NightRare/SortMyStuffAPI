@@ -1,6 +1,5 @@
 ﻿using AutoMapper;
 using AutoMapper.QueryableExtensions;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using SortMyStuffAPI.Exceptions;
@@ -200,8 +199,7 @@ namespace SortMyStuffAPI.Services
 
         protected virtual async Task<(bool Succeeded, string Error)> DeleteOneResourceAsync(
             string resourceId,
-            IQueryable<TEntity> repo,
-            CancellationToken ct)
+            IQueryable<TEntity> repo)
         {
             return await Task.Run(() =>
             {
@@ -220,7 +218,7 @@ namespace SortMyStuffAPI.Services
                 }
 
                 return (true, null);
-            }, ct);
+            });
         }
 
         protected virtual bool CheckResourceScopedUniqueness(

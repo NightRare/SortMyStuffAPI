@@ -72,7 +72,7 @@ namespace SortMyStuffAPI.Utils
 
         public const string EnvDeveloperUid = "DEVELOPER_UID";
 
-        public const string EnvConnectionStrings = "SORTMYSTUFF_CONNECTION_STRINGS_AZURE";
+        public const string EnvConnectionStrings = "SORTMYSTUFF_CONNECTION_STRINGS";
 
         #endregion
 

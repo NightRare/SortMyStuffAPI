@@ -13,6 +13,8 @@ using Microsoft.AspNetCore.Hosting;
 using SortMyStuffAPI.Utils;
 using SortMyStuffAPI.Exceptions;
 using System.Net;
+using SortMyStuffAPI.Infrastructure;
+using Microsoft.EntityFrameworkCore;
 
 namespace SortMyStuffAPI.Controllers
 {
@@ -25,6 +27,7 @@ namespace SortMyStuffAPI.Controllers
         private readonly ICategoryDataService _categoryDataService;
         private readonly IBaseDetailDataService _baseDetailDataService;
         private readonly IDetailDataService _detailDataService;
+        private readonly IDataChangeSender _dataChangeSender;
 
         public AssetsController(
             IAssetDataService assetDataService,
@@ -35,7 +38,8 @@ namespace SortMyStuffAPI.Controllers
             IHostingEnvironment env,
             IAuthorizationService authService,
             IBaseDetailDataService baseDetailDataService,
-            IDetailDataService detailDataService) :
+            IDetailDataService detailDataService,
+            IDataChangeSender dataChangeSender) :
             base(assetDataService,
                 pagingOptions,
                 apiConfigs,
@@ -47,6 +51,7 @@ namespace SortMyStuffAPI.Controllers
             _categoryDataService = categoryDataService;
             _baseDetailDataService = baseDetailDataService;
             _detailDataService = detailDataService;
+            _dataChangeSender = dataChangeSender;
         }
 
         // GET /assets
@@ -104,7 +109,7 @@ namespace SortMyStuffAPI.Controllers
 
             var response = new Collection<PathUnit>
             {
-                Self = Link.ToCollection(nameof(GetAssetPathByIdAsync), 
+                Self = Link.ToCollection(nameof(GetAssetPathByIdAsync),
                     new { assetId = assetId }),
                 Value = pathUnits.ToArray()
             };
@@ -119,6 +124,7 @@ namespace SortMyStuffAPI.Controllers
             [FromBody] CreateAssetForm body,
             CancellationToken ct)
         {
+
             var errorMsg = "POST asset failed.";
             if (!ModelState.IsValid) return BadRequest(
                 new ApiError(errorMsg, ModelState));
@@ -247,10 +253,9 @@ namespace SortMyStuffAPI.Controllers
                 var result = await _assetDataService.DeleteResourceAsync(
                     user.Id,
                     assetId,
-                    deletingOptions.DelDependents,
-                    ct);
+                    deletingOptions.DelDependents);
 
-                if(!result.Succeeded)
+                if (!result.Succeeded)
                 {
                     return BadRequest(new ApiError(
                         errorMsg,
@@ -267,8 +272,8 @@ namespace SortMyStuffAPI.Controllers
         #region PRIVATE METHODS
 
         private async Task<(bool IsValid, string Error)> CheckBaseForm(
-            string userId, 
-            AssetBaseForm form, 
+            string userId,
+            AssetBaseForm form,
             CancellationToken ct)
         {
             var category = await _categoryDataService.GetResourceAsync(userId, form.CategoryId, ct);

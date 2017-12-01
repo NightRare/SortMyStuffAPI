@@ -96,8 +96,7 @@ namespace SortMyStuffAPI.Services
         public async Task<(bool Succeeded, string Error)> DeleteResourceAsync(
             string userId,
             string resourceId,
-            bool delDependents,
-            CancellationToken ct)
+            bool delDependents)
         {
             var repo = GetUserRepository(userId, DbContext.Categories);
 
@@ -114,10 +113,10 @@ namespace SortMyStuffAPI.Services
                 {
                     return (false, "Categorised assets or base details found. Cannot delete category with dependents.");
                 }
-                return await DeleteOneResourceAsync(resourceId, repo, ct);
+                return await DeleteOneResourceAsync(resourceId, repo);
             }
 
-            return await DeleteCategoryWithDependentsAsync(category, repo, ct);
+            return await DeleteCategoryWithDependentsAsync(category, repo);
         }
 
         public async Task<bool> CheckScopedUniquenessAsync(
@@ -143,8 +142,7 @@ namespace SortMyStuffAPI.Services
 
         private async Task<(bool Succeeded, string Error)> DeleteCategoryWithDependentsAsync(
             CategoryEntity category,
-            IQueryable<CategoryEntity> repo,
-            CancellationToken ct)
+            IQueryable<CategoryEntity> repo)
         {
             // note that when deleting the navigation property (categorised asset)
             // category.CategorisedAssets will be modifed as well
@@ -153,7 +151,7 @@ namespace SortMyStuffAPI.Services
             foreach (var asset in categorisedAssets)
             {
                 var delAsset = await _assetDataService
-                    .DeleteResourceAsync(category.UserId, asset.Id, true, ct);
+                    .DeleteResourceAsync(category.UserId, asset.Id, true);
 
                 if (!delAsset.Succeeded)
                 {
@@ -165,7 +163,7 @@ namespace SortMyStuffAPI.Services
             foreach (var bd in baseDetails)
             {
                 var delBd = await _baseDetailDataService
-                    .DeleteResourceAsync(category.UserId, bd.Id, true, ct);
+                    .DeleteResourceAsync(category.UserId, bd.Id, true);
 
                 if(!delBd.Succeeded)
                 {
@@ -173,7 +171,7 @@ namespace SortMyStuffAPI.Services
                 }
             }
 
-            return await DeleteOneResourceAsync(category.Id, repo, ct);
+            return await DeleteOneResourceAsync(category.Id, repo);
         }
 
         #endregion

@@ -109,8 +109,7 @@ namespace SortMyStuffAPI.Services
         public async Task<(bool Succeeded, string Error)> DeleteResourceAsync(
             string userId,
             string resourceId,
-            bool delDependents,
-            CancellationToken ct)
+            bool delDependents)
         {
             throw new NotImplementedException();
         }

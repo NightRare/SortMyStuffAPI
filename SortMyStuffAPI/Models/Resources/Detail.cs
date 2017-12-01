@@ -15,6 +15,9 @@ namespace SortMyStuffAPI.Models
 
         public Link BaseDetail { get; set; }
 
+        [Searchable]
+        public string Label { get; set; }
+
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public Link FormSpecs { get; set; }
 
@@ -25,5 +28,6 @@ namespace SortMyStuffAPI.Models
         [JsonIgnore]
         [Searchable]
         public string AssetId { get; set; }
+
     }
 }

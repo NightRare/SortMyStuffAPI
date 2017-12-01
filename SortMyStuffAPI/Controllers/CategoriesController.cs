@@ -136,7 +136,7 @@ namespace SortMyStuffAPI.Controllers
             try
             {
                 var result = await _categoryDataService.DeleteResourceAsync(
-                    userId, categoryId, deletingOptions.DelDependents, ct);
+                    userId, categoryId, deletingOptions.DelDependents);
 
                 if (!result.Succeeded)
                 {

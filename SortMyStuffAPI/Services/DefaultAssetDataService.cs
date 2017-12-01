@@ -18,14 +18,17 @@ namespace SortMyStuffAPI.Services
         IAssetDataService
     {
         private readonly IUserService _userService;
+        private readonly IDetailDataService _detailDataService;
 
         public DefaultAssetDataService(
             SortMyStuffContext dbContext,
             IOptions<ApiConfigs> apiConfigs,
-            IUserService userService)
+            IUserService userService,
+            IDetailDataService detailDataService)
             : base(dbContext, apiConfigs)
         {
             _userService = userService;
+            _detailDataService = detailDataService;
         }
 
         #region IDataService METHODS
@@ -98,21 +101,21 @@ namespace SortMyStuffAPI.Services
         public async Task<(bool Succeeded, string Error)> DeleteResourceAsync(
             string userId,
             string resourceId,
-            bool delDependents,
-            CancellationToken ct)
+            bool delDependents)
         {
-            var repo = GetUserRepository(userId, DbContext.Assets);
+            var assetRepo = GetUserRepository(userId, DbContext.Assets);
 
             if (!delDependents)
             {
-                if (repo.Any(a => a.ContainerId == resourceId))
+                if (assetRepo.Any(a => a.ContainerId == resourceId))
                 {
                     return (false, "Content assets found. Cannot delete an asset with dependents.");
                 }
-                return await DeleteOneResourceAsync(resourceId, repo, ct);
+                return await DeleteOneResourceAsync(resourceId, assetRepo);
             }
 
-            return await DeleteAssetWithDependentsAsync(resourceId, repo, ct);
+            return await DeleteAssetWithDependentsAsync(
+                userId, resourceId, assetRepo, GetUserRepository(userId, DbContext.Details));
         }
 
         public async Task<bool> CheckScopedUniquenessAsync(
@@ -277,16 +280,17 @@ namespace SortMyStuffAPI.Services
         }
 
         private async Task<(bool Succeeded, string Error)> DeleteAssetWithDependentsAsync(
+            string userId,
             string resourceId,
-            IQueryable<AssetEntity> repo,
-            CancellationToken ct)
+            IQueryable<AssetEntity> assetRepo,
+            IQueryable<DetailEntity> detailRepo)
         {
-            var contents = repo.Where(a => a.ContainerId == (resourceId));
+            var contents = assetRepo.Where(a => a.ContainerId == (resourceId));
             if (contents.Any())
             {
                 foreach (var asset in contents)
                 {
-                    var result = await DeleteAssetWithDependentsAsync(asset.Id, repo, ct);
+                    var result = await DeleteAssetWithDependentsAsync(userId, asset.Id, assetRepo, detailRepo);
                     if (!result.Succeeded)
                     {
                         return result;
@@ -294,7 +298,12 @@ namespace SortMyStuffAPI.Services
                 }
             }
 
-            return await DeleteOneResourceAsync(resourceId, repo, ct);
+            var details = detailRepo.Where(d => d.AssetId == (resourceId));
+            foreach(var detail in details)
+            {
+                await _detailDataService.DeleteResourceAsync(userId, detail.Id, true);
+            }
+            return await DeleteOneResourceAsync(resourceId, assetRepo);
         }
 
         #endregion

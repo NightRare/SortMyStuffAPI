@@ -6,6 +6,34 @@ using Newtonsoft.Json;
 
 namespace SortMyStuffAPI.Infrastructure
 {
+    public static class EntityToResourceExtensions
+    {
+        public static object ToResource(this IEntity entity)
+        {
+            if (entity is AssetEntity)
+            {
+                return Mapper.Map<Asset>(entity);
+            }
+            else if (entity is BaseDetailEntity)
+            {
+                return Mapper.Map<BaseDetail>(entity);
+            }
+            else if (entity is CategoryEntity)
+            {
+                return Mapper.Map<Category>(entity);
+            }
+            else if (entity is DetailEntity)
+            {
+                return Mapper.Map<Detail>(entity);
+            }
+            else if(entity is UserEntity)
+            {
+                return Mapper.Map<User>(entity);
+            }
+            return null;
+        }
+    }
+
     public class MappingProfile : Profile
     {
         public MappingProfile()
@@ -168,6 +196,9 @@ namespace SortMyStuffAPI.Infrastructure
                 .ForMember(dest => dest.BaseDetail, opt => opt.MapFrom(src =>
                     Link.To(nameof(Controllers.BaseDetailsController.GetBaseDetailByIdAsync),
                         new { baseDetailId = src.Id })))
+
+                .ForMember(dest => dest.Label, opt => opt.MapFrom(src => 
+                    src.BaseDetail == null ? null : src.BaseDetail.Label))
 
                 .ForMember(dest => dest.FormSpecs, opt => opt.MapFrom(src =>
                     Link.ToCollection(
