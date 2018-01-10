@@ -253,7 +253,7 @@ namespace SortMyStuffAPI.Services
             var assetTree = new AssetTree
             {
                 Self = Link.To(nameof(Controllers.AssetTreesController.GetAssetTreeByIdAsync),
-                    new { assetTreeId = assetEntity.Id }),
+                    new { assetId = assetEntity.Id }),
                 Id = assetEntity.Id,
                 Name = assetEntity.Name,
                 Contents = null
