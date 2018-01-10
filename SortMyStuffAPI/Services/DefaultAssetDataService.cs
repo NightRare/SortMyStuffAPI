@@ -161,6 +161,7 @@ namespace SortMyStuffAPI.Services
         {
             return await Task.Run(() =>
             {
+                var parents = GetAllParents(userId, id);
                 return GetAllParents(userId, id)
                     .Select(entity =>
                         new PathUnit
@@ -215,7 +216,7 @@ namespace SortMyStuffAPI.Services
                 await _userService.UpdateAsync(user);
                 DbContext.SaveChanges();
             }
-            catch(DbUpdateException ex)
+            catch (DbUpdateException ex)
             {
                 return (false, ex.Message);
             }
@@ -228,7 +229,7 @@ namespace SortMyStuffAPI.Services
 
         #region PRIVATE METHODS
 
-        private IEnumerable<AssetEntity> GetAllParents(
+        private IList<AssetEntity> GetAllParents(
             string userId,
             string id)
         {
@@ -236,13 +237,15 @@ namespace SortMyStuffAPI.Services
             var entity = repo.SingleOrDefault(a => a.Id == id) ??
                 throw new KeyNotFoundException();
 
-            yield return entity;
-            while(!entity.ContainerId.Equals(ApiStrings.RootAssetToken))
+            var parents = new List<AssetEntity>();
+            parents.Add(entity);
+            while (entity.ContainerId != null && !entity.ContainerId.Equals(ApiStrings.RootAssetToken))
             {
-                entity = repo.SingleOrDefault(a => a.Id == id);
-                if (entity == null) yield break;
-                yield return entity;
+                entity = repo.SingleOrDefault(a => a.Id == entity.ContainerId);
+                if (entity == null) break;
+                parents.Add(entity);
             }
+            return parents;
         }
 
         private AssetTree ConvertToAssetTree(AssetEntity assetEntity)
@@ -299,7 +302,7 @@ namespace SortMyStuffAPI.Services
             }
 
             var details = detailRepo.Where(d => d.AssetId == (resourceId));
-            foreach(var detail in details)
+            foreach (var detail in details)
             {
                 await _detailDataService.DeleteResourceAsync(userId, detail.Id, true);
             }
